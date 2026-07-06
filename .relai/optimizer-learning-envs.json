@@ -1,0 +1,14 @@
+{
+  "scope_tags": [
+    "baggage_policy_tool",
+    "change_seat_tool",
+    "end-to-end",
+    "lookup_booking_tool"
+  ],
+  "learning_envs": [
+    {
+      "kind": "path",
+      "path": ".relai/learning-envs/response-signoff.py"
+    }
+  ]
+}
