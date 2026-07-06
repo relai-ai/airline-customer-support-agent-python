@@ -1,0 +1,18 @@
+{
+  "schema_version": "relai.runtime_manifest.v1",
+  "env": [
+    {
+      "name": "OPENAI_API_KEY",
+      "required": true,
+      "sensitive": true,
+      "reason": "The airline support agent runs through the OpenAI Agents SDK."
+    },
+    {
+      "name": "OPENAI_DEFAULT_MODEL",
+      "required": false,
+      "sensitive": false,
+      "reason": "Optional stable default model override for OpenAI Agents SDK runs."
+    }
+  ],
+  "files": []
+}

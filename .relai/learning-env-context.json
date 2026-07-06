@@ -1,0 +1,47 @@
+{
+  "schema_version": "relai.learning_env_context.v1",
+  "agent": {
+    "entrypoint": "airline_support.agent:AIRLINE_AGENT",
+    "runner_summary": "Runs the SkyServe airline support OpenAI Agent through the simulator adapter with plain string chat turns."
+  },
+  "components": [
+    {
+      "id": "lookup_booking_tool",
+      "import_path": "airline_support.agent:lookup_booking",
+      "when_to_use": "Booking lookup failures or scenarios that depend on a confirmation code resolving to the expected itinerary.",
+      "live_mock_targets": [],
+      "required_mock_targets": [],
+      "input_guidance": "Use named kwargs matching the tool schema, for example {\"confirmation_code\": \"SKY123\"}.",
+      "output_guidance": "Evaluate the returned booking summary string, including route, departure, seat, and status details."
+    },
+    {
+      "id": "baggage_policy_tool",
+      "import_path": "airline_support.agent:baggage_policy",
+      "when_to_use": "Baggage-policy wording or ticket-type handling regressions.",
+      "live_mock_targets": [],
+      "required_mock_targets": [],
+      "input_guidance": "Use named kwargs matching the tool schema, for example {\"ticket_type\": \"basic economy\"}.",
+      "output_guidance": "Evaluate the returned baggage policy text for the requested fare type."
+    },
+    {
+      "id": "change_seat_tool",
+      "import_path": "airline_support.agent:change_seat",
+      "when_to_use": "Seat-change behavior, confirmation-code validation, or scenarios that need a controlled tool result.",
+      "live_mock_targets": [],
+      "required_mock_targets": [],
+      "input_guidance": "Use named kwargs matching the tool schema, for example {\"confirmation_code\": \"SKY123\", \"requested_seat\": \"14C\"}.",
+      "output_guidance": "Evaluate the confirmation or validation message returned after the seat-change request."
+    }
+  ],
+  "log_notes": [
+    "Agent environments should supply plain string turns. The simulator passes each FixedTurn.content value directly to the adapter without wrapping it in an object.",
+    "Seat changes mutate the in-memory BOOKINGS map for the current process. Mock airline_support.agent:change_seat when a test should avoid shared-state changes or force a specific seat-change outcome."
+  ],
+  "learning_env_guidance": [
+    "Use raw string chat turns for agent environments, for example FixedTurn(content=\"My confirmation code is SKY123. Please confirm my route and current seat.\").",
+    "Keep scenarios within the agent's supported domain: booking lookups, baggage policy, seat changes, and high-level flight-change guidance.",
+    "For booking-specific actions, include a confirmation code in the user turn when you expect the agent to verify or modify a reservation. The demo data includes SKY123 and BAY777.",
+    "Component environments for these OpenAI Agents FunctionTool targets should use named kwargs matching the tool JSON schema.",
+    "Set OPENAI_API_KEY for simulator runs. Optionally set OPENAI_DEFAULT_MODEL if you need a stable default model choice across runs."
+  ]
+}
