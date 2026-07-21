@@ -1,0 +1,18 @@
+{
+  "schema_version": "relai.runtime_manifest.v1",
+  "env": [
+    {
+      "name": "OPENAI_API_KEY",
+      "required": false,
+      "sensitive": true,
+      "reason": "Preferred provider key; when set the agent uses the default OpenAI Agents SDK model path."
+    },
+    {
+      "name": "ANTHROPIC_API_KEY",
+      "required": false,
+      "sensitive": true,
+      "reason": "Fallback provider key; when OPENAI_API_KEY is unset the agent uses the Anthropic LiteLLM model configured in airline_support.models."
+    }
+  ],
+  "files": []
+}

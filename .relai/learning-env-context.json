@@ -1,0 +1,47 @@
+{
+  "schema_version": "relai.learning_env_context.v1",
+  "agent": {
+    "entrypoint": "airline_support.agent:create_airline_agent",
+    "runner_summary": "Runs the OpenAI Agents airline support agent through a simulator adapter that accepts raw string user turns and preserves conversation history internally."
+  },
+  "components": [
+    {
+      "id": "lookup_booking",
+      "import_path": "airline_support.agent:lookup_booking",
+      "when_to_use": "Use for failures to retrieve or summarize booking details from a confirmation code.",
+      "live_mock_targets": [],
+      "required_mock_targets": [],
+      "input_guidance": "Use kwargs with confirmation_code set to the booking code the user supplies, such as SKY123 or BAY777.",
+      "output_guidance": "Expect either a booking summary string with passenger, route, departure, seat, and status, or the not-found message."
+    },
+    {
+      "id": "baggage_policy",
+      "import_path": "airline_support.agent:baggage_policy",
+      "when_to_use": "Use for mistakes in baggage allowance answers across ticket tiers.",
+      "live_mock_targets": [],
+      "required_mock_targets": [],
+      "input_guidance": "Use kwargs with ticket_type set to values such as standard, basic, business, first, or premium.",
+      "output_guidance": "Expect the ticket-specific baggage policy string returned by the tool."
+    },
+    {
+      "id": "change_seat",
+      "import_path": "airline_support.agent:change_seat",
+      "when_to_use": "Use for failures to validate confirmation codes or report seat-change outcomes.",
+      "live_mock_targets": [],
+      "required_mock_targets": [],
+      "input_guidance": "Use kwargs with confirmation_code and requested_seat matching the user request, for example SKY123 and 14C.",
+      "output_guidance": "Expect either a success string naming the updated seat and booking code or the invalid-code message."
+    }
+  ],
+  "log_notes": [
+    "Agent turns in learning environments should stay as raw user strings; the adapter is responsible for maintaining prior conversation state between turns.",
+    "The demo booking table includes valid confirmation codes SKY123 and BAY777; other codes return the booking-not-found or seat-change validation messages.",
+    "change_seat mutates in-memory booking state for the remainder of a single simulation run, so use mocks when the scenario should avoid state changes."
+  ],
+  "learning_env_guidance": [
+    "For agent simulations, set FixedTurn.content to a plain user message string. Do not wrap the turn in JSON or an internal helper payload.",
+    "Use SKY123 or BAY777 when a scenario needs an existing booking. Use another code when the scenario should trigger a not-found path.",
+    "Prefer live execution for baggage_policy and lookup_booking because they are deterministic local tools; consider mocking airline_support.agent:change_seat when a scenario should avoid mutating booking state.",
+    "Prefer OpenAI when OPENAI_API_KEY is available. If it is not set, the agent falls back to the Anthropic LiteLLM model selected by ANTHROPIC_API_KEY."
+  ]
+}
