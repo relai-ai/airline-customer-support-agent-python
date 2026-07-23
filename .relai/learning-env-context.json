@@ -1,0 +1,43 @@
+{
+  "schema_version": "relai.learning_env_context.v1",
+  "agent": {
+    "entrypoint": "airline_support.agent:create_airline_agent",
+    "runner_summary": "The simulator adapter builds the SkyServe airline support Agent and runs each fixed turn's content string through Runner.run, returning the agent's final text output."
+  },
+  "components": [
+    {
+      "id": "lookup_booking",
+      "import_path": "airline_support.agent:lookup_booking",
+      "when_to_use": "Scenarios about looking up an existing demo booking (route, departure, seat, status) by confirmation code, including invalid or unknown codes.",
+      "live_mock_targets": [],
+      "required_mock_targets": [],
+      "input_guidance": "Use FixedComponentInput(kwargs={\"confirmation_code\": \"SKY123\"}) with a demo code from BOOKINGS (SKY123, BAY777) or an invalid code to test the not-found path. Do not use positional args.",
+      "output_guidance": "Evaluate the returned booking summary string, or the not-found message when the confirmation code is unknown."
+    },
+    {
+      "id": "baggage_policy",
+      "import_path": "airline_support.agent:baggage_policy",
+      "when_to_use": "Scenarios about baggage allowance questions for a given ticket type (basic economy, standard, premium/business/first).",
+      "live_mock_targets": [],
+      "required_mock_targets": [],
+      "input_guidance": "Use FixedComponentInput(kwargs={\"ticket_type\": \"standard\"}) with one of basic/standard/business ticket type strings. The argument is optional and defaults to \"standard\".",
+      "output_guidance": "Evaluate the returned baggage policy sentence for the requested ticket tier."
+    },
+    {
+      "id": "change_seat",
+      "import_path": "airline_support.agent:change_seat",
+      "when_to_use": "Scenarios about changing the seat on an existing demo booking after confirmation-code verification.",
+      "live_mock_targets": [],
+      "required_mock_targets": ["airline_support.agent:change_seat"],
+      "input_guidance": "Use FixedComponentInput(kwargs={\"confirmation_code\": \"SKY123\", \"requested_seat\": \"14C\"}). This tool mutates the shared in-memory BOOKINGS dataset, so mock it in agent-level scenarios; do not use positional args.",
+      "output_guidance": "Evaluate the returned seat-confirmation message, or the invalid-confirmation-code message for unknown codes."
+    }
+  ],
+  "log_notes": [
+    "Terminal session logs under logs/*.jsonl contain one JSON object per line: a leading {\"type\": \"session\", ...} record followed by {\"type\": \"message\", \"role\": \"user\"|\"assistant\", \"content\": ...} records.",
+    "When turning a log into a learning environment, the adapter-facing turn value is the plain user message content string, not the full JSONL event object."
+  ],
+  "learning_env_guidance": [
+    "The agent selects its model from environment keys: OPENAI_API_KEY uses the default OpenAI Agents SDK model, and ANTHROPIC_API_KEY (checked only when OPENAI_API_KEY is unset) uses litellm/anthropic/claude-sonnet-5. Prefer whichever key is already configured in the runtime environment; do not require both."
+  ]
+}
