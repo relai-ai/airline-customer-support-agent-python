@@ -17,13 +17,14 @@ def input_from(values: list[str]) -> Iterator[str]:
 def api_key(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key")
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("ATIF_TRAJECTORY_PATH", raising=False)
 
 
 @pytest.mark.asyncio
 async def test_terminal_chat_logs_user_and_assistant_messages(monkeypatch, tmp_path):
     monkeypatch.setenv("AIRLINE_SUPPORT_LOG_DIR", str(tmp_path))
 
-    async def fake_stream_agent_response(messages):
+    async def fake_stream_agent_response(messages, *, trajectory_path):
         assert messages[-1].content == "What is the baggage policy?"
         yield "Standard tickets include "
         yield "one checked bag."
@@ -50,7 +51,7 @@ async def test_terminal_chat_logs_user_and_assistant_messages(monkeypatch, tmp_p
 async def test_terminal_chat_creates_new_log_each_run(monkeypatch, tmp_path):
     monkeypatch.setenv("AIRLINE_SUPPORT_LOG_DIR", str(tmp_path))
 
-    async def fake_stream_agent_response(_messages):
+    async def fake_stream_agent_response(_messages, *, trajectory_path):
         yield "Hello."
 
     monkeypatch.setattr(main, "stream_agent_response", fake_stream_agent_response)
@@ -67,6 +68,9 @@ async def test_terminal_chat_creates_new_log_each_run(monkeypatch, tmp_path):
     assert first_log_path != second_log_path
     assert tmp_path.joinpath(first_log_path).exists()
     assert tmp_path.joinpath(second_log_path).exists()
+    for log_path in (first_log_path, second_log_path):
+        trajectory_path = tmp_path.joinpath(log_path).with_suffix(".atif.json")
+        assert json.loads(trajectory_path.read_text())["steps"] == []
 
 
 @pytest.mark.asyncio
@@ -74,7 +78,7 @@ async def test_terminal_chat_can_use_named_log(monkeypatch, tmp_path):
     monkeypatch.setenv("AIRLINE_SUPPORT_LOG_DIR", str(tmp_path))
     tmp_path.joinpath("off-topic-guardrail.jsonl").write_text("old log", encoding="utf-8")
 
-    async def fake_stream_agent_response(messages):
+    async def fake_stream_agent_response(messages, *, trajectory_path):
         assert messages[-1].content == "Can you write a chocolate chip cookie recipe?"
         yield "I can only help with airline support questions."
 
@@ -102,7 +106,7 @@ async def test_terminal_chat_ignores_empty_input(monkeypatch, tmp_path):
     monkeypatch.setenv("AIRLINE_SUPPORT_LOG_DIR", str(tmp_path))
     calls = 0
 
-    async def fake_stream_agent_response(_messages):
+    async def fake_stream_agent_response(_messages, *, trajectory_path):
         nonlocal calls
         calls += 1
         yield "This should not be called."

@@ -2,7 +2,7 @@
 
 A terminal airline customer support agent built with the OpenAI Agents SDK for Python.
 
-The agent can help with demo booking lookups, baggage policy, seat changes, and flight-change guidance. Each terminal conversation is saved as JSONL under `logs/`.
+The agent can help with demo booking lookups, baggage policy, seat changes, and flight-change guidance. Each terminal conversation is saved as JSONL with an ATIF trajectory under `logs/`.
 
 ## Prerequisites
 
@@ -37,7 +37,7 @@ Pass a log name to save the session to a fixed file such as `logs/booking-help.j
 ./start.sh booking-help
 ```
 
-Type `exit`, `quit`, or `q` to end the chat. Each run creates a new session log and prints the saved path.
+Type `exit`, `quit`, or `q` to end the chat. Each run prints its log and trajectory paths. Named sessions overwrite their previous logs.
 
 ## Local Logs
 
@@ -45,9 +45,10 @@ Each chat session is saved as JSONL under `logs/`:
 
 ```text
 logs/session-<id>.jsonl
+logs/session-<id>.atif.json
 ```
 
-Session files are ignored by Git and contain the user and assistant messages from the conversation.
+Session files are ignored by Git. The JSONL log contains user and assistant messages; the ATIF trajectory also captures model and tool activity. Both preserve turns within the session. Reusing a named session overwrites its previous logs.
 
 ## Checks
 

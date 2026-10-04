@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import asyncio
 import argparse
-from collections.abc import Callable
+import asyncio
 import sys
+from collections.abc import Callable
 from typing import TextIO
 
 from dotenv import load_dotenv
@@ -16,7 +16,7 @@ from airline_support.sessions import (
     session_id_from_log_name,
     session_path,
 )
-
+from airline_support.trajectory import get_recorder
 
 EXIT_COMMANDS = {"exit", "quit", "q"}
 
@@ -31,10 +31,14 @@ async def chat(
     session_id = session_id_from_log_name(log_name) if log_name else None
     session = create_session(session_id=session_id, overwrite=log_name is not None)
     log_path = session_path(session.id)
+    trajectory_path = log_path.with_suffix(".atif.json")
+    recorder = get_recorder(trajectory_path, new_session=True)
 
     print("SkyServe Airline Support", file=output)
     print(f"Session: {session.id}", file=output)
     print(f"Log: {log_path}", file=output)
+    if recorder is not None:
+        print(f"Trajectory: {recorder.path}", file=output)
     print("Type exit, quit, or q to end the chat.", file=output)
 
     while True:
@@ -55,7 +59,9 @@ async def chat(
         chunks: list[str] = []
 
         print("\nAgent: ", end="", file=output, flush=True)
-        async for delta in stream_agent_response(messages):
+        async for delta in stream_agent_response(
+            messages, trajectory_path=trajectory_path
+        ):
             chunks.append(delta)
             print(delta, end="", file=output, flush=True)
         print(file=output)
@@ -69,7 +75,9 @@ async def chat(
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Chat with the SkyServe airline support agent.")
+    parser = argparse.ArgumentParser(
+        description="Chat with the SkyServe airline support agent."
+    )
     parser.add_argument(
         "log_name",
         nargs="?",
