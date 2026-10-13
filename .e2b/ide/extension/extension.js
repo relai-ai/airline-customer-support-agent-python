@@ -38,6 +38,7 @@ function activate(context) {
       },
     );
     const current = panel;
+    await vscode.commands.executeCommand("workbench.action.closeAuxiliaryBar");
     current.onDidDispose(() => {
       panel = undefined;
     });

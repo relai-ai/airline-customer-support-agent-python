@@ -128,7 +128,7 @@
       }
       .risk-inventory table {
         width: 100%;
-        min-width: 780px;
+        min-width: 700px;
         border-collapse: collapse;
         font-size: 12px;
       }
@@ -443,22 +443,22 @@
             data-folder="project"
             aria-label="Open repository folders in Explorer"
           >
-            <strong>Project folders</strong><code>cmd/ · demo/ · benchmarks/</code>
+            <strong>Project folders</strong><code>start.sh · demo/ · benchmarks/</code>
             <small
-              >cmd/ runs the agent; demo/ contains the walkthrough; benchmarks/
+              >start.sh opens the Python agent; demo/ contains the walkthrough; benchmarks/
               holds datasets. .e2b/ packages this playground workspace.</small
             ><span>Open folder ↗</span>
           </button>
         </div>
         <p class="muted">
-          Experience how you would use RELAI through a coding assistant such as
-          Codex, Claude Code, or Cursor.
+          Use Codex with RELAI to explore and improve this agent in a real coding
+          workspace.
         </p>
       </section>
       <section
         id="history"
         class="conversation"
-        aria-label="Code Assistant conversation"
+        aria-label="Codex conversation"
       ></section>
     </main>
     <section class="composer">
@@ -711,14 +711,7 @@
         const body = document.createElement("tbody");
         for (const risk of inventory.risks) {
           const row = document.createElement("tr");
-          const sentence = (value) => {
-            for (const match of value.matchAll(/[.!?]["”]?\s+/g)) {
-              const prefix = value.slice(0, match.index + match[0].trimEnd().length);
-              if ((prefix.match(/["“”]/g) || []).length % 2 === 0) return prefix;
-            }
-            return value;
-          };
-          const values = [risk.id, sentence(risk.failure), sentence(risk.trigger), risk.impact, risk.confidence, risk.triggerability];
+          const values = [risk.id, risk.failure, risk.trigger, risk.impact, risk.confidence, risk.triggerability];
           if (mixedStatus) values.push(risk.lifecycle);
           for (const value of values)
             row.append(node("td", value));
@@ -1064,7 +1057,8 @@
           live = progress >= 4;
           nextDraft();
           renderLive(state);
-          el("content").scrollTop = el("content").scrollHeight;
+          if (progress === 1) el("history").scrollIntoView?.({ block: "start" });
+          else el("content").scrollTop = el("content").scrollHeight;
         }
         if (d.type === "state") {
           if (
