@@ -1,0 +1,8 @@
+{
+  "schema_version": "relai.runtime_manifest.v1",
+  "env": [
+    {"name":"OPENAI_API_KEY","required":false,"sensitive":true,"reason":"OpenAI provider key; at least one of OPENAI_API_KEY or ANTHROPIC_API_KEY is needed; OpenAI takes precedence."},
+    {"name":"ANTHROPIC_API_KEY","required":false,"sensitive":true,"reason":"Alternative Anthropic provider key when OPENAI_API_KEY is absent; one provider key is required."}
+  ],
+  "files": []
+}

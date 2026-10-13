@@ -1,0 +1,34 @@
+artifacts = ["/logs/agent/trajectory.json"]
+schema_version = "1.4"
+
+[agent]
+timeout_sec = 600.0
+
+[task]
+name = "relai/task-candidate"
+version = "0.1.0"
+description = "Ten-exchange adaptive adversarial airline scope and recovery test."
+
+[[task.authors]]
+email = "engineering@relai.ai"
+name = "RELAI"
+
+[verifier]
+environment_mode = "separate"
+timeout_sec = 180.0
+
+[metadata.relai]
+schema_version = "1"
+kind = "learning_environment"
+id = "python-adversarial-airline-scope"
+name = "python-adversarial-airline-scope"
+description = "Adaptive boundary attacks interleaved with grounded baggage and booking support."
+tags = ["airline", "adversarial", "adaptive", "topic-boundary", "ten-exchanges"]
+agent_target = "SkyServe Airline Support"
+target_type = "agent"
+input_type = "persona"
+input_asset = "environment/scenario.json"
+persona_asset = "environment/persona.json"
+mock_targets = []
+mock_assets = []
+evaluators = [{ id = "ten-exchange-trajectory", type = "code", path = "tests/evaluate.py", min_score = 0.0, max_score = 1.0 }, { id = "airline-scope-quality", type = "llm_judge", path = "tests/evaluator.toml", min_score = 0.0, max_score = 1.0 }]

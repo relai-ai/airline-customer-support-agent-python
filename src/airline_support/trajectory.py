@@ -189,7 +189,7 @@ def get_recorder(
 ) -> TrajectoryRecorder | None:
     """Reuse the session writer, with an optional destination override."""
     try:
-        destination = os.environ.get("ATIF_TRAJECTORY_PATH")
+        destination = os.environ.get("RELAI_ATIF_TRAJECTORY_PATH") or os.environ.get("ATIF_TRAJECTORY_PATH")
         path = (
             Path(destination)
             if destination

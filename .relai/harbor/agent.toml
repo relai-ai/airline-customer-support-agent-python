@@ -1,0 +1,2 @@
+[agent]
+command = "/workspace/.venv/bin/python /app/project_adapter.py"

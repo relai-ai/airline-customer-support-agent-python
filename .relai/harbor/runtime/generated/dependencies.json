@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "files": [
+    {
+      "source": "pyproject.toml",
+      "staged": "generated/runtime/dependencies/pyproject.toml",
+      "sha256": "7e9fc527c486239ee6dbb36020c51e09bbf1932b1435c7f53e142fc069fbeaea"
+    },
+    {
+      "source": "uv.lock",
+      "staged": "generated/runtime/dependencies/uv.lock",
+      "sha256": "d7ab965b3d6f1b509c72b7290e046f844f129c6053d48d4c2cffad69a6049491"
+    }
+  ]
+}
