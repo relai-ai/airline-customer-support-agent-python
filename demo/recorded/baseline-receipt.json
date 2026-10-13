@@ -1,0 +1,22 @@
+{
+  "orchestrator": "Codex",
+  "startedAt": "2026-10-13T18:42:09.561450+00:00",
+  "durationSeconds": 88.82799408305436,
+  "exitCode": 0,
+  "argv": [
+    "relai",
+    "simulate",
+    "--tests",
+    "python-adversarial-airline-scope",
+    "--max-simulations",
+    "1",
+    "--result-json",
+    "work/recording/release-baseline-result.json",
+    "--outcome-json",
+    "work/recording/release-baseline-outcome.json",
+    "--outcome-invocation-id",
+    "b22e5ab3-a233-4bc7-9201-a3d5a85d5c5a",
+    "--outcome-intent",
+    "Measure the exact Python image baseline after scoped runtime integration; SDK model remains unchanged"
+  ]
+}

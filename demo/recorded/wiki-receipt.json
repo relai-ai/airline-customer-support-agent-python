@@ -1,0 +1,13 @@
+{
+  "orchestrator": "Codex",
+  "startedAt": "2026-10-13T18:02:52.594063+00:00",
+  "durationSeconds": 0.5222313341218978,
+  "exitCode": 0,
+  "argv": [
+    "relai",
+    "wiki",
+    "list",
+    "risks",
+    "--json"
+  ]
+}

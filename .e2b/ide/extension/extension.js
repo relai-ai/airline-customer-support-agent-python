@@ -45,7 +45,6 @@ function activate(context) {
     const env = JSON.parse(
       await fs.readFile("/home/user/.playground/environment.json", "utf8"),
     );
-    const modeKey = "relai.playground.mode." + env.PLAYGROUND_SESSION_ID;
     const recordingKey =
       "relai.playground.recording." + env.PLAYGROUND_SESSION_ID;
     const root = "/home/user/airline";
@@ -81,42 +80,13 @@ function activate(context) {
         { viewColumn: vscode.ViewColumn.Beside, preview: true },
       );
     };
-    const base =
-      env.PLAYGROUND_API_BASE + "/sessions/" + env.PLAYGROUND_SESSION_ID;
-    const api = async (suffix, method = "GET", body) => {
-      const response = await fetch(base + suffix, {
-        method,
-        headers: {
-          Authorization: "Token " + env.RELAI_TEAM_API_KEY,
-          "Content-Type": "application/json",
-        },
-        redirect: "error",
-        signal: AbortSignal.timeout(130000),
-        ...(body ? { body: JSON.stringify(body) } : {}),
-      });
-      if (!response.ok)
-        throw Error(
-          response.status === 401
-            ? "This session has expired. Return to onboarding to reset it."
-            : "The request could not finish. Refresh before retrying; no result was fabricated.",
-        );
-      return response.json();
-    };
     current.webview.onDidReceiveMessage(async (msg) => {
       try {
         // Explicit action allowlist. Webview cannot choose URLs, paths or credentials.
         if (msg.action === "load") {
           recording = await recorded.loadRecording(root);
-          if (codex) await codex.restore();
-          let investigation = codex
-            ? { investigation: codex.snapshot() }
-            : await api("/investigation");
-          if (!investigation.investigation) {
-            await api("/investigation", "POST", {
-              challengeId: "invalid-seat",
-            });
-            investigation = await api("/investigation");
-          }
+          await codex.restore();
+          const investigation = { investigation: codex.snapshot() };
           current.webview.postMessage({
             type: "loaded",
             recording,
@@ -177,111 +147,15 @@ function activate(context) {
             ),
             { viewColumn: vscode.ViewColumn.Beside },
           );
-        } else if (
-          msg.action === "mode" &&
-          [null, "assistant", "terminal"].includes(msg.mode) &&
-          typeof msg.challengeId === "string"
-        ) {
-          await context.workspaceState.update(modeKey, {
-            mode: msg.mode,
-            challengeId: msg.challengeId,
-          });
-        } else if (msg.action === "choose") {
-          await api("/investigation", "POST", { challengeId: msg.id });
-          current.webview.postMessage({
-            type: "state",
-            ...(await api("/investigation")),
-          });
-        } else if (
-          msg.action === "try-agent" &&
-          typeof msg.prompt === "string" &&
-          msg.prompt.trim()
-        ) {
-          current.webview.postMessage({
-            type: "state",
-            ...(await api("/investigation/try-agent", "POST", {
-              prompt: msg.prompt,
-              turnId: crypto.randomUUID(),
-            })),
-          });
-        } else if (
-          msg.action === "send" &&
-          typeof msg.prompt === "string" &&
-          msg.prompt.trim()
-        ) {
-          if (codex) {
-            await codex.send(msg.prompt);
-            current.webview.postMessage({
-              type: "state",
-              investigation: codex.snapshot(),
-            });
-            return;
-          }
-          current.webview.postMessage({
-            type: "state",
-            ...(await api("/investigation/turn", "POST", {
-              prompt: msg.prompt,
-              ...(msg.runWorkflow === true ? { runWorkflow: true } : {}),
-              ...(typeof msg.step === "string" ? { step: msg.step } : {}),
-              turnId: crypto.randomUUID(),
-            })),
-          });
-        } else if (
-          msg.action === "approve" &&
-          typeof msg.approved === "boolean"
-        ) {
-          if (codex) {
-            await codex.approve(msg.id, msg.approved);
-            return;
-          }
-          await api("/investigation/approval", "POST", {
-            callId: msg.id,
-            approved: msg.approved,
-          });
-          current.webview.postMessage({
-            type: "state",
-            ...(await api("/investigation")),
-          });
-        } else if (msg.action === "continue") {
-          if (codex) {
-            current.webview.postMessage({
-              type: "state",
-              investigation: codex.snapshot(),
-            });
-            return;
-          }
-          current.webview.postMessage({
-            type: "state",
-            ...(await api("/investigation/continue", "POST", {})),
-          });
-        } else if (msg.action === "refresh") {
-          if (codex) {
-            current.webview.postMessage({
-              type: "state",
-              investigation: codex.snapshot(),
-            });
-            return;
-          }
-          current.webview.postMessage({
-            type: "state",
-            ...(await api("/investigation")),
-          });
-        } else if (msg.action === "stop") {
-          if (codex) {
-            await codex.stop();
-            return;
-          }
-          await api("/investigation/abandon-turn", "POST", {});
-          current.webview.postMessage({
-            type: "state",
-            ...(await api("/investigation")),
-          });
-        } else if (msg.action === "cancel") {
-          await api("/investigation/cancel", "POST", { jobId: msg.id });
-          current.webview.postMessage({
-            type: "state",
-            ...(await api("/investigation")),
-          });
+        } else if (msg.action === "send" && typeof msg.prompt === "string" && msg.prompt.trim()) {
+          await codex.send(msg.prompt);
+          current.webview.postMessage({ type: "state", investigation: codex.snapshot() });
+        } else if (msg.action === "approve" && typeof msg.approved === "boolean") {
+          await codex.approve(msg.id, msg.approved);
+        } else if (["continue", "refresh"].includes(msg.action)) {
+          current.webview.postMessage({ type: "state", investigation: codex.snapshot() });
+        } else if (["stop", "cancel"].includes(msg.action)) {
+          await codex.stop();
         } else if (msg.action === "assistant") {
           await vscode.commands.executeCommand("workbench.action.closePanel");
           await vscode.commands.executeCommand("workbench.action.closeSidebar");

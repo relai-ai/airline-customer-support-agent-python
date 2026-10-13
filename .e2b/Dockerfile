@@ -1,4 +1,4 @@
-FROM python:3.13-slim-bookworm AS playground-tools
+FROM python:3.13-slim-bookworm
 ARG TARGETARCH
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -36,7 +36,6 @@ USER user
 RUN git config --global user.name "RELAI Playground" && git config --global user.email "engineering@relai.ai" && bash .e2b/setup.sh && uv run --no-sync pytest && bash -n start.sh
 
 # Keep UI iteration independent of tool installation.
-FROM playground-tools AS playground
 USER root
 COPY .e2b/ide/start-ide.py /opt/playground/start-ide.py
 COPY .e2b/ide/session_config.py /opt/playground/session_config.py
