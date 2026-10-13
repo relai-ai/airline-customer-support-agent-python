@@ -33,7 +33,7 @@ COPY .e2b/setup.sh .e2b/README.md ./.e2b/
 COPY .e2b/start.sh /usr/local/bin/start-playground
 RUN chmod 755 /usr/local/bin/start-playground && chown -R user:user /home/user/airline
 USER user
-RUN git config --global user.name "RELAI Playground" && git config --global user.email "engineering@relai.ai" && bash .e2b/setup.sh && uv run --no-sync pytest && bash -n start.sh
+RUN git config --global user.name "RELAI Playground" && git config --global user.email "engineering@relai.ai" && bash .e2b/setup.sh && "$HOME/.local/bin/uv" run --no-sync pytest && bash -n start.sh
 
 # Keep UI iteration independent of tool installation.
 USER root
