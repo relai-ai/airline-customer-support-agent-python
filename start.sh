@@ -145,15 +145,24 @@ main() {
 
   require_command uv
 
-  load_env_api_keys
-  prompt_for_api_key
-
-  log "Installing Python dependencies"
-  uv sync
-  commit_dependency_changes
+  if [ "${AIRLINE_MODEL_PROVIDER:-}" = "relai" ]; then
+    [ -n "${RELAI_API_BASE:-}" ] && [ -n "${RELAI_TEAM_API_KEY:-}" ] && [ -n "${RELAI_SESSION_MODEL:-}" ] \
+      || fail "This playground session is unavailable. Return to the dashboard and start a fresh workspace."
+    log "Using the prepared playground environment"
+  else
+    load_env_api_keys
+    prompt_for_api_key
+    log "Installing Python dependencies"
+    uv sync
+    commit_dependency_changes
+  fi
 
   log "Starting terminal chat"
-  uv run airline-support "$@"
+  if [ "${AIRLINE_MODEL_PROVIDER:-}" = "relai" ]; then
+    uv run --no-sync airline-support "$@"
+  else
+    uv run airline-support "$@"
+  fi
 }
 
 main "$@"

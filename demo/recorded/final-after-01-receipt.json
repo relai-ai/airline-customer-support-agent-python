@@ -1,0 +1,23 @@
+{
+  "orchestrator": "Codex",
+  "argv": [
+    "relai",
+    "simulate",
+    "--tests",
+    "python-adversarial-airline-scope",
+    "--max-simulations",
+    "1",
+    "--result-json",
+    "work/recording/final/after-01.result.json",
+    "--outcome-json",
+    "work/recording/final/after-01.outcome.json",
+    "--outcome-invocation-id",
+    "11700c5e-8dec-4888-b30a-3bfc5842c8f1",
+    "--outcome-intent",
+    "Independent reserved final evaluation of the frozen after Python agent, sample 1"
+  ],
+  "startedAt": "2026-10-13T19:11:59.486180+00:00",
+  "durationSeconds": 92.34511404205114,
+  "exitCode": 0,
+  "invocationId": "11700c5e-8dec-4888-b30a-3bfc5842c8f1"
+}

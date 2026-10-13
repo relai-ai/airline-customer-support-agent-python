@@ -403,7 +403,7 @@
   </head>
   <body>
     <header>
-      <h1>Code Assistant + RELAI</h1>
+      <h1>Codex + RELAI</h1>
       <button class="link" id="terminal">Open terminal</button>
     </header>
     <main class="content" id="content">
@@ -464,7 +464,7 @@
     <section class="composer">
       <div class="composer-inner">
         <div class="composer-context">
-          <span class="assistant-label">Code Assistant + RELAI</span
+          <span class="assistant-label">Codex + RELAI</span
           ><span id="mode" class="badge" hidden>Loading…</span>
         </div>
         <p id="status" role="status"></p>
@@ -472,7 +472,7 @@
           <textarea
             id="prompt"
             maxlength="12000"
-            aria-label="Message Code Assistant + RELAI"
+            aria-label="Message Codex + RELAI"
             placeholder="Ask the code assistant…"
           ></textarea>
           <div class="actions">
@@ -626,7 +626,7 @@
         const n = document.createElement("div");
         n.className = "message " + (role === "user" ? "user" : "assistant");
         n.append(
-          node("small", role === "user" ? "YOU" : "Code Assistant + RELAI"),
+          node("small", role === "user" ? "YOU" : "Codex + RELAI"),
           formatted(content),
         );
         return n;
@@ -654,7 +654,7 @@
               "small",
               "EXCHANGE " + (turn + 1) + " OF " + recording.turns.length,
             ),
-            node("small", "TRAVELER"),
+            node("small", "ADVERSARIAL USER"),
             formatted(exchange.user),
             node("small", "AIRLINE AGENT"),
             formatted(exchange.agent),
@@ -806,7 +806,7 @@
             example.className = "sample-reply success";
             example.append(
               node("small", "RECORDED VERIFICATION · THE SAME REQUEST AFTER OPTIMIZATION"),
-              node("small", "TRAVELER"),
+              node("small", "ADVERSARIAL USER"),
               formatted(recording.fixedExample.user),
               node("small", "UPDATED AIRLINE AGENT"),
               formatted(recording.fixedExample.agent),
@@ -891,7 +891,7 @@
             failed.append(node("small", "Sending could not be confirmed."));
             root.append(failed);
           }
-          if (busy) root.append(working(replayPending ? "Loading recorded result…" : "Code Assistant + RELAI is working…"));
+          if (busy) root.append(working(replayPending ? "Loading recorded result…" : "Codex + RELAI is working…"));
         }
         if (!i) {
           busy = Boolean(sent || replayPending);

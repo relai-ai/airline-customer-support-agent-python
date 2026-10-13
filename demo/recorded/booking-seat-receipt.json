@@ -1,0 +1,22 @@
+{
+  "orchestrator": "Codex",
+  "startedAt": "2026-10-13T19:30:38.281346+00:00",
+  "durationSeconds": 36.820436582900584,
+  "exitCode": 0,
+  "argv": [
+    "relai",
+    "simulate",
+    "--tests",
+    "smoke",
+    "--max-simulations",
+    "1",
+    "--result-json",
+    "work/recording/smoke-result.json",
+    "--outcome-json",
+    "work/recording/smoke-outcome.json",
+    "--outcome-invocation-id",
+    "9a56e6d1-57e1-4d0b-b9fd-51d1bce29871",
+    "--outcome-intent",
+    "Independent regression: real booking lookup and valid seat mutation after the off-topic improvement"
+  ]
+}

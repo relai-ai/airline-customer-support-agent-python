@@ -1,0 +1,30 @@
+name: Python playground checks
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  recorded-python-playground:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: '0.12.10'
+          python-version: '3.13'
+      - run: uv sync --locked
+      - run: uv run --no-sync pytest
+      - run: bash -n start.sh .e2b/setup.sh .e2b/start.sh
+      - run: node --test .e2b/ide/extension/*.test.js
+      - run: python3 -m unittest discover -s .e2b/ide -p 'test_*.py'
+      - name: Validate actual saved evidence and original source
+        run: node .e2b/ide/extension/validate-recording.js .
+      - name: Apply the verified recording in this disposable checkout
+        run: node -e 'const r=require("./.e2b/ide/extension/recorded"); (async()=>console.log(await r.applyRecording(process.cwd(),await r.loadRecording(process.cwd()))))().catch(e=>{console.error(e.message);process.exitCode=1})'
+      - name: Candidate Python regression checks
+        run: uv run --no-sync pytest

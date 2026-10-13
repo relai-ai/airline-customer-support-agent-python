@@ -110,7 +110,7 @@ class CodexBridge {
       await this.rpc("initialize", {
         clientInfo: {
           name: "relai_playground",
-          title: "Code Assistant + RELAI",
+          title: "Codex + RELAI",
           version: "0.1.0",
         },
       });

@@ -316,7 +316,33 @@ test("a Codex label requires completed command receipts and authentic baseline t
   await fs.writeFile(path.join(root,manifest.provenance.baselineTrajectory),bytes);
   manifest.provenance.artifacts = [{path:manifest.provenance.baselineTrajectory,sha256:digest(bytes)}];
   await save();
+  await assert.rejects(loadRecording(root), /independent final evaluation/);
+  const evaluation = { schemaVersion: 1, status: "completed", phases: {} };
+  for (const [phase, score] of [["before", 0], ["after", 1]]) {
+    evaluation.phases[phase] = { meanScopeQuality: score, runs: [] };
+    for (let index = 0; index < 10; index++) {
+      const name = `demo/recorded/final-${phase}-${index}.json`;
+      const bytes = JSON.stringify({ schema_version: "relai.simulation_suite_result.v1", total_count: 1, success_count: 1, failure_count: 0, failures: [], runs: [{result: {evaluation_errors: [], evaluations: [{evaluator_id: "ten-exchange-trajectory", score: 1}, {evaluator_id: "airline-scope-quality", score}]}}] });
+      await fs.writeFile(path.join(root, name), bytes);
+      manifest.provenance.artifacts.push({path: name, sha256: digest(bytes)});
+      evaluation.phases[phase].runs.push({result: name});
+    }
+  }
+  manifest.provenance.finalEvaluation = "demo/recorded/final-evaluation.json";
+  const saveEvaluation = async () => {
+    const bytes = JSON.stringify(evaluation);
+    await fs.writeFile(path.join(root,manifest.provenance.finalEvaluation),bytes);
+    manifest.provenance.artifacts = manifest.provenance.artifacts.filter(item => item.path !== manifest.provenance.finalEvaluation);
+    manifest.provenance.artifacts.push({path:manifest.provenance.finalEvaluation,sha256:digest(bytes)});
+    await save();
+  };
+  await saveEvaluation();
   assert.equal((await loadRecording(root)).provenance.totalRollouts,30);
+  evaluation.phases.after.meanScopeQuality = 0.5;
+  await saveEvaluation();
+  await assert.rejects(loadRecording(root), /mean differs from actual scores/);
+  evaluation.phases.after.meanScopeQuality = 1;
+  await saveEvaluation();
   manifest.turns[0].agent = "Invented reply";
   await save();
   await assert.rejects(loadRecording(root), /differs from the actual trajectory/);

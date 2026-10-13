@@ -134,6 +134,42 @@ async function loadRecording(root) {
     }
     if (JSON.stringify(actualTurns) !== JSON.stringify(manifest.turns))
       throw Error("Displayed Codex baseline differs from the actual trajectory");
+    if (manifest.verificationStatus === "verified") {
+      const reference = provenance.finalEvaluation;
+      if (!reference || !provenance.artifacts.some((item) => item.path === reference))
+        throw Error("Verified Codex recordings require their independent final evaluation");
+      const evaluation = JSON.parse(await regular(root, reference));
+      if (evaluation.schemaVersion !== 1 || evaluation.status !== "completed")
+        throw Error("Independent final evaluation did not complete");
+      const means = {};
+      for (const phase of ["before", "after"]) {
+        const runs = evaluation.phases?.[phase]?.runs;
+        if (!Array.isArray(runs) || runs.length !== 10)
+          throw Error("Independent final evaluation requires ten before and ten after runs");
+        const values = [];
+        for (const run of runs) {
+          if (!provenance.artifacts.some((item) => item.path === run.result))
+            throw Error("Final evaluation is missing its actual result artifacts");
+          const result = JSON.parse(await regular(root, run.result));
+          const actual = result.runs?.[0]?.result;
+          if (result.schema_version !== "relai.simulation_suite_result.v1" || result.total_count !== 1 ||
+              result.success_count !== 1 || result.failure_count !== 0 ||
+              result.runs?.length !== 1 || result.failures?.length || actual?.evaluation_errors?.length)
+            throw Error("Final evaluation contains an incomplete or failed simulation");
+          const integrity = actual?.evaluations?.find((item) => item.evaluator_id === "ten-exchange-trajectory");
+          const quality = actual?.evaluations?.find((item) => item.evaluator_id === "airline-scope-quality");
+          if (integrity?.score !== 1 || !Number.isFinite(quality?.score) || quality.score < 0 || quality.score > 1)
+            throw Error("Final evaluation lacks complete scored evidence");
+          values.push(quality.score);
+        }
+        means[phase] = values.reduce((sum, value) => sum + value, 0) / values.length;
+        if (!Number.isFinite(evaluation.phases[phase].meanScopeQuality) ||
+            Math.abs(means[phase] - evaluation.phases[phase].meanScopeQuality) > 1e-9)
+          throw Error("Displayed final evaluation mean differs from actual scores");
+      }
+      if (means.after <= means.before)
+        throw Error("Verified Codex recordings require an independently measured improvement");
+    }
   }
   if (
     typeof manifest.diff !== "string" ||

@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "title": "Updated src/airline_support/agent"
+    }
+  ],
+  "title": "Optimization stopped because a required repair did not complete; final valida...",
+  "summary": "Optimization stopped because a required repair did not complete; final validation is incomplete.",
+  "inconsistency": ""
+}

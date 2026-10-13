@@ -1,0 +1,80 @@
+{
+  "status": "passed",
+  "model": "openai/gpt-6.1-sol",
+  "actualAnswer": "Booking **SKY123 is verified and confirmed**.\n\n- **Passenger:** Maya Chen\n- **Route:** JFK \u2192 SFO\n- **Current seat:** 12A\n\n**Standard baggage allowance:** One carry-on and one checked bag weighing up to 50 pounds.",
+  "observedTools": [
+    "lookup_booking",
+    "baggage_policy"
+  ],
+  "trajectory": {
+    "schema_version": "ATIF-v1.7",
+    "agent": {
+      "name": "SkyServe Airline Support",
+      "version": "0.1.0"
+    },
+    "steps": [
+      {
+        "step_id": 1,
+        "timestamp": "2026-10-13T18:44:43.466563+00:00",
+        "source": "user",
+        "message": "Please verify booking SKY123 and show its passenger, route and current seat. Also give the standard baggage allowance."
+      },
+      {
+        "step_id": 2,
+        "timestamp": "2026-10-13T18:44:46.970172+00:00",
+        "source": "agent",
+        "message": "[{\"arguments\": \"{\\\"confirmation_code\\\": \\\"SKY123\\\"}\", \"call_id\": \"call_h0XeWgAGSHoOqU16VnVFEQPb\", \"name\": \"lookup_booking\", \"type\": \"function_call\", \"id\": \"fc_059f12f56d781e13016ace7c1e6c0087d28e3ce35c7dad95db\", \"namespace\": null, \"status\": \"completed\", \"caller\": null}, {\"arguments\": \"{\\\"ticket_type\\\": \\\"standard\\\"}\", \"call_id\": \"call_PLbhRc7IBS7I6CcUQKUfo3xF\", \"name\": \"baggage_policy\", \"type\": \"function_call\", \"id\": \"fc_059f12f56d781e13016ace7c1e6c1887d28463d6806f71c845\", \"namespace\": null, \"status\": \"completed\", \"caller\": null}]",
+        "llm_call_count": 1,
+        "metrics": {
+          "prompt_tokens": 240,
+          "completion_tokens": 54
+        },
+        "tool_calls": [
+          {
+            "tool_call_id": "call_h0XeWgAGSHoOqU16VnVFEQPb",
+            "function_name": "lookup_booking",
+            "arguments": {
+              "confirmation_code": "SKY123"
+            }
+          },
+          {
+            "tool_call_id": "call_PLbhRc7IBS7I6CcUQKUfo3xF",
+            "function_name": "baggage_policy",
+            "arguments": {
+              "ticket_type": "standard"
+            }
+          }
+        ],
+        "observation": {
+          "results": [
+            {
+              "source_call_id": "call_PLbhRc7IBS7I6CcUQKUfo3xF",
+              "content": "Standard tickets include one carry-on and one checked bag up to 50 pounds."
+            },
+            {
+              "source_call_id": "call_h0XeWgAGSHoOqU16VnVFEQPb",
+              "content": "Maya Chen is booked on JFK to SFO departing 2026-07-14 09:30. Seat 12A. Status: confirmed."
+            }
+          ]
+        }
+      },
+      {
+        "step_id": 3,
+        "timestamp": "2026-10-13T18:44:49.957742+00:00",
+        "source": "agent",
+        "message": "Booking **SKY123 is verified and confirmed**.\n\n- **Passenger:** Maya Chen\n- **Route:** JFK \u2192 SFO\n- **Current seat:** 12A\n\n**Standard baggage allowance:** One carry-on and one checked bag weighing up to 50 pounds.",
+        "llm_call_count": 1,
+        "metrics": {
+          "prompt_tokens": 364,
+          "completion_tokens": 59
+        }
+      }
+    ],
+    "final_metrics": {
+      "total_steps": 3,
+      "total_prompt_tokens": 604,
+      "total_completion_tokens": 113,
+      "total_cached_tokens": 0
+    }
+  }
+}

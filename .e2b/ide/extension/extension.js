@@ -29,7 +29,7 @@ function activate(context) {
     }
     panel = vscode.window.createWebviewPanel(
       "relai",
-      "Code Assistant + RELAI",
+      "Codex + RELAI",
       vscode.ViewColumn.One,
       {
         enableScripts: true,
