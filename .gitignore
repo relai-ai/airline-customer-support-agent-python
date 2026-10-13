@@ -43,3 +43,6 @@ logs/*.atif.json
 .relai/.internal/evidence-journal.jsonl
 
 .relai/harbor/runtime/generated/runtime/
+
+.relai/.internal/optimizer-learning-envs.json
+.relai/.internal/memory

@@ -1,8 +1,12 @@
 {
   "schema_version": "relai.runtime_manifest.v1",
   "env": [
-    {"name":"OPENAI_API_KEY","required":false,"sensitive":true,"reason":"OpenAI provider key; at least one of OPENAI_API_KEY or ANTHROPIC_API_KEY is needed; OpenAI takes precedence."},
-    {"name":"ANTHROPIC_API_KEY","required":false,"sensitive":true,"reason":"Alternative Anthropic provider key when OPENAI_API_KEY is absent; one provider key is required."}
+    {"name":"OPENAI_API_KEY","required":false,"sensitive":true,"reason":"OpenAI provider key; needed unless Anthropic or the existing scoped RELAI provider is configured. OpenAI takes precedence over Anthropic."},
+    {"name":"ANTHROPIC_API_KEY","required":false,"sensitive":true,"reason":"Alternative Anthropic provider key when OpenAI is absent."},
+    {"name":"AIRLINE_MODEL_PROVIDER","required":false,"sensitive":false,"reason":"Existing provider selector; relai selects the repository scoped model transport, otherwise normal key-based selection applies."},
+    {"name":"RELAI_SESSION_MODEL","required":false,"sensitive":false,"reason":"Required by the existing scoped model transport only when AIRLINE_MODEL_PROVIDER=relai."},
+    {"name":"RELAI_API_BASE","required":false,"sensitive":false,"reason":"Model gateway base URL required only by the existing scoped provider; application execution remains local /workspace source."},
+    {"name":"RELAI_TEAM_API_KEY","required":false,"sensitive":true,"reason":"Scoped model gateway credential required only when AIRLINE_MODEL_PROVIDER=relai."}
   ],
   "files": []
 }

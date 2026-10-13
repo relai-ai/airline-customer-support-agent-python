@@ -1,0 +1,272 @@
+// Recorded runs are evidence, never live command execution.
+const fs = require("node:fs/promises");
+const path = require("node:path");
+const crypto = require("node:crypto");
+const { execFile } = require("node:child_process");
+const { promisify } = require("node:util");
+const exec = promisify(execFile);
+const prompts = [
+  "What are the risks identified for this agent by RELAI?",
+  "Use RELAI to create a new agent test for the off-topic-help-without-refusal risk with at least 10 turns and a sophisticated adversarial user; show me the readable result of the agent simulation against this test.",
+  "Use RELAI to fix the issue discovered in this agent test",
+  "These changes look great; apply",
+];
+const digest = (data) => crypto.createHash("sha256").update(data).digest("hex");
+async function regular(root, name) {
+  if (
+    !/^((?:src\/airline_support\/[a-zA-Z0-9_-]+\.py|tests\/test_[a-zA-Z0-9_-]+\.py)|demo\/recorded\/[a-zA-Z0-9_.-]+)$/.test(
+      name,
+    )
+  )
+    throw Error("Invalid recorded artifact path");
+  const file = path.join(await fs.realpath(root), name);
+  if ((await fs.realpath(file)) !== file)
+    throw Error("Recorded artifacts cannot use symlinks");
+  if (!(await fs.stat(file)).isFile())
+    throw Error("Recorded artifacts must be regular files");
+  return fs.readFile(file);
+}
+async function loadRecording(root) {
+  const manifest = JSON.parse(
+    await regular(root, "demo/recorded/walkthrough.json"),
+  );
+  if (
+    manifest.schemaVersion !== 1 ||
+    !["pending", "verified"].includes(manifest.verificationStatus) ||
+    manifest.steps?.length !== 3 ||
+    !Array.isArray(manifest.files) ||
+    !manifest.files.length
+  )
+    throw Error("Recorded walkthrough is incomplete");
+  for (const step of manifest.steps)
+    if (
+      !Number.isFinite(step.durationSeconds) ||
+      step.durationSeconds < 0 ||
+      typeof step.text !== "string"
+    )
+      throw Error("Recorded run metadata unavailable");
+  if (manifest.riskInventory) {
+    const inventory = manifest.riskInventory;
+    if (inventory.command !== "relai wiki list risks" ||
+        inventory.source !== ".relai/evals-wiki/hypotheses/risks.md" ||
+        !["demo/recorded/wiki-risks.md", "demo/recorded/wiki-risks.json"].includes(inventory.snapshot))
+      throw Error("Recorded wiki inventory metadata is invalid");
+    const snapshot = await regular(root, inventory.snapshot);
+    if (digest(snapshot) !== inventory.sha256)
+      throw Error("Recorded wiki inventory integrity check failed");
+    let lifecycle = "";
+    const rows = inventory.snapshot.endsWith(".json")
+      ? JSON.parse(snapshot).results?.map((risk) => ({
+          id: risk.id, impact: risk.impact, confidence: risk.confidence,
+          triggerability: risk.triggerability, mechanism: risk.mechanism,
+          trigger: risk.trigger, failure: risk.observable_failure, lifecycle: risk.lifecycle,
+        }))
+      : snapshot.toString().split("\n").flatMap((line) => {
+      if (line.startsWith("## ")) lifecycle = line.slice(3).trim();
+      const match = line.match(/^- \[`([^`]+)`\].*? — ([^;]+); mechanism: (.*?); trigger: (.*?); observable failure: (.*?); requirements:/);
+      if (!match) return [];
+      const [, id, ratings, mechanism, trigger, failure] = match;
+      const [impact, confidence, triggerability] = ratings.split("/");
+      return [{ id, impact, confidence, triggerability, mechanism, trigger, failure, lifecycle }];
+    });
+    if (!rows?.length || rows.some((row) =>
+      !["id", "impact", "confidence", "triggerability", "mechanism", "trigger", "failure", "lifecycle"]
+        .every((key) => typeof row[key] === "string" && row[key].length > 0)) ||
+      JSON.stringify(rows) !== JSON.stringify(inventory.risks))
+      throw Error("Displayed risks differ from the saved wiki inventory");
+    if (inventory.snapshot.endsWith(".json") && JSON.parse(snapshot).total !== rows.length)
+      throw Error("Recorded wiki inventory must include every returned risk");
+  }
+  if (manifest.initialization) {
+    const init = manifest.initialization;
+    if (!/^demo\/recorded\/[a-zA-Z0-9_.-]+\.json$/.test(init.receipt ?? ""))
+      throw Error("Initialization timing requires a saved command receipt");
+    const receipt = JSON.parse(await regular(root, init.receipt));
+    if (
+      receipt.argv?.[0] !== "relai" ||
+      receipt.argv?.[1] !== "init" ||
+      receipt.exitCode !== 0 ||
+      !Number.isFinite(receipt.durationSeconds) ||
+      receipt.durationSeconds <= 0 ||
+      init.durationSeconds !== receipt.durationSeconds
+    )
+      throw Error(
+        "Initialization timing must come from a completed relai init command",
+      );
+  }
+  if (manifest.provenance) {
+    const provenance = manifest.provenance;
+    if (provenance.orchestrator !== "Codex" ||
+        !/^[a-f0-9-]{36}$/.test(provenance.threadId ?? "") ||
+        !/^[a-f0-9]{40}$/.test(provenance.sourceRevision ?? "") ||
+        !Number.isInteger(provenance.totalRollouts) || provenance.totalRollouts < 6)
+      throw Error("Codex recording provenance is incomplete");
+    const phases = ["initialize", "baseline", "optimize", "verify"];
+    for (const phase of phases) {
+      const reference = provenance.receipts?.[phase];
+      if (!reference) throw Error("Codex recording requires completed workflow receipts");
+      const bytes = await regular(root, reference.path);
+      if (digest(bytes) !== reference.sha256) throw Error("Codex receipt integrity check failed");
+      const receipt = JSON.parse(bytes);
+      if (receipt.orchestrator !== "Codex" || receipt.exitCode !== 0 ||
+          receipt.argv?.[0] !== "relai" ||
+          receipt.argv[1] !== (phase === "initialize" ? "init" : phase === "optimize" ? "optimize" : "simulate") ||
+          !Number.isFinite(receipt.durationSeconds) ||
+          receipt.durationSeconds <= 0)
+        throw Error("Codex recording requires successful RELAI command receipts");
+      if (phase === "optimize" &&
+          Number(receipt.argv[receipt.argv.indexOf("--total-rollouts") + 1]) !== provenance.totalRollouts)
+        throw Error("Codex rollout count differs from its command receipt");
+    }
+    if (!Array.isArray(provenance.artifacts) || !provenance.artifacts.length)
+      throw Error("Codex recording requires saved run artifacts");
+    for (const reference of provenance.artifacts)
+      if (digest(await regular(root, reference.path)) !== reference.sha256)
+        throw Error("Codex run artifact integrity check failed");
+    if (!provenance.artifacts.some((item) => item.path === provenance.baselineTrajectory))
+      throw Error("Codex recording requires its measured baseline trajectory");
+    const trajectory = JSON.parse(await regular(root, provenance.baselineTrajectory));
+    const actualTurns = [];
+    for (const step of trajectory.steps ?? []) {
+      if (step.source === "user") actualTurns.push({ user: step.message, agent: "" });
+      else if (step.source === "agent" && !step.tool_calls?.length && actualTurns.length)
+        actualTurns.at(-1).agent = step.message;
+    }
+    if (JSON.stringify(actualTurns) !== JSON.stringify(manifest.turns))
+      throw Error("Displayed Codex baseline differs from the actual trajectory");
+  }
+  if (
+    typeof manifest.diff !== "string" ||
+    !["before", "after", "regressions"].every(
+      (key) => typeof manifest.comparison?.[key] === "string",
+    )
+  )
+    throw Error("Recorded comparison is incomplete");
+  for (const file of manifest.files)
+    if (
+      !/^(?:src\/airline_support\/[a-zA-Z0-9_-]+\.py|tests\/test_[a-zA-Z0-9_-]+\.py)$/.test(file.path) ||
+      (file.before !== null && !/^[a-f0-9]{64}$/.test(file.before)) ||
+      !/^[a-f0-9]{64}$/.test(file.after)
+    )
+      throw Error("Recorded source hashes are invalid");
+  if (
+    new Set(manifest.files.map((file) => file.path)).size !==
+    manifest.files.length
+  )
+    throw Error("Recorded files must be unique");
+  if (
+    !Array.isArray(manifest.turns) ||
+    manifest.turns.length < 10 ||
+    !manifest.turns.every(
+      (t) => typeof t.user === "string" && typeof t.agent === "string",
+    )
+  )
+    throw Error("Recording requires ten real exchanges");
+  if (manifest.baselineExample &&
+      (!Number.isInteger(manifest.baselineExample.turnIndex) ||
+       manifest.baselineExample.turnIndex < 0 || manifest.baselineExample.turnIndex >= manifest.turns.length))
+    throw Error("Recorded baseline example must identify an actual exchange");
+  if (
+    !Array.isArray(manifest.prompts) ||
+    manifest.prompts.length !== 4 ||
+    !manifest.prompts.every((p, i) => p === prompts[i])
+  )
+    throw Error("Recorded prompts do not match the walkthrough");
+  if (manifest.fixedExample) {
+    const example = manifest.fixedExample;
+    if (!/^demo\/recorded\/[a-zA-Z0-9_.-]+\.json$/.test(example.trajectory ?? ""))
+      throw Error("Verification example requires a recorded trajectory");
+    const trajectory = JSON.parse(await regular(root, example.trajectory));
+    const user = trajectory.steps?.find((step) => step.source === "user");
+    const agent = trajectory.steps?.find(
+      (step) => step.source === "agent" && !step.tool_calls?.length && step.message,
+    );
+    if (example.user !== user?.message || example.agent !== agent?.message)
+      throw Error("Verification example differs from its actual recorded response");
+  }
+  const patch = await regular(root, "demo/recorded/verified.patch");
+  if (digest(patch) !== manifest.patchSha256)
+    throw Error("Recorded patch integrity check failed");
+  if (manifest.diff !== patch.toString())
+    throw Error("Displayed changes do not match the recorded patch");
+  return manifest;
+}
+async function applyRecording(root, manifest) {
+  if (manifest.verificationStatus !== "verified")
+    throw Error(
+      "Independent verification is pending. The recorded patch cannot be applied yet.",
+    );
+  const patch = await regular(root, "demo/recorded/verified.patch");
+  if (digest(patch) !== manifest.patchSha256)
+    throw Error("Recorded patch integrity check failed");
+  let before = true,
+    after = true;
+  for (const file of manifest.files) {
+    if (!/^(?:src\/airline_support\/[a-zA-Z0-9_-]+\.py|tests\/test_[a-zA-Z0-9_-]+\.py)$/.test(file.path))
+      throw Error("Only recorded agent code can be applied");
+    let hash;
+    try {
+      hash = digest(await regular(root, file.path));
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
+      const parent = path.join(await fs.realpath(root), path.dirname(file.path));
+      if ((await fs.realpath(parent)) !== parent)
+        throw Error("Recorded artifacts cannot use symlinks");
+      hash = null;
+    }
+    before &&= hash === file.before;
+    after &&= hash === file.after;
+  }
+  if (after)
+    return "The verified changes are already applied to this workspace.";
+  if (!before)
+    throw Error(
+      "These files have changed since the recorded baseline. Your edits were preserved; review the diff before applying.",
+    );
+  const patchPaths = [
+    ...patch.toString().matchAll(/^diff --git a\/(.+) b\/(.+)$/gm),
+  ];
+  if (
+    !patchPaths.length ||
+    patchPaths.some(
+      (m) => m[1] !== m[2] || !manifest.files.some((f) => f.path === m[1]),
+    )
+  )
+    throw Error("Recorded patch contains an unexpected file");
+  const patchFile = path.join(root, "demo/recorded/verified.patch");
+  await exec("git", ["apply", "--check", "--", patchFile], { cwd: root });
+  await exec("git", ["apply", "--", patchFile], { cwd: root });
+  for (const file of manifest.files)
+    if (digest(await regular(root, file.path)) !== file.after)
+      throw Error("Applied file does not match verified evidence");
+  return "Applied the recorded, verified improvement to this workspace. New requests now use these files.";
+}
+function reviewFile(manifest, name) {
+  const file = manifest.files.find((item) => item.path === name);
+  if (!file || !/^(?:src\/airline_support\/[a-zA-Z0-9_-]+\.py|tests\/test_[a-zA-Z0-9_-]+\.py)$/.test(name))
+    throw Error("This file is not part of the recorded change");
+  if (
+    typeof file.beforeContent !== "string" ||
+    typeof file.afterContent !== "string"
+  )
+    throw Error("Recorded diff snapshots are unavailable");
+  if (
+    (file.before === null
+      ? file.beforeContent !== ""
+      : digest(file.beforeContent) !== file.before) ||
+    digest(file.afterContent) !== file.after
+  )
+    throw Error("Recorded diff snapshots do not match the measured source");
+  return { before: file.beforeContent, after: file.afterContent };
+}
+async function artifactContent(root, manifest, name) {
+  const references = [...(manifest.provenance?.artifacts || [])];
+  if (manifest.riskInventory)
+    references.push({ path: manifest.riskInventory.snapshot, sha256: manifest.riskInventory.sha256 });
+  const reference = references.find((item) => item.path === name);
+  if (!reference) throw Error("This file is not a saved walkthrough artifact");
+  const bytes = await regular(root, name);
+  if (digest(bytes) !== reference.sha256) throw Error("Saved artifact integrity check failed");
+  return bytes.toString();
+}
+module.exports = { prompts, loadRecording, applyRecording, reviewFile, artifactContent, digest };
