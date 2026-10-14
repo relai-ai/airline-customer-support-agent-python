@@ -1,0 +1,24 @@
+{
+  "status": "runtime_repair_action_required",
+  "prompts": [
+    "What are the risks identified for this agent by RELAI?",
+    "Use RELAI to build a multi-turn test for the highest-impact risk u found",
+    "Use relai to fix the failures the test found",
+    "These changes look great; apply"
+  ],
+  "engine": "real Codex coding assistant invoking RELAI CLI",
+  "required_artifacts": [
+    "exact response for each prompt",
+    "native Codex completion receipt",
+    "test package",
+    "baseline outcome and full trajectory",
+    "optimizer report and patch",
+    "independent verification outcome and full trajectory"
+  ],
+  "screenshots": "presentation examples only; selected risk comes from the actual wiki",
+  "existing_recordings": "retain until new evidence is complete and independently verified",
+  "capture_thread": "01a13bf6-fd44-70a1-868c-755cf2f3a748",
+  "optimizer_rollout_limit": 6,
+  "optimizer_rollouts_used": 0,
+  "blocker": "Pinned Harbor dependency download timed out; RELAI requested host DNS/HTTPS recovery before validation."
+}
