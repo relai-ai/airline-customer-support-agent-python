@@ -232,8 +232,8 @@
       .folder-card {
         display: flex;
         flex-direction: column;
-        gap: 8px;
-        padding: 18px;
+        gap: 4px;
+        padding: 10px 18px;
         border: 1px solid var(--vscode-panel-border);
         background: var(--vscode-editor-background);
         color: var(--vscode-foreground);
@@ -246,11 +246,6 @@
       .folder-card code {
         font: 11px var(--vscode-editor-font-family);
         overflow-wrap: anywhere;
-      }
-      .folder-card span {
-        color: var(--vscode-textLink-foreground);
-        margin-top: auto;
-        font-size: 12px;
       }
       .composer-context {
         display: flex;
@@ -418,36 +413,17 @@
         </p>
         <p class="muted">Click a card to open its folder in the Explorer.</p>
         <div class="folders">
-          <button
-            class="folder-card"
-            data-folder="source"
-            aria-label="Open agent source folder in Explorer"
-          >
+          <button class="folder-card" data-folder="source" aria-label="Open agent source folder in Explorer">
             <strong>Agent source</strong><code>src/airline_support/</code>
-            <small>The agent’s instructions, booking state and Python tools.</small
-            ><span>Open folder ↗</span>
+            <small>Agent instructions, booking state and Python tools.</small>
           </button>
-          <button
-            class="folder-card"
-            data-folder="relai"
-            aria-label="Open initialized RELAI folder in Explorer"
-          >
-            <strong>RELAI</strong><code>.relai/</code>
-            <small
-              >Created by relai init. evals-wiki/ stores requirements, risks and
-              findings; harbor/ holds evaluations, simulators and evaluators.</small
-            ><span>Open folder ↗</span>
+          <button class="folder-card" data-folder="wiki" aria-label="Open Evals Wiki folder in Explorer">
+            <strong>Evals Wiki</strong><code>.relai/evals-wiki/</code>
+            <small>Requirements, risks and findings.</small>
           </button>
-          <button
-            class="folder-card"
-            data-folder="project"
-            aria-label="Open repository folders in Explorer"
-          >
-            <strong>Project folders</strong><code>start.sh · demo/ · benchmarks/</code>
-            <small
-              >start.sh opens the Python agent; demo/ contains the walkthrough; benchmarks/
-              holds datasets. .e2b/ packages this playground workspace.</small
-            ><span>Open folder ↗</span>
+          <button class="folder-card" data-folder="harbor" aria-label="Open Agent tests folder in Explorer">
+            <strong>Agent tests</strong><code>.relai/harbor/</code>
+            <small>Evaluations, simulators and evaluators.</small>
           </button>
         </div>
         <p class="muted">
