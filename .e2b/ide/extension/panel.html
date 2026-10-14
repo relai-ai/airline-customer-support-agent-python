@@ -755,7 +755,7 @@
           reply.prepend(badge);
           if (index === 0 && recording.riskInventory) {
             reply.append(riskInventoryViewer());
-            reply.append(formatted(
+            if (!step.exactResponse) reply.append(formatted(
               "### Suggested next steps\n" +
               "- Review what RELAI learned: `relai wiki list requirements`, `relai wiki list requirements --without-tests`, `relai wiki list risks`, and `relai wiki list open-questions`.\n" +
               "- Generate targeted tests: `relai wiki list risks --create-test`."

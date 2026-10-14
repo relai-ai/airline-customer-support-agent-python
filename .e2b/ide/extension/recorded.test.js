@@ -360,3 +360,21 @@ test("saved artifacts open only validated evidence and reject credentials or lat
   await fs.writeFile(path.join(root, snapshot), "edited");
   await assert.rejects(artifactContent(root, manifest, snapshot), /integrity/);
 });
+
+test("exact Codex replay requires matching prompt, unchanged reply and completed capture for every step", async t => {
+  const { root } = await fixture(t), manifestPath = path.join(root, "demo/recorded/walkthrough.json");
+  const manifest = JSON.parse(await fs.readFile(manifestPath, "utf8"));
+  manifest.prompts[1] = "Use RELAI to build a multi-turn test for the highest-impact risk u found";
+  manifest.prompts[2] = "Use relai to fix the failures the test found";
+  for (const [index, step] of manifest.steps.entries()) {
+    const response = { engine: "codex-cli", turnStatus: "completed", threadId: "offline-fixture", prompt: manifest.prompts[index], response: step.text, responseSha256: digest(step.text) };
+    const bytes = JSON.stringify(response), name = `demo/recorded/response-${index}.json`;
+    await fs.writeFile(path.join(root, name), bytes);
+    step.exactResponse = { path: name, sha256: digest(bytes) };
+  }
+  await fs.writeFile(manifestPath, JSON.stringify(manifest));
+  await loadRecording(root);
+  manifest.steps[1].text = "Invented result";
+  await fs.writeFile(manifestPath, JSON.stringify(manifest));
+  await assert.rejects(loadRecording(root), /does not match its exact Codex response/);
+});

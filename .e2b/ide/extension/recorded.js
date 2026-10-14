@@ -11,6 +11,12 @@ const prompts = [
   "Use RELAI to fix the issue discovered in this agent test",
   "These changes look great; apply",
 ];
+const exactPrompts = [
+  prompts[0],
+  "Use RELAI to build a multi-turn test for the highest-impact risk u found",
+  "Use relai to fix the failures the test found",
+  prompts[3],
+];
 const digest = (data) => crypto.createHash("sha256").update(data).digest("hex");
 async function regular(root, name) {
   if (
@@ -45,6 +51,20 @@ async function loadRecording(root) {
       typeof step.text !== "string"
     )
       throw Error("Recorded run metadata unavailable");
+  if (manifest.steps.some(step => step.exactResponse)) {
+    if (manifest.steps.some(step => !step.exactResponse))
+      throw Error("Every recorded step requires its exact Codex response");
+    for (const [index, step] of manifest.steps.entries()) {
+      const bytes = await regular(root, step.exactResponse.path);
+      if (digest(bytes) !== step.exactResponse.sha256)
+        throw Error("Exact Codex response integrity check failed");
+      const response = JSON.parse(bytes);
+      if (response.engine !== "codex-cli" || response.turnStatus !== "completed" || !response.threadId ||
+          response.prompt !== manifest.prompts[index] || response.response !== step.text ||
+          digest(response.response) !== response.responseSha256)
+        throw Error("Recorded reply does not match its exact Codex response");
+    }
+  }
   if (manifest.riskInventory) {
     const inventory = manifest.riskInventory;
     if (inventory.command !== "relai wiki list risks" ||
@@ -205,7 +225,7 @@ async function loadRecording(root) {
   if (
     !Array.isArray(manifest.prompts) ||
     manifest.prompts.length !== 4 ||
-    !manifest.prompts.every((p, i) => p === prompts[i])
+    !manifest.prompts.every((p, i) => p === (manifest.steps.every(step => step.exactResponse) ? exactPrompts[i] : prompts[i]))
   )
     throw Error("Recorded prompts do not match the walkthrough");
   if (manifest.fixedExample) {
@@ -297,6 +317,8 @@ function reviewFile(manifest, name) {
 }
 async function artifactContent(root, manifest, name) {
   const references = [...(manifest.provenance?.artifacts || [])];
+  for (const step of manifest.steps || [])
+    if (step.exactResponse) references.push(step.exactResponse);
   if (manifest.riskInventory)
     references.push({ path: manifest.riskInventory.snapshot, sha256: manifest.riskInventory.sha256 });
   const reference = references.find((item) => item.path === name);

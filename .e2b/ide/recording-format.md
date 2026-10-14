@@ -57,3 +57,9 @@ Optional initialization timing must have a saved successful `relai init`
 command receipt. The loader checks its command, exit status and duration.
 Without that receipt, show no initialization duration. Inventory-read time
 is never initialization time.
+
+## Exact Codex responses
+
+For a newly captured walkthrough, every step has `exactResponse: {path, sha256}` referencing a public JSON export in `demo/recorded/`. Export a completed native Codex exec JSONL turn and its `--output-last-message` file using `.e2b/ide/record-codex-response.py`. The exporter preserves the response bytes, prompt, native thread ID, completion status and hashes. Keep raw native events private; they can contain reasoning or unrelated command output.
+
+`step.text` must equal the exported `response` exactly, including headings, tables and Suggested next steps. The loader rejects a modified reply, mismatched prompt, incomplete step set or invalid hash. Original summaries remain summaries until genuine exact captures replace all three steps. Capture the revised risk, highest-impact multi-turn test, and failure-fix prompts in order; preserve failed/recovery attempts separately rather than presenting them as successful simulations. The screenshot examples specify layout, not a required scenario or score.

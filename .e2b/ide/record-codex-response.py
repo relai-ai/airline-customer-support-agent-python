@@ -16,7 +16,7 @@ if not thread or not turns or turns[-1].get('type') != 'turn.completed' or not m
 response = args.reply.read_text()
 if messages[-1].rstrip('\n') != response.rstrip('\n'):
     raise SystemExit('Final reply does not match the native Codex event')
-record = {'schemaVersion': 1, 'engine': 'codex-cli', 'threadId': thread,
+record = {'schemaVersion': 1, 'engine': 'codex-cli', 'threadId': thread, 'turnStatus': 'completed',
           'prompt': args.prompt, 'response': response,
           'responseSha256': hashlib.sha256(response.encode()).hexdigest(),
           'eventsSha256': hashlib.sha256(args.events.read_bytes()).hexdigest()}
