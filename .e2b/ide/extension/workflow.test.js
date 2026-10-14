@@ -255,3 +255,24 @@ test("command failures are human-readable and JSON-escaped logs become normal te
   assert.match(commandResultView({ status: "error", content: { timedOut: true, output: "waiting" } }).summary, /timed out/);
   assert.match(commandResultView({ status: "success", content: "Comparison recorded." }).summary, /Comparison recorded/);
 });
+
+test("recorded Markdown tables render score columns without interpreting output as HTML", () => {
+  const fs = require("node:fs"), vm = require("node:vm");
+  const html = fs.readFileSync(require("node:path").join(__dirname, "panel.html"), "utf8");
+  class Element {
+    constructor(tag) { this.tagName = tag.toUpperCase(); this.children = []; }
+    append(...children) { this.children.push(...children); }
+  }
+  const context = { document: { createElement: tag => new Element(tag) } };
+  vm.createContext(context);
+  const functions = html.slice(html.indexOf("      function node(tag"), html.indexOf("      function message(role"));
+  vm.runInContext(functions, context);
+  const root = context.formatted("| Check | Before | After |\n| --- | --- | --- |\n| **Allowances** | 0.0 | 1.0 |\n| <script>bad()</script> | 0 | 1 |");
+  const table = root.children[0].children[0];
+  assert.equal(table.tagName, "TABLE");
+  assert.equal(table.children[0].children[0].children.length, 3);
+  assert.equal(table.children[1].children.length, 2);
+  const literal = table.children[1].children[1].children[0].children[0];
+  assert.equal(literal.tagName, "SPAN");
+  assert.equal(literal.textContent, "<script>bad()</script>");
+});

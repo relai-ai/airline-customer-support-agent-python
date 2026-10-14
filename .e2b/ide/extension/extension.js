@@ -113,6 +113,10 @@ function activate(context) {
           } finally {
             recordingBusy = false;
           }
+        } else if (msg.action === "wiki-file" && recording?.riskInventory) {
+          const wikiPath = vscode.Uri.file(path.join(root, ".relai/evals-wiki/hypotheses/risks.md"));
+          await vscode.commands.executeCommand("revealInExplorer", wikiPath);
+          await vscode.window.showTextDocument(wikiPath, { viewColumn: vscode.ViewColumn.Beside });
         } else if (msg.action === "artifact" && typeof msg.file === "string" && recording) {
           const content = await recorded.artifactContent(root, recording, msg.file);
           const uri = vscode.Uri.from({ scheme: "relai-recorded-change", path: "/artifact/" + msg.file });

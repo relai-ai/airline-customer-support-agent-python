@@ -247,6 +247,9 @@
         font: 11px var(--vscode-editor-font-family);
         overflow-wrap: anywhere;
       }
+      .recorded-table { overflow-x: auto; }
+      .recorded-table table { width: 100%; border-collapse: collapse; }
+      .recorded-table th, .recorded-table td { padding: 8px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--vscode-panel-border); }
       .composer-context {
         display: flex;
         align-items: center;
@@ -557,7 +560,25 @@
             paragraph = [];
           }
         };
-        for (const line of String(content).split("\n")) {
+        const lines = String(content).split("\n");
+        for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+          const line = lines[lineIndex];
+          const cells = value => value.trim().replace(/^\||\|$/g, "").split("|").map(cell => cell.trim());
+          if (!code && line.includes("|") && lines[lineIndex + 1] &&
+              cells(lines[lineIndex + 1]).every(cell => /^:?-{3,}:?$/.test(cell))) {
+            flush(); list = null;
+            const wrapper = node("div", ""); wrapper.className = "recorded-table";
+            const table = node("table", ""), head = node("thead", ""), row = node("tr", "");
+            for (const cell of cells(line)) { const th = node("th", ""); th.scope = "col"; inline(th, cell); row.append(th); }
+            head.append(row); table.append(head);
+            const body = node("tbody", ""); lineIndex++;
+            while (lines[lineIndex + 1]?.includes("|")) {
+              const tr = node("tr", "");
+              for (const cell of cells(lines[++lineIndex])) { const td = node("td", ""); inline(td, cell); tr.append(td); }
+              body.append(tr);
+            }
+            table.append(body); wrapper.append(table); root.append(wrapper); continue;
+          }
           if (line.trim().startsWith("```")) {
             flush();
             list = null;
@@ -713,14 +734,14 @@
           ][index];
           if (recording.provenance?.orchestrator === "Codex")
             timingText = [
-              "Precomputed Codex + RELAI · wiki risks",
+              "Codex + RELAI precomputed results",
               "Precomputed Codex + RELAI · baseline simulation",
               "Precomputed Codex + RELAI · " + recording.provenance.totalRollouts + "-rollout budget",
             ][index];
           if (Number.isFinite(timing?.durationSeconds))
             timingText +=
               (index === 0 && recording.initialization
-                ? " · initialization: "
+                ? " initialization: "
                 : index === 1
                 ? " · " + (step.durationLabel || "validation") + ": "
                 : index === 2 && recording.verificationStatus !== "verified"
@@ -734,8 +755,13 @@
           reply.prepend(badge);
           if (index === 0 && recording.riskInventory) {
             reply.append(riskInventoryViewer());
+            reply.append(formatted(
+              "### Suggested next steps\n" +
+              "- Review what RELAI learned: `relai wiki list requirements`, `relai wiki list requirements --without-tests`, `relai wiki list risks`, and `relai wiki list open-questions`.\n" +
+              "- Generate targeted tests: `relai wiki list risks --create-test`."
+            ));
             reply.append(button("Open saved wiki results ↗", () =>
-              post("artifact", { file: recording.riskInventory.snapshot })));
+              post("wiki-file")));
           }
           if (index === 1) {
             const sampleIndex = recording.baselineExample?.turnIndex ?? 0;
