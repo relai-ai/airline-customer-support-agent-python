@@ -120,7 +120,7 @@ function activate(context) {
           await vscode.window.showTextDocument(uri, { viewColumn: vscode.ViewColumn.Beside });
         } else if (
           msg.action === "folder" &&
-          ["source", "relai", "project", "wiki", "tests"].includes(msg.folder)
+          ["source", "relai", "project", "wiki", "tests", "harbor"].includes(msg.folder)
         ) {
           const folders = {
             source: "src/airline_support",
@@ -128,6 +128,7 @@ function activate(context) {
             project: ".",
             wiki: ".relai/evals-wiki",
             tests: ".relai/harbor/agent-tests",
+            harbor: ".relai/harbor",
           };
           await vscode.commands.executeCommand(
             "revealInExplorer",
