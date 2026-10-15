@@ -447,6 +447,10 @@
       {
         "path": "demo/recorded/risk-inspection-receipt.json",
         "sha256": "9a66d985091b54c6656d33bf01f020a9643db4458bd16a2622f3d1b32298df53"
+      },
+      {
+        "path": "demo/recorded/trajectory-before.py",
+        "sha256": "1f3cb96eebbf6a898b946382c19cedaea4f2db99e55e1fe78fe4c0187787b279"
       }
     ]
   },
@@ -516,6 +520,7 @@
     "/private/tmp/exact-playground-recording/src/airline_support/trajectory.py": "demo/recorded/verified-trajectory.py",
     "/private/tmp/exact-playground-recording/src/airline_support/trajectory.py:75": "demo/recorded/verified-trajectory.py",
     "/private/tmp/exact-playground-recording/tests/test_embedded_redaction.py": "demo/recorded/verified-test_embedded_redaction.py",
-    "/private/tmp/exact-playground-recording/work/exact-recording/init-resume-20261015T173107Z/risks-receipt.json": "demo/recorded/risk-inspection-receipt.json"
+    "/private/tmp/exact-playground-recording/work/exact-recording/init-resume-20261015T173107Z/risks-receipt.json": "demo/recorded/risk-inspection-receipt.json",
+    "/private/tmp/exact-playground-recording/work/exact-recording/redaction-fix-20261015T192622Z/trajectory-before.py": "demo/recorded/trajectory-before.py"
   }
 }
