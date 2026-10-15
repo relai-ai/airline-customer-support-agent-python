@@ -731,7 +731,7 @@
         for (let index = 0; index < Math.min(progress, 3); index++) {
           const step = recording.steps[index];
           root.append(message("user", recording.prompts[index]));
-          const reply = message("assistant", recordedReplyText(index, step.text), false);
+          const reply = message("assistant", recordedReplyText(index, step.text, recording.turns, recording.evidenceKind === "deterministic-recorder"), false);
           const timing = index === 0 ? recording.initialization : step;
           let timingText = [
             recording.riskInventory ? "Precomputed relai wiki list risks" : "Precomputed relai init",
@@ -741,9 +741,9 @@
           if (recording.provenance?.orchestrator === "Codex")
             timingText = [
               "Codex + RELAI precomputed results",
-              "Precomputed Codex + RELAI · baseline simulation",
+              "Codex + RELAI precomputed results",
               recording.evidenceKind === "deterministic-recorder"
-                ? "Precomputed Codex + RELAI · independent verification"
+                ? "Codex + RELAI precomputed results · independent verification"
                 : "Precomputed Codex + RELAI · " + recording.provenance.totalRollouts + "-rollout budget",
             ][index];
           if (Number.isFinite(timing?.durationSeconds))
@@ -771,7 +771,7 @@
             reply.append(button("Open saved wiki results ↗", () =>
               post("wiki-file")));
           }
-          if (index === 1) {
+          if (index === 1 && !step.exactResponse) {
             const sampleIndex = recording.baselineExample?.turnIndex ?? 0;
             const sample = node("div", "");
             sample.className = "sample-reply";
@@ -810,7 +810,9 @@
             const example = node("div", "");
             example.className = "sample-reply success";
             example.append(
-              node("small", "RECORDED VERIFICATION · THE SAME REQUEST AFTER OPTIMIZATION"),
+              node("small", recording.evidenceKind === "deterministic-recorder"
+                ? "RECORDED VERIFICATION · THE SAME REQUEST AFTER THE FIX"
+                : "RECORDED VERIFICATION · THE SAME REQUEST AFTER OPTIMIZATION"),
               node("small", "ADVERSARIAL USER"),
               formatted(recording.fixedExample.user),
               node("small", recording.evidenceKind === "deterministic-recorder" ? "SCRIPTED SDK RESPONSE · RECORDER VERIFIED" : "UPDATED AIRLINE AGENT"),
@@ -1069,7 +1071,8 @@
           live = progress >= 4;
           nextDraft();
           renderLive(state);
-          if (progress === 1) el("history").scrollIntoView?.({ block: "start" });
+          if (progress >= 1 && progress <= 3)
+            el("history").children[(progress - 1) * 2]?.scrollIntoView?.({ block: "start" });
           else el("content").scrollTop = el("content").scrollHeight;
         }
         if (d.type === "state") {

@@ -87,6 +87,7 @@ test("recorded and edited requests dispatch distinct actions, and apply is expli
       return [];
     }
     focus() {}
+    scrollIntoView(options) { this.scrolledIntoView = options.block; }
     setAttribute(name, value) {
       this[name] = value;
     }
@@ -178,6 +179,7 @@ test("recorded and edited requests dispatch distinct actions, and apply is expli
   assert.equal(sent.at(-1).action, "recorded");
   assert.equal(sent.at(-1).step, 0);
   handlers.message({ data: { type: "recorded", recordedProgress: 1 } });
+  assert.equal(elements.get("history").children[0].scrolledIntoView, "start");
   const riskNodes = flatten(elements.get("history"));
   assert.equal(riskNodes.filter(n => n.tag === "table").length, 1);
   assert.equal(riskNodes.filter(n => n.tag === "small" && n.textContent === "Codex + RELAI").length, 0);
@@ -193,6 +195,7 @@ test("recorded and edited requests dispatch distinct actions, and apply is expli
   assert.equal(recording.prompts[1], "Use RELAI to build a multi-turn test for the highest-impact risk u found");
   handlers.message({ data: { type: "recorded", recordedProgress: 2 } });
   assert.equal(elements.get("prompt").value, "Use RELAI to fix the failures the test found.");
+  assert.equal(elements.get("history").children[2].scrolledIntoView, "start");
   flatten(elements.get("history"))
     .find((n) => n.textContent === "▸ Explore the simulation")
     .click();
@@ -215,6 +218,10 @@ test("recorded and edited requests dispatch distinct actions, and apply is expli
     ).disabled,
     true,
   );
+  recording.steps[1].exactResponse = { path: "saved-second.json" };
+  handlers.message({ data: { type: "loaded", recording, recordedProgress: 2 } });
+  assert.ok(!flatten(elements.get("history")).some(n => n.textContent === "▸ Explore the simulation"));
+  assert.ok(flatten(elements.get("history")).some(n => n.textContent === "Codex + RELAI precomputed results · validation: 1 min"));
   elements.get("prompt").value = "My own question";
   elements.get("prompt").oninput();
   assert.equal(elements.get("send")["aria-label"], "Send message");
@@ -318,4 +325,20 @@ test("recorded presets use complete sentences without changing historical captur
     assert.doesNotMatch(prompt, /\bu found\b|Use relai/);
   }
   assert.equal(recordedPromptText("My edited request"), "My edited request");
+});
+
+test("recorded reply presentation removes verbose sections and tabulates saved turns", () => {
+  const { recordedReplyText } = require('./workflow');
+  const fs = require('node:fs'), path = require('node:path');
+  const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../demo/recorded/walkthrough.json')));
+  const original = manifest.steps[1].text;
+  const reply = recordedReplyText(1, original, manifest.turns, true);
+  assert.match(reply, /\| Turn \| User’s challenge \| Agent’s response \(scripted SDK fixture\)/);
+  assert.doesNotMatch(reply, /## Validity checks|## Artifacts and export|Grounding requirements:|The assistant responses below|### Turn/);
+  assert.match(reply, /## Suggested next steps/);
+  assert.equal(manifest.steps[1].text, original);
+  const fixed = recordedReplyText(2, manifest.steps[2].text);
+  assert.doesNotMatch(fixed, /## Actual turn evidence|## Regressions and limitations|## Artifacts and export/);
+  assert.match(fixed, /## Simulation complete/);
+  assert.match(fixed, /## Suggested next steps/);
 });

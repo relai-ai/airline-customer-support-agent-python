@@ -57,13 +57,28 @@ function recordedPromptText(prompt) {
   return corrections[prompt] || prompt;
 }
 // Presentation-only trimming; the original Codex response stays unchanged in the bundle.
-function recordedReplyText(index, text) {
-  if (index !== 0) return text;
-  let evidence = false;
-  return text.split('\n').filter(line => {
-    if (/^## Evidence\s*$/.test(line)) { evidence = true; return false; }
-    if (evidence && /^## /.test(line)) evidence = false;
-    return !evidence;
+function recordedReplyText(index, text, turns = [], scripted = false) {
+  const omitted = index === 0 ? ['Evidence'] : index === 1
+    ? ['Validity checks and limitations', 'Artifacts and export']
+    : ['Actual turn evidence', 'Regressions and limitations', 'Artifacts and export'];
+  let hidden = false;
+  let result = text.split('\n').filter(line => {
+    const heading = line.match(/^## (.*)$/);
+    if (heading) hidden = omitted.includes(heading[1]);
+    return !hidden;
   }).join('\n');
+  if (index === 1) {
+    result = result.replace(/^\*\*The assistant responses below are scripted SDK fixtures[^\n]*\n?/m, '')
+      .replace(/^Grounding requirements:[^\n]*\n?/m, '');
+    if (turns.length) {
+      const cell = value => String(value).replace(/\|/g, '\uFF5C').replace(/\r?\n/g, ' ');
+      const table = '## Every recorded turn\n\n| Turn | User’s challenge | ' +
+        (scripted ? 'Agent’s response (scripted SDK fixture)' : 'Agent’s response') +
+        ' |\n| --- | --- | --- |\n' + turns.map((turn, i) =>
+          '| ' + (i + 1) + ' | ' + cell(turn.user) + ' | ' + cell(turn.agent) + ' |').join('\n') + '\n\n';
+      result = result.replace(/^## Every recorded turn\n[\s\S]*?(?=^## |$(?![\s\S]))/m, table);
+    }
+  }
+  return result;
 }
 if (typeof module !== 'undefined') module.exports = { workflowSteps, workflowView, shouldPrefill, startingRequest, stepValue, restoreOutputScroll, commandResultView, recordedReplyText, recordedPromptText };

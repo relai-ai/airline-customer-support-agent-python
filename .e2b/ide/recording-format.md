@@ -107,3 +107,10 @@ Prefilled prompts use corrected spelling, RELAI capitalization, and complete
 sentences in the UI. Replay matches these displayed presets; original captured
 prompts remain verbatim in the manifest and exact-response exports. Saved drafts
 matching an old preset are upgraded; user-edited drafts are preserved.
+
+The baseline presentation uses a table of saved turns, labels fixture responses
+as scripted, and omits the verbose fixture paragraph, grounding list, validity
+section, artifact list, and extra simulation viewer. The fix reply omits its
+turn evidence, limitations, and artifact sections. All full exports remain
+unchanged. Replay anchors the latest submitted prompt at the top for reading.
+The recorder verification example says “after the fix”: no optimizer ran.
