@@ -102,3 +102,8 @@ assistant label beside the timing badge. When an exact Codex risk reply already
 contains its table, the UI does not append the separate inventory table. The
 saved-wiki button remains available. These are display-only changes: the exact
 JSON/Markdown response exports and their hashes remain untouched.
+
+Prefilled prompts use corrected spelling, RELAI capitalization, and complete
+sentences in the UI. Replay matches these displayed presets; original captured
+prompts remain verbatim in the manifest and exact-response exports. Saved drafts
+matching an old preset are upgraded; user-edited drafts are preserved.

@@ -46,6 +46,16 @@ function commandResultView(result) {
   const metadata = failed && typeof value?.exitCode === 'number' ? 'Exit code: ' + value.exitCode + '\n\n' : '';
   return { summary: summary.trim(), details: metadata + (output || (value && typeof value === 'object' ? JSON.stringify(value, null, 2) : '')) };
 }
+// Keep captured prompts verbatim in saved exports; polish only the UI presets.
+function recordedPromptText(prompt) {
+  const corrections = {
+    'Use RELAI to build a multi-turn test for the highest-impact risk u found': 'Use RELAI to build a multi-turn test for the highest-impact risk you found.',
+    'Use relai to fix the failures the test found': 'Use RELAI to fix the failures the test found.',
+    'Use RELAI to fix the issue discovered in this agent test': 'Use RELAI to fix the issue discovered in this agent test.',
+    'These changes look great; apply': 'These changes look great. Apply them.',
+  };
+  return corrections[prompt] || prompt;
+}
 // Presentation-only trimming; the original Codex response stays unchanged in the bundle.
 function recordedReplyText(index, text) {
   if (index !== 0) return text;
@@ -56,4 +66,4 @@ function recordedReplyText(index, text) {
     return !evidence;
   }).join('\n');
 }
-if (typeof module !== 'undefined') module.exports = { workflowSteps, workflowView, shouldPrefill, startingRequest, stepValue, restoreOutputScroll, commandResultView, recordedReplyText };
+if (typeof module !== 'undefined') module.exports = { workflowSteps, workflowView, shouldPrefill, startingRequest, stepValue, restoreOutputScroll, commandResultView, recordedReplyText, recordedPromptText };

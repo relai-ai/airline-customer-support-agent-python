@@ -150,7 +150,7 @@ test("recorded and edited requests dispatch distinct actions, and apply is expli
   const { prompts } = require("./recorded");
   const recording = {
     verificationStatus: "verified",
-    prompts,
+    prompts: [prompts[0], "Use RELAI to build a multi-turn test for the highest-impact risk u found", "Use relai to fix the failures the test found", prompts[3]],
     steps: prompts
       .slice(0, 3)
       .map(() => ({ text: "Real evidence", durationSeconds: 60 })),
@@ -186,8 +186,13 @@ test("recorded and edited requests dispatch distinct actions, and apply is expli
   assert.ok(riskNodes.some(n => n.textContent === "Open saved wiki results ↗"));
   assert.ok(!riskNodes.some(n => /No baseline or risk-validation|^Evidence$/.test(n.textContent)));
   assert.equal(recording.steps[0].text, exactRiskReply);
-  assert.equal(elements.get("prompt").value, prompts[1]);
+  assert.equal(elements.get("prompt").value, "Use RELAI to build a multi-turn test for the highest-impact risk you found.");
+  elements.get("send").click();
+  assert.equal(sent.at(-1).action, "recorded");
+  assert.equal(sent.at(-1).step, 1);
+  assert.equal(recording.prompts[1], "Use RELAI to build a multi-turn test for the highest-impact risk u found");
   handlers.message({ data: { type: "recorded", recordedProgress: 2 } });
+  assert.equal(elements.get("prompt").value, "Use RELAI to fix the failures the test found.");
   flatten(elements.get("history"))
     .find((n) => n.textContent === "▸ Explore the simulation")
     .click();
@@ -302,4 +307,15 @@ test("recorded Markdown tables render score columns without interpreting output 
   const fenced = context.formatted("````text\n```json\n{\"password\":\"synthetic\"}\n```\n````");
   assert.equal(fenced.children[0].tagName, "PRE");
   assert.equal(fenced.children[0].textContent, '```json\n{"password":"synthetic"}\n```');
+});
+
+test("recorded presets use complete sentences without changing historical captures", () => {
+  const { recordedPromptText, workflowSteps } = require("./workflow");
+  const { prompts } = require("./recorded");
+  assert.equal(recordedPromptText(prompts[3]), "These changes look great. Apply them.");
+  for (const prompt of [...prompts.map(recordedPromptText), ...Object.values(workflowSteps).map(step => step.prompt)]) {
+    assert.match(prompt, /[.?!]$/);
+    assert.doesNotMatch(prompt, /\bu found\b|Use relai/);
+  }
+  assert.equal(recordedPromptText("My edited request"), "My edited request");
 });

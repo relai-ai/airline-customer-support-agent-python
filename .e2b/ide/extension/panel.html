@@ -1045,7 +1045,7 @@
           return;
         }
         if (d.type === "loaded") {
-          recording = d.recording;
+          recording = { ...d.recording, prompts: d.recording.prompts.map(recordedPromptText) };
           progress = d.recordedProgress;
           live = progress >= 4 || Boolean(saved.live);
           const previousPresets = [
@@ -1056,7 +1056,7 @@
             ["These changes look great. Apply them.", "these changes look great; apply"],
           ];
           el("prompt").value =
-            saved.draft && !previousPresets[progress]?.includes(saved.draft)
+            saved.draft && saved.draft !== d.recording.prompts[progress] && !previousPresets[progress]?.includes(saved.draft)
               ? saved.draft
               : recording.prompts[progress] || "";
           lastSuggestion = recording.prompts[progress] || null;
