@@ -165,6 +165,11 @@ test("recorded and edited requests dispatch distinct actions, and apply is expli
     },
     diff: "patch",
   };
+  recording.initialization = { durationSeconds: 191.949 };
+  recording.provenance = { orchestrator: "Codex", totalRollouts: 0 };
+  recording.riskInventory = { risks: [{ id: "risk-one" }] };
+  const exactRiskReply = "## Risks\n| Risk | Priority |\n| --- | --- |\n| Redaction | 63 |\n\n## Evidence\n[Receipt](/saved/receipt.json)\n\nNo baseline or risk-validation test has run during this walkthrough.\n\n## Suggested next steps\n1. Build a targeted test.";
+  recording.steps[0] = { text: exactRiskReply, durationSeconds: 1, exactResponse: { path: "saved.json" } };
   handlers.message({
     data: { type: "loaded", recording, recordedProgress: 0 },
   });
@@ -173,6 +178,14 @@ test("recorded and edited requests dispatch distinct actions, and apply is expli
   assert.equal(sent.at(-1).action, "recorded");
   assert.equal(sent.at(-1).step, 0);
   handlers.message({ data: { type: "recorded", recordedProgress: 1 } });
+  const riskNodes = flatten(elements.get("history"));
+  assert.equal(riskNodes.filter(n => n.tag === "table").length, 1);
+  assert.equal(riskNodes.filter(n => n.tag === "small" && n.textContent === "Codex + RELAI").length, 0);
+  assert.ok(riskNodes.some(n => n.textContent === "Codex + RELAI precomputed results · initialization: 3.2 min"));
+  assert.ok(riskNodes.some(n => n.textContent === "Suggested next steps"));
+  assert.ok(riskNodes.some(n => n.textContent === "Open saved wiki results ↗"));
+  assert.ok(!riskNodes.some(n => /No baseline or risk-validation|^Evidence$/.test(n.textContent)));
+  assert.equal(recording.steps[0].text, exactRiskReply);
   assert.equal(elements.get("prompt").value, prompts[1]);
   handlers.message({ data: { type: "recorded", recordedProgress: 2 } });
   flatten(elements.get("history"))

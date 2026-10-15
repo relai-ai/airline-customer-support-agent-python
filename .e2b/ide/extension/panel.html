@@ -627,13 +627,11 @@
         if (code) root.append(node("pre", code.join("\n")));
         return root;
       }
-      function message(role, content) {
+      function message(role, content, showRole = true) {
         const n = document.createElement("div");
         n.className = "message " + (role === "user" ? "user" : "assistant");
-        n.append(
-          node("small", role === "user" ? "YOU" : "Codex + RELAI"),
-          formatted(content),
-        );
+        if (showRole) n.append(node("small", role === "user" ? "YOU" : "Codex + RELAI"));
+        n.append(formatted(content));
         return n;
       }
       function details(label, value, key = label) {
@@ -733,7 +731,7 @@
         for (let index = 0; index < Math.min(progress, 3); index++) {
           const step = recording.steps[index];
           root.append(message("user", recording.prompts[index]));
-          const reply = message("assistant", step.text);
+          const reply = message("assistant", recordedReplyText(index, step.text), false);
           const timing = index === 0 ? recording.initialization : step;
           let timingText = [
             recording.riskInventory ? "Precomputed relai wiki list risks" : "Precomputed relai init",
@@ -751,7 +749,7 @@
           if (Number.isFinite(timing?.durationSeconds))
             timingText +=
               (index === 0 && recording.initialization
-                ? " initialization: "
+                ? " · initialization: "
                 : index === 1
                 ? " · " + (step.durationLabel || "validation") + ": "
                 : index === 2 && recording.verificationStatus !== "verified"
@@ -764,7 +762,7 @@
           badge.className = "badge";
           reply.prepend(badge);
           if (index === 0 && recording.riskInventory) {
-            reply.append(riskInventoryViewer());
+            if (!step.exactResponse) reply.append(riskInventoryViewer());
             if (!step.exactResponse) reply.append(formatted(
               "### Suggested next steps\n" +
               "- Review what RELAI learned: `relai wiki list requirements`, `relai wiki list requirements --without-tests`, `relai wiki list risks`, and `relai wiki list open-questions`.\n" +

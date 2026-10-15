@@ -46,4 +46,14 @@ function commandResultView(result) {
   const metadata = failed && typeof value?.exitCode === 'number' ? 'Exit code: ' + value.exitCode + '\n\n' : '';
   return { summary: summary.trim(), details: metadata + (output || (value && typeof value === 'object' ? JSON.stringify(value, null, 2) : '')) };
 }
-if (typeof module !== 'undefined') module.exports = { workflowSteps, workflowView, shouldPrefill, startingRequest, stepValue, restoreOutputScroll, commandResultView };
+// Presentation-only trimming; the original Codex response stays unchanged in the bundle.
+function recordedReplyText(index, text) {
+  if (index !== 0) return text;
+  let evidence = false;
+  return text.split('\n').filter(line => {
+    if (/^## Evidence\s*$/.test(line)) { evidence = true; return false; }
+    if (evidence && /^## /.test(line)) evidence = false;
+    return !evidence;
+  }).join('\n');
+}
+if (typeof module !== 'undefined') module.exports = { workflowSteps, workflowView, shouldPrefill, startingRequest, stepValue, restoreOutputScroll, commandResultView, recordedReplyText };

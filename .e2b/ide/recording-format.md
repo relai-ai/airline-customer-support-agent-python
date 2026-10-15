@@ -96,3 +96,9 @@ The prior conversation bundle is retained in the task's
 unreferenced saved files are historical; only the current manifest selects what
 the UI replays. No raw Codex JSONL events, private reasoning, or credentials are
 packaged.
+
+The risk reply's presentation omits its Evidence section and the repeated
+assistant label beside the timing badge. When an exact Codex risk reply already
+contains its table, the UI does not append the separate inventory table. The
+saved-wiki button remains available. These are display-only changes: the exact
+JSON/Markdown response exports and their hashes remain untouched.
