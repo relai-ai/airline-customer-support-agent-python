@@ -1,5 +1,5 @@
 {
-  "status": "runtime_repair_action_required",
+  "status": "awaiting_proposal_review",
   "prompts": [
     "What are the risks identified for this agent by RELAI?",
     "Use RELAI to build a multi-turn test for the highest-impact risk u found",
@@ -20,5 +20,7 @@
   "capture_thread": "01a13bf6-fd44-70a1-868c-755cf2f3a748",
   "optimizer_rollout_limit": 6,
   "optimizer_rollouts_used": 0,
-  "blocker": "Pinned Harbor dependency download timed out; RELAI requested host DNS/HTTPS recovery before validation."
+  "blocker": "RELAI requires the human proposal-review answer before building and simulating the staged test.",
+  "runtime_repair_completed": true,
+  "proposed_test": "embedded-json-redaction-two-turn"
 }
