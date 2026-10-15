@@ -788,14 +788,7 @@
             reply.append(button("Review code changes ↗", () =>
               post("changes", { recorded: true }),
             ));
-            if (recording.provenance?.artifacts?.length) {
-              const artifacts = document.createElement("details");
-              artifacts.append(node("summary", "Saved run artifacts"));
-              for (const artifact of recording.provenance.artifacts)
-                artifacts.append(button(artifact.path.split("/").at(-1) + " ↗", () =>
-                  post("artifact", { file: artifact.path })));
-              reply.append(artifacts);
-            }
+
           }
           root.append(reply);
         }
