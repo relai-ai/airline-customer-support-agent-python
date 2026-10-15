@@ -1,0 +1,76 @@
+{
+  "schema_version": "relai.agent_simulation_outcome.v1",
+  "invocation_id": "40b31df6-e037-4832-aca4-7f4cb4281f29",
+  "selectors": {
+    "requested_learning_envs": [
+      "embedded-json-redaction-two-turn"
+    ],
+    "requested_tags": [],
+    "requested_benchmarks": [],
+    "resolved_learning_envs": [
+      "embedded-json-redaction-two-turn"
+    ]
+  },
+  "execution": {
+    "status": "completed",
+    "runs": [
+      {
+        "learning_environment": "/private/tmp/exact-playground-recording/.relai/harbor/agent-tests/embedded-json-redaction-two-turn",
+        "status": "completed",
+        "run_id": "harbor-embedded-json-redaction-two-turn-1-1792092433315994000",
+        "scores": [
+          {
+            "evaluator_id": "snapshot-one-redaction",
+            "score": 1.0,
+            "min_score": 0.0,
+            "max_score": 1.0
+          },
+          {
+            "evaluator_id": "snapshot-two-redaction",
+            "score": 1.0,
+            "min_score": 0.0,
+            "max_score": 1.0
+          },
+          {
+            "evaluator_id": "cumulative-prefix",
+            "score": 1.0,
+            "min_score": 0.0,
+            "max_score": 1.0
+          },
+          {
+            "evaluator_id": "user-steps-and-ids",
+            "score": 1.0,
+            "min_score": 0.0,
+            "max_score": 1.0
+          },
+          {
+            "evaluator_id": "history-and-exhaustion",
+            "score": 1.0,
+            "min_score": 0.0,
+            "max_score": 1.0
+          },
+          {
+            "evaluator_id": "session-isolation",
+            "score": 1.0,
+            "min_score": 0.0,
+            "max_score": 1.0
+          }
+        ],
+        "evaluator_errors": [],
+        "failure": null,
+        "repair": {
+          "state": "not_needed",
+          "attempts": 0,
+          "owner": null
+        },
+        "local_artifact_paths": [
+          ".relai/.internal/runs/harbor/relai-harbor-13060-1792092433333083000/embedded-json-redaction-two-turn__uAxJu88/agent/trajectory.json"
+        ]
+      }
+    ],
+    "failures": []
+  },
+  "next_actions": [
+    "review_evaluator_scores"
+  ]
+}

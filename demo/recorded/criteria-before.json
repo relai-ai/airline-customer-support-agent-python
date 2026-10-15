@@ -1,0 +1,14 @@
+{
+  "README.md": "15f8e48a3c2ca6a4b880ef2c2adb7bf275ef8dbc035cdc8d5ae986756d4bfd14",
+  "environment/Dockerfile": "56ec652047f1d3da7a58df80beafc8f410db127babe44cd5170462b0d9a2c1ad",
+  "environment/adapter.json": "d668e6e2f179bebe9035b36390bfb59c089303eb40b2f66a747b74295d7d186f",
+  "environment/mocks/sdk_model.json": "a88db77bc7e2d46049706d69a085a3d08ca2cc730fd5ecfad5312d72e976d0ba",
+  "environment/offline_adapter.py": "624d061464eb7cc00f033903b110e305101216195ac3154f47b451a19f44ba6c",
+  "environment/scenario.json": "c3faa68fdb06e5a212dcb2c6cd02014b153bac27c309e4f6a3f2915be975a541",
+  "generated/build.json": "a59db3ad290dd4cb7620dce650d4565581cb79ec2f2423b5d63f35e3f839e668",
+  "instruction.md": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "task.toml": "a0eeb017be0502a13ff261d40d96f4aaf0afc5e3cee3df8d9a1683d252a7a0d6",
+  "tests/Dockerfile": "13d6355662882d2e7d2b43d9fa7208d53d3b42e9ee12452cdceb95926a9580ae",
+  "tests/evaluate.py": "63204992b8924f47d0221382e98a3e77a51980cd45669c71e3dde9a4b360e71a",
+  "tests/test.sh": "d05932f788f7232e4525e96f52a66a2c026efc62b149189bf2e1387dcd7595bb"
+}

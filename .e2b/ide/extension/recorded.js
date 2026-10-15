@@ -37,13 +37,14 @@ async function loadRecording(root) {
     await regular(root, "demo/recorded/walkthrough.json"),
   );
   if (
-    manifest.schemaVersion !== 1 ||
+    ![1, 2].includes(manifest.schemaVersion) ||
     !["pending", "verified"].includes(manifest.verificationStatus) ||
     manifest.steps?.length !== 3 ||
     !Array.isArray(manifest.files) ||
     !manifest.files.length
   )
     throw Error("Recorded walkthrough is incomplete");
+  if (manifest.schemaVersion === 2) await validateRecorderEvidence(root, manifest);
   for (const step of manifest.steps)
     if (
       !Number.isFinite(step.durationSeconds) ||
@@ -60,6 +61,7 @@ async function loadRecording(root) {
         throw Error("Exact Codex response integrity check failed");
       const response = JSON.parse(bytes);
       if (response.engine !== "codex-cli" || response.turnStatus !== "completed" || !response.threadId ||
+          (manifest.schemaVersion === 2 && response.threadId !== manifest.provenance.threadId) ||
           response.prompt !== manifest.prompts[index] || response.response !== step.text ||
           digest(response.response) !== response.responseSha256)
         throw Error("Recorded reply does not match its exact Codex response");
@@ -114,7 +116,7 @@ async function loadRecording(root) {
         "Initialization timing must come from a completed relai init command",
       );
   }
-  if (manifest.provenance) {
+  if (manifest.provenance && manifest.schemaVersion === 1) {
     const provenance = manifest.provenance;
     if (provenance.orchestrator !== "Codex" ||
         !/^[a-f0-9-]{36}$/.test(provenance.threadId ?? "") ||
@@ -212,12 +214,12 @@ async function loadRecording(root) {
     throw Error("Recorded files must be unique");
   if (
     !Array.isArray(manifest.turns) ||
-    manifest.turns.length < 10 ||
+    manifest.turns.length < (manifest.schemaVersion === 2 ? 2 : 10) ||
     !manifest.turns.every(
       (t) => typeof t.user === "string" && typeof t.agent === "string",
     )
   )
-    throw Error("Recording requires ten real exchanges");
+    throw Error(manifest.schemaVersion === 2 ? "Recording requires its complete measured exchanges" : "Recording requires ten real exchanges");
   if (manifest.baselineExample &&
       (!Number.isInteger(manifest.baselineExample.turnIndex) ||
        manifest.baselineExample.turnIndex < 0 || manifest.baselineExample.turnIndex >= manifest.turns.length))
@@ -246,6 +248,91 @@ async function loadRecording(root) {
   if (manifest.diff !== patch.toString())
     throw Error("Displayed changes do not match the recorded patch");
   return manifest;
+}
+// Recorder probes use deterministic SDK fixtures rather than ten-turn model-quality
+// trials. Keep their evidence contract explicit and separate from legacy recordings.
+async function validateRecorderEvidence(root, manifest) {
+  const p = manifest.provenance, e = manifest.recorderEvidence;
+  if (manifest.evidenceKind !== "deterministic-recorder" ||
+      manifest.verificationStatus !== "verified" ||
+      p?.orchestrator !== "Codex" || !/^[a-f0-9-]{36}$/.test(p.threadId || "") ||
+      !/^[a-f0-9]{40}$/.test(p.sourceRevision || "") || p.totalRollouts !== 0 ||
+      !manifest.steps.every(step => step.exactResponse) || !e)
+    throw Error("Recorder evidence provenance is incomplete");
+  const artifacts = new Map();
+  for (const ref of p.artifacts || []) {
+    if (artifacts.has(ref.path)) throw Error("Duplicate recorder evidence");
+    const bytes = await regular(root, ref.path);
+    if (digest(bytes) !== ref.sha256) throw Error("Recorder evidence integrity check failed");
+    artifacts.set(ref.path, bytes);
+  }
+  const read = name => {
+    if (!artifacts.has(name)) throw Error("Missing recorder evidence");
+    return JSON.parse(artifacts.get(name));
+  };
+  for (const target of Object.values(manifest.savedLinks || {}))
+    if (!artifacts.has(target)) throw Error("Saved link is not a verified artifact");
+  const expected = ["snapshot-one-redaction", "snapshot-two-redaction", "cumulative-prefix",
+    "user-steps-and-ids", "history-and-exhaustion", "session-isolation"];
+  for (const phase of ["before", "after"]) {
+    const suite = read(e[phase].result);
+    const result = suite.runs?.[0]?.result;
+    if (suite.schema_version !== "relai.simulation_suite_result.v1" || suite.total_count !== 1 ||
+        suite.success_count !== 1 || suite.failure_count !== 0 || suite.runs?.length !== 1 ||
+        suite.failures?.length || result?.evaluation_errors?.length ||
+        result?.learning_environment_id !== e.testId || result.evaluations?.length !== expected.length)
+      throw Error("Recorder simulation did not complete cleanly");
+    for (const [index, id] of expected.entries()) {
+      const score = result.evaluations.find(item => item.evaluator_id === id);
+      if (score?.evaluator_type !== "code" || score.max_score !== 1 || score.min_score !== 0 ||
+          score.score !== (phase === "before" && index < 2 ? 0 : 1))
+        throw Error("Recorder scores do not prove the reported improvement");
+    }
+    const snapshots = e[phase].snapshots.map(read);
+    if (snapshots.length !== 2 || snapshots[0].steps?.length !== 2 || snapshots[1].steps?.length !== 4 ||
+        JSON.stringify(snapshots[0].steps) !== JSON.stringify(snapshots[1].steps.slice(0, 2)))
+      throw Error("Recorder snapshots lost cumulative evidence");
+    for (const snapshot of snapshots) {
+      if (!e.syntheticSentinel || JSON.stringify(snapshot).includes(e.syntheticSentinel) !== (phase === "before") ||
+          (phase === "after" && !snapshot.steps[0].message.includes("[REDACTED]")) ||
+          snapshot.steps.some((step, index) => step.step_id !== index + 1))
+        throw Error("Recorder snapshot redaction or step IDs differ from the report");
+    }
+    const trajectory = read(e[phase].trajectory);
+    if (JSON.stringify(trajectory.steps) !== JSON.stringify(snapshots[1].steps))
+      throw Error("Recorder trajectory differs from completed snapshots");
+    if (phase === "before") {
+      const turns = [];
+      for (const step of trajectory.steps) {
+        if (step.source === "user") turns.push({ user: step.message, agent: "" });
+        else if (step.source === "agent" && !step.tool_calls?.length && turns.length) turns.at(-1).agent = step.message;
+      }
+      if (JSON.stringify(turns) !== JSON.stringify(manifest.turns))
+        throw Error("Displayed recorder exchanges differ from the actual trajectory");
+    }
+    const receipt = read(e[phase].receipt);
+    const argv = receipt.argv || receipt.command;
+    if ((receipt.exitCode ?? receipt.exit_code) !== 0 || argv?.[0] !== "relai" ||
+        argv[1] !== (phase === "before" ? "test" : "simulate"))
+      throw Error("Recorder command receipt is incomplete");
+  }
+  const frozen = read(e.criteriaBefore), verified = read(e.criteriaAfter);
+  if (!Object.keys(frozen).length || JSON.stringify(frozen) !== JSON.stringify(verified))
+    throw Error("Recorder criteria changed during verification");
+  if (Object.keys(frozen).length !== Object.keys(e.packageFiles || {}).length)
+    throw Error("Recorder test package is incomplete");
+  for (const [name, hash] of Object.entries(frozen))
+    if (!artifacts.has(e.packageFiles[name]) || digest(artifacts.get(e.packageFiles[name])) !== hash)
+      throw Error("Recorder test package differs from frozen criteria");
+  const outcome = read(e.outcome), receipt = read(e.after.receipt);
+  const before = read(e.before.result).runs[0].result, after = read(e.after.result).runs[0].result;
+  if (outcome.schema_version !== "relai.agent_simulation_outcome.v1" ||
+      outcome.invocation_id !== receipt.outcome_invocation_id ||
+      outcome.execution?.status !== "completed" || outcome.execution.failures?.length ||
+      outcome.execution.runs?.length !== 1 || outcome.execution.runs[0].run_id !== after.run_id ||
+      before.run_id === after.run_id || outcome.execution.runs[0].evaluator_errors?.length ||
+      outcome.execution.runs[0].failure || outcome.execution.runs[0].repair?.attempts !== 0)
+    throw Error("Recorder independent verification outcome is invalid");
 }
 async function applyRecording(root, manifest) {
   if (manifest.verificationStatus !== "verified")

@@ -1,0 +1,11 @@
+{
+  "command": [
+    "bash",
+    "-n",
+    "start.sh"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.003,
+  "stdout": "",
+  "stderr": ""
+}

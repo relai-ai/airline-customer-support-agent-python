@@ -1,0 +1,31 @@
+diff --git a/src/airline_support/trajectory.py b/src/airline_support/trajectory.py
+index 160644b..222823e 100644
+--- a/src/airline_support/trajectory.py
++++ b/src/airline_support/trajectory.py
+@@ -72,6 +72,26 @@ def redact(value: Any, secrets: tuple[str, ...]) -> Any:
+             decoded = None
+         if isinstance(decoded, (dict, list)):
+             return json.dumps(redact(decoded, secrets), ensure_ascii=False)
++        # Diagnostics can embed JSON in prose or Markdown fences. Parse complete
++        # containers so quoted keys and escaped values use structured redaction.
++        decoder = json.JSONDecoder()
++        parts = []
++        end = 0
++        for match in re.finditer(r"[\[{]", value):
++            if match.start() < end:
++                continue
++            try:
++                embedded, consumed = decoder.raw_decode(value, match.start())
++            except ValueError:
++                continue
++            filtered = redact(embedded, secrets)
++            parts.append(value[end:match.start()])
++            end = consumed
++            parts.append(
++                json.dumps(filtered, ensure_ascii=False)
++                if filtered != embedded else value[match.start():end]
++            )
++        value = "".join(parts) + value[end:]
+         return _SECRET_TEXT.sub(REDACTED, value)
+     return value
+ 

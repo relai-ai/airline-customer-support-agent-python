@@ -1,0 +1,27 @@
+
+────────────────────────────────────────
+
+Simulation complete
+
+  Agent test: embedded-json-redaction-two-turn
+Evaluator scores:
+  - snapshot-one-redaction: 1.00 / 1.00 (1.00 / 1.00 normalized)
+  - snapshot-two-redaction: 1.00 / 1.00 (1.00 / 1.00 normalized)
+  - cumulative-prefix: 1.00 / 1.00 (1.00 / 1.00 normalized)
+  - user-steps-and-ids: 1.00 / 1.00 (1.00 / 1.00 normalized)
+  - history-and-exhaustion: 1.00 / 1.00 (1.00 / 1.00 normalized)
+  - session-isolation: 1.00 / 1.00 (1.00 / 1.00 normalized)
+
+Artifacts:
+  Transcript:  .relai/.internal/runs/harbor/relai-harbor-13060-1792092433333083000/embedded-json-redaction-two-turn__uAxJu88/agent/trajectory.json
+  Verifier feedback:  .relai/.internal/runs/harbor/relai-harbor-13060-1792092433333083000/embedded-json-redaction-two-turn__uAxJu88/verifier/relai_global_metrics.json
+  Report:      work/exact-recording/redaction-fix-20261015T192622Z/simulation-result.json
+
+Suggested next steps, when you're ready
+  Ask RELAI to search for failure-revealing tests
+    relai test discover --count 3
+    Create challenging tests for different potential risks, to reveal current agent
+    failures or increase test coverage. Add --no-review to skip human review.
+  Keep optimizing the current project scope
+    relai optimize
+    Optimize using all configured agent tests and benchmarks for this project.

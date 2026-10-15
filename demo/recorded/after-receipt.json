@@ -1,0 +1,29 @@
+{
+  "command": [
+    "relai",
+    "simulate",
+    "--tests",
+    "embedded-json-redaction-two-turn",
+    "--max-simulations",
+    "1",
+    "--outcome-json",
+    ".relai/.internal/runs/redaction-fix-40b31df6-e037-4832-aca4-7f4cb4281f29-outcome.json",
+    "--outcome-invocation-id",
+    "40b31df6-e037-4832-aca4-7f4cb4281f29",
+    "--result-json",
+    "work/exact-recording/redaction-fix-20261015T192622Z/simulation-result.json",
+    "--outcome-change",
+    "Parse embedded JSON containers through existing structured redaction",
+    "--outcome-intent",
+    "Verify redaction in both snapshots while preserving continuity and isolation",
+    "--timeout",
+    "25m"
+  ],
+  "outcome_invocation_id": "40b31df6-e037-4832-aca4-7f4cb4281f29",
+  "outcome_path": ".relai/.internal/runs/redaction-fix-40b31df6-e037-4832-aca4-7f4cb4281f29-outcome.json",
+  "wrapper": "CODEX_ALLOW_AI_KEYS=1 with-ai-keys",
+  "UV_HTTP_TIMEOUT": "180",
+  "package_unchanged_before_run": true,
+  "exit_code": 0,
+  "elapsed_seconds": 23.58
+}

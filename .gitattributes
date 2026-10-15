@@ -1,0 +1,3 @@
+# Preserve verbatim generated evidence, including diff context and CLI wiki output.
+demo/recorded/fix-source.diff -whitespace
+.relai/evals-wiki/hypotheses/risks/embedded-json-credentials-bypass-trajectory-redaction.md -whitespace

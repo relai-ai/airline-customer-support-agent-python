@@ -1,0 +1,9 @@
+{
+  "package_files": 12,
+  "changed_package_files": [],
+  "optimizer_rollouts": 0,
+  "source_paths": [
+    "src/airline_support/trajectory.py"
+  ],
+  "new_regression_test": "tests/test_embedded_redaction.py"
+}

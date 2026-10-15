@@ -275,4 +275,18 @@ test("recorded Markdown tables render score columns without interpreting output 
   const literal = table.children[1].children[1].children[0].children[0];
   assert.equal(literal.tagName, "SPAN");
   assert.equal(literal.textContent, "<script>bad()</script>");
+  const messages = [];
+  context.recording = { savedLinks: { "/saved/result.json": "demo/recorded/after-result.json" } };
+  context.post = (...args) => messages.push(args);
+  const links = context.formatted("[Result](/saved/result.json) [Untrusted](https://example.com/collect)");
+  const p = links.children[0];
+  const action = p.children.find(n => n.tagName === "BUTTON");
+  assert.equal(action.textContent, "Result ↗");
+  action.onclick();
+  assert.equal(messages[0][0], "artifact");
+  assert.equal(messages[0][1].file, "demo/recorded/after-result.json");
+  assert.equal(p.children.filter(n => n.tagName === "BUTTON").length, 1);
+  const fenced = context.formatted("````text\n```json\n{\"password\":\"synthetic\"}\n```\n````");
+  assert.equal(fenced.children[0].tagName, "PRE");
+  assert.equal(fenced.children[0].textContent, '```json\n{"password":"synthetic"}\n```');
 });

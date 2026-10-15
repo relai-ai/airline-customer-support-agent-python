@@ -5,6 +5,43 @@
     {
       "citations": [
         {
+          "rationale": "Requires credential-bearing structured fields and recognizable credential text to be redacted throughout recorded messages, including serialized objects.",
+          "reference": "relai://wiki/requirements/trajectory-secret-redaction.md"
+        },
+        {
+          "rationale": "redact attempts json.loads on the complete string and otherwise uses _SECRET_TEXT; the assignment regex does not allow the closing JSON field-name quote before the colon.",
+          "reference": "relai://repo/src/airline_support/trajectory.py"
+        },
+        {
+          "rationale": "stream_agent_response records the final user message before starting model execution, making the unfiltered diagnostic directly observable in trajectory evidence.",
+          "reference": "relai://repo/src/airline_support/agent.py"
+        },
+        {
+          "rationale": "The inspected redaction test covers a standalone serialized password object, nested fields, and unquoted credential assignments, but not JSON wrapped in prose or code fences.",
+          "reference": "relai://repo/tests/test_trajectory.py"
+        }
+      ],
+      "confidence": "high",
+      "expectations": [],
+      "id": "embedded-json-credentials-bypass-trajectory-redaction",
+      "impact": "high",
+      "lifecycle": "proposed",
+      "local_path": ".relai/evals-wiki/hypotheses/risks/embedded-json-credentials-bypass-trajectory-redaction.md",
+      "mechanism": "The redactor recursively filters serialized credential fields only when the entire string parses as JSON. JSON embedded in prose or a Markdown code fence fails that parse, while the fallback credential regex does not match quoted JSON field names such as \"password\" followed by a closing quote before the colon.",
+      "observable_failure": "The saved ATIF user step contains the literal synthetic password value instead of masking it, even though it is explicitly labeled as a password in the embedded JSON.",
+      "path": "hypotheses/risks/embedded-json-credentials-bypass-trajectory-redaction.md",
+      "priority": 63,
+      "rationale": "This tests a deterministic serialization-boundary gap without relying on model compliance or real credentials. Support diagnostics commonly combine prose and structured snippets, and the existing tests demonstrate standalone serialized-object filtering rather than this wrapped representation.",
+      "requirements": [
+        "trajectory-secret-redaction"
+      ],
+      "target": "SkyServe Airline Support",
+      "trigger": "In a fresh isolated session, submit a baggage-support message containing a fenced JSON diagnostic with {\"password\":\"opaque-demo-73915\"}, then fully consume the response and inspect the native trajectory. Use only this synthetic sentinel, leave it absent from provider keys and explicitly declared secret variables, and include surrounding prose so the message is not a standalone JSON document.",
+      "triggerability": "high"
+    },
+    {
+      "citations": [
+        {
           "rationale": "Requires redaction throughout recorded content and supports explicitly named additional secret variables.",
           "reference": "relai://wiki/requirements/trajectory-secret-redaction.md"
         },
@@ -208,5 +245,5 @@
       "triggerability": "medium"
     }
   ],
-  "total": 6
+  "total": 7
 }

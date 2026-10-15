@@ -61,6 +61,36 @@ async function fixture(t) {
   );
   return { root, manifest, before, after };
 }
+test("deterministic recorder replay requires unchanged criteria and independently passing native evidence", async (t) => {
+  const { root } = await fixture(t);
+  await fs.cp(path.resolve(__dirname, "../../../demo/recorded"), path.join(root, "demo/recorded"), { recursive: true });
+  const manifest = await loadRecording(root);
+  assert.equal(manifest.schemaVersion, 2);
+  assert.equal(manifest.evidenceKind, "deterministic-recorder");
+  assert.equal(manifest.turns.length, 2);
+  assert.equal(manifest.provenance.totalRollouts, 0);
+  const resultPath = manifest.recorderEvidence.after.result;
+  const resultFile = path.join(root, resultPath);
+  const original = await fs.readFile(resultFile);
+  const result = JSON.parse(original);
+  result.runs[0].result.evaluations[0].score = 0;
+  const changed = Buffer.from(JSON.stringify(result));
+  await fs.writeFile(resultFile, changed);
+  manifest.provenance.artifacts.find(ref => ref.path === resultPath).sha256 = digest(changed);
+  const manifestFile = path.join(root, "demo/recorded/walkthrough.json");
+  await fs.writeFile(manifestFile, JSON.stringify(manifest));
+  await assert.rejects(loadRecording(root), /scores do not prove/);
+  await fs.writeFile(resultFile, original);
+  manifest.provenance.artifacts.find(ref => ref.path === resultPath).sha256 = digest(original);
+  const criteriaPath = manifest.recorderEvidence.criteriaAfter;
+  const criteria = JSON.parse(await fs.readFile(path.join(root, criteriaPath)));
+  criteria["tests/evaluate.py"] = "0".repeat(64);
+  const altered = Buffer.from(JSON.stringify(criteria));
+  await fs.writeFile(path.join(root, criteriaPath), altered);
+  manifest.provenance.artifacts.find(ref => ref.path === criteriaPath).sha256 = digest(altered);
+  await fs.writeFile(manifestFile, JSON.stringify(manifest));
+  await assert.rejects(loadRecording(root), /criteria changed/);
+});
 test("recorded patch changes actual code exactly once", async (t) => {
   const { root, after } = await fixture(t);
   const manifest = await loadRecording(root);

@@ -1,5 +1,5 @@
 {
-  "status": "awaiting_proposal_review",
+  "status": "verified",
   "prompts": [
     "What are the risks identified for this agent by RELAI?",
     "Use RELAI to build a multi-turn test for the highest-impact risk u found",
@@ -16,11 +16,29 @@
     "independent verification outcome and full trajectory"
   ],
   "screenshots": "presentation examples only; selected risk comes from the actual wiki",
-  "existing_recordings": "retain until new evidence is complete and independently verified",
+  "existing_recordings": "Replaced by exact native Codex replies and verified recorder evidence; previous bundle preserved in task output.",
   "capture_thread": "01a13bf6-fd44-70a1-868c-755cf2f3a748",
   "optimizer_rollout_limit": 6,
   "optimizer_rollouts_used": 0,
-  "blocker": "RELAI requires the human proposal-review answer before building and simulating the staged test.",
+  "blocker": null,
   "runtime_repair_completed": true,
-  "proposed_test": "embedded-json-redaction-two-turn"
+  "proposed_test": "embedded-json-redaction-two-turn",
+  "fix_method": "Codex direct deterministic fix with independent RELAI simulation",
+  "test_id": "embedded-json-redaction-two-turn",
+  "before_scores": [
+    0,
+    0,
+    1,
+    1,
+    1,
+    1
+  ],
+  "after_scores": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+  ]
 }

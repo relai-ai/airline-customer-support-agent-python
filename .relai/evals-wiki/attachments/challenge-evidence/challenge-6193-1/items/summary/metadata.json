@@ -1,0 +1,17 @@
+{
+  "content_path": "challenge-evidence/challenge-6193-1/items/summary/content.json",
+  "content_sha256": "739e6fbb5b5691b57960b9b2523ce719175467374ba4c48f8a4735a46c746e1f",
+  "end_byte": 2487,
+  "ingestion_id": "challenge-6193-1",
+  "item_id": "summary",
+  "kind": "challenge-evidence",
+  "media_type": "application/json",
+  "preview": "{\n  \"behavioral_test_id\": \"embedded-json-redaction-two-turn\",\n  \"challenge_id\": \"challenge-6193\",\n  \"evaluator_scores\": [\n    {\n      \"evaluator_id\": \"snapshot-one-redaction\",\n      \"max_score\": 1.0,\n      \"normalized_score\": 0.0,\n      \"passed\": false,\n      \"score\": 0.0\n    },\n    {\n      \"evaluator_id\": \"snapshot-two-redaction\",\n      \"max_score\": 1.0,\n      \"normalized_score\": 0.0,\n      \"passed\": false,\n      \"score\": 0.0\n    },\n    {\n      \"evaluator_id\": \"cumulative-prefix\",\n      \"max_score\": 1.0,\n      \"normalized_score\": 1.0,\n      \"passed\": true,\n      \"score\": 1.0\n    },\n    {\n      \"evaluator_id\": \"user-steps-and-ids\",\n      \"max_score\": 1.0,\n      \"normalized_score\": 1.0,\n      \"passed\": true,\n      \"score\": 1.0\n    },\n    {\n      \"evaluator_id\": \"history-and-exhaustion\",\n      \"max_score\": 1.0,\n      \"normalized_score\": 1.0,\n      \"passed\": true,\n      \"score\": 1.0\n    },\n    {\n      \"evaluator_id\": \"session-isolation\",\n      \"max_score\": 1.0,\n      \"normalized_score\": 1.0,\n      \"passed\": true,\n      \"score\": 1.0\n    }\n  ],\n  \"failed_evaluators\": [\n    \"snapshot-one-redaction\",\n    \"snapshot-two-redaction\"\n  ],\n  \"failure_kind\": null,\n  \"failure_message\": null,\n  \"outcome\": \"failure\",\n  \"package_digest\": \"b1aca818d00416f52d14902084a31da9018ee109e8145bd137d7cfdbcb1b35f0\",\n  \"raw_items\": {\n    \"result\": {\n      \"bytes\": 5807,\n      \"included\": true,\n      \"omitted_reason\": null,\n      \"path\": \".relai/.internal/challenge-runs/challenge-6193-1-simulation.json\"\n    },\n    \"transcript\": {\n      \"bytes\": 1476,\n      \"content_digest\": \"2454e061cb5922c26cd4afe0dc9a1f40a9346f30bfbf11c3a420f3a51cc95011\",\n      \"included\": true,\n      \"omitted_reason\": null,\n      \"path\": \".relai/.internal/runs/harbor/relai-harbor-11176-1792092105564833000/.stage-challenge-6193__gn28z8g/agent/trajectory.json\"\n    }\n  },\n  \"result_digest\": \"3b91d2679f3c53b30a527bdff5e933d36079f14a4c8a7b57e502ccd6e26c14a4\",\n  \"result_path\": \".relai/.internal/challenge-runs/challenge-6193-1-simulation.json\",\n  \"risk_id\": \"embedded-json-credentials-bypass-trajectory-redaction\",\n  \"schema_version\": \"relai.challenge_evidence.v1\",\n  \"sequence\": 1,\n  \"transcript_attachment_digest\": \"2454e061cb5922c26cd4afe0dc9a1f40a9346f30bfbf11c3a420f3a51cc95011\",\n  \"transcript_digest\": \"004d9a9988c6f86e65e0e008d0c02100ac2dddbe4fa48f519f99f6e5fd35b17e\",\n  \"transcript_path\": \".relai/.internal/runs/harbor/relai-harbor-11176-1792092105564833000/.stage-challenge-6193__gn28z8g/agent/trajectory.json\"\n}",
+  "preview_truncated": false,
+  "rationale": "Compact challenge evidence summary.",
+  "schema_version": "relai.wiki_attachment_item.v1",
+  "source_path": "challenge evidence summary",
+  "source_sha256": "537651d5e997e4f07726e5d1d1cf08466a3ae52d5a7452a579a8838191a0ee8e",
+  "start_byte": 0,
+  "text_hint": true
+}

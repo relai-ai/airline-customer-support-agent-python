@@ -22,6 +22,8 @@ Generated from typed durable records. Each hypothesis is a falsifiable agent-beh
 
 ## confirmed
 
+- [`embedded-json-credentials-bypass-trajectory-redaction`](relai://wiki/hypotheses/risks/embedded-json-credentials-bypass-trajectory-redaction.md) — high/high/high; mechanism: The redactor recursively filters serialized credential fields only when the entire string parses as JSON. JSON embedded in prose or a Markdown code fence fails that parse, while the fallback credential regex does not match quoted JSON field names such as "password" followed by a closing quote before the colon.; trigger: In a fresh isolated session, submit a baggage-support message containing a fenced JSON diagnostic with {"password":"opaque-demo-73915"}, then fully consume the response and inspect the native trajectory. Use only this synthetic sentinel, leave it absent from provider keys and explicitly declared secret variables, and include surrounding prose so the message is not a standalone JSON document.; observable failure: The saved ATIF user step contains the literal synthetic password value instead of masking it, even though it is explicitly labeled as a password in the embedded JSON.; requirements: [trajectory-secret-redaction](relai://wiki/requirements/trajectory-secret-redaction.md); active agent tests: relai://learning-env/embedded-json-redaction-two-turn
+
 ## rejected
 
 ## retired

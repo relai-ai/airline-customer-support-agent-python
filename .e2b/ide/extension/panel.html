@@ -539,7 +539,13 @@
       function formatted(content) {
         const root = node("div", "");
         const inline = (target, text) => {
-          for (const part of text.split(/(\*\*[^*\n]+\*\*|`[^`\n]+`)/g)) {
+          for (const part of text.split(/(\[[^\]\n]+\]\([^\s)]+\)|\*\*[^*\n]+\*\*|`[^`\n]+`)/g)) {
+            const link = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+            const saved = link && typeof recording !== "undefined" && recording?.savedLinks?.[link[2]];
+            if (saved) {
+              target.append(button(link[1] + " ↗", () => post("artifact", { file: saved })));
+              continue;
+            }
             target.append(
               part.startsWith("**") && part.endsWith("**")
                 ? node("strong", part.slice(2, -2))
@@ -551,7 +557,7 @@
         };
         let paragraph = [],
           list,
-          code;
+          code, codeFence = 0;
         const flush = () => {
           if (paragraph.length) {
             const p = node("p", "");
@@ -579,13 +585,15 @@
             }
             table.append(body); wrapper.append(table); root.append(wrapper); continue;
           }
-          if (line.trim().startsWith("```")) {
+          const fence = line.trim().match(/^(`{3,})/);
+          if (fence && (!code || (fence[1].length >= codeFence && /^`+\s*$/.test(line.trim())))) {
             flush();
             list = null;
             if (code) {
               root.append(node("pre", code.join("\n")));
               code = null;
-            } else code = [];
+              codeFence = 0;
+            } else { code = []; codeFence = fence[1].length; }
             continue;
           }
           if (code) {
@@ -736,7 +744,9 @@
             timingText = [
               "Codex + RELAI precomputed results",
               "Precomputed Codex + RELAI · baseline simulation",
-              "Precomputed Codex + RELAI · " + recording.provenance.totalRollouts + "-rollout budget",
+              recording.evidenceKind === "deterministic-recorder"
+                ? "Precomputed Codex + RELAI · independent verification"
+                : "Precomputed Codex + RELAI · " + recording.provenance.totalRollouts + "-rollout budget",
             ][index];
           if (Number.isFinite(timing?.durationSeconds))
             timingText +=
@@ -768,7 +778,9 @@
             const sample = node("div", "");
             sample.className = "sample-reply";
             sample.append(
-              node("small", "ACTUAL AGENT RESPONSE · EXCHANGE " + (sampleIndex + 1)),
+              node("small", (recording.evidenceKind === "deterministic-recorder"
+                ? "SCRIPTED SDK RESPONSE · RECORDER PROBE · EXCHANGE "
+                : "ACTUAL AGENT RESPONSE · EXCHANGE ") + (sampleIndex + 1)),
               formatted(recording.turns[sampleIndex]?.agent || ""),
             );
             reply.append(sample, simulationViewer());
@@ -793,7 +805,7 @@
             message("user", recording.prompts[3]),
             message(
               "assistant",
-              "Applied the verified improvement to this workspace. You can now run RELAI on your own requests, inspect the code, or test the off-topic boundary yourself.",
+              recording.applyMessage || "Applied the verified improvement to this workspace. You can now run RELAI on your own requests, inspect the code, or test the off-topic boundary yourself.",
             ),
           );
           if (recording.fixedExample) {
@@ -803,7 +815,7 @@
               node("small", "RECORDED VERIFICATION · THE SAME REQUEST AFTER OPTIMIZATION"),
               node("small", "ADVERSARIAL USER"),
               formatted(recording.fixedExample.user),
-              node("small", "UPDATED AIRLINE AGENT"),
+              node("small", recording.evidenceKind === "deterministic-recorder" ? "SCRIPTED SDK RESPONSE · RECORDER VERIFIED" : "UPDATED AIRLINE AGENT"),
               formatted(recording.fixedExample.agent),
               node("p", recording.fixedExample.evidence || "See the saved trajectory for the tool-call evidence."),
             );
