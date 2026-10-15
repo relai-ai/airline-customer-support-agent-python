@@ -138,6 +138,8 @@ function activate(context) {
             "revealInExplorer",
             vscode.Uri.file(path.join(root, folders[msg.folder])),
           );
+          await vscode.commands.executeCommand("workbench.files.action.focusFilesExplorer");
+          await vscode.commands.executeCommand("list.expand");
           current.webview.postMessage({
             type: "folder-opened",
             folder: msg.folder,
