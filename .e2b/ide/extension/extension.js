@@ -90,6 +90,7 @@ function activate(context) {
           const investigation = { investigation: codex.snapshot() };
           current.webview.postMessage({
             type: "loaded",
+            sessionId: env.PLAYGROUND_SESSION_ID,
             recording,
             recordedProgress: context.workspaceState.get(recordingKey, 0),
             ...investigation,
@@ -195,7 +196,7 @@ function activate(context) {
                 description: file.before === null ? "Added" : "Modified",
               })),
               {
-                title: "RELAI optimized changes",
+                title: "Recorded code changes",
                 placeHolder: "Choose a file to compare before and after",
               },
             );
