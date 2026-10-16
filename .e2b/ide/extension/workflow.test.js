@@ -174,11 +174,15 @@ test("recorded and edited requests dispatch distinct actions, and apply is expli
   handlers.message({
     data: { type: "loaded", recording, recordedProgress: 0 },
   });
+  assert.equal(elements.get("next-steps").hidden, true);
+  assert.equal(elements.get("next-steps").children.length, 0);
   assert.equal(elements.get("prompt").value, prompts[0]);
   elements.get("send").click();
   assert.equal(sent.at(-1).action, "recorded");
   assert.equal(sent.at(-1).step, 0);
   handlers.message({ data: { type: "recorded", recordedProgress: 1 } });
+  assert.equal(elements.get("next-steps").hidden, true);
+  assert.equal(elements.get("next-steps").children.length, 0);
   assert.equal(elements.get("history").children[0].scrolledIntoView, "start");
   const riskNodes = flatten(elements.get("history"));
   assert.equal(riskNodes.filter(n => n.tag === "table").length, 1);
@@ -194,6 +198,8 @@ test("recorded and edited requests dispatch distinct actions, and apply is expli
   assert.equal(sent.at(-1).step, 1);
   assert.equal(recording.prompts[1], "Use RELAI to build a multi-turn test for the highest-impact risk u found");
   handlers.message({ data: { type: "recorded", recordedProgress: 2 } });
+  assert.equal(elements.get("next-steps").hidden, true);
+  assert.equal(elements.get("next-steps").children.length, 0);
   assert.equal(elements.get("prompt").value, "Use RELAI to fix the failures the test found.");
   assert.equal(elements.get("history").children[2].scrolledIntoView, "start");
   flatten(elements.get("history"))
@@ -268,6 +274,7 @@ test("recorded and edited requests dispatch distinct actions, and apply is expli
   assert.equal(sent.at(-1).action, "recorded");
   assert.equal(sent.at(-1).step, 3);
   assert.equal(elements.get("next-steps").hidden, true);
+  assert.equal(elements.get("next-steps").children.length, 0, "Submitting Apply must not reveal suggestions before it succeeds");
   assert.ok(!flatten(elements.get("history")).some(n => n.className === "next-steps"));
   recording.evidenceKind = "deterministic-recorder";
   recording.fixedExample = { user: "Synthetic input", agent: "Fixture answer" };
@@ -283,6 +290,7 @@ test("recorded and edited requests dispatch distinct actions, and apply is expli
   const suggestions = flatten(elements.get("next-steps")).find(n => n.className === "next-steps");
   const choices = flatten(suggestions).filter(n => n.tag === "button");
   assert.equal(choices.length, 4);
+  assert.ok(!flatten(suggestions).some(n => n.textContent.startsWith("Choose a suggestion")));
   const sentCount = sent.length;
   for (const choice of choices) {
     choice.click();
