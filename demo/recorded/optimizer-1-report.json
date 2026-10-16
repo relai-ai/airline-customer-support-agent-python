@@ -1,10 +1,10 @@
 {
   "changes": [
     {
-      "title": "Replace conflicting rules with tool-backed booking guidance"
+      "title": "Ground support decisions in authoritative lookups"
     }
   ],
-  "title": "Ground airline booking guidance in tool-backed state",
-  "summary": "Replaced conflicting airline-support instructions with tool-backed guidance to keep booking responses grounded and truthful.\n\n- Clarified booking authority, read-only verification, booking attribution, and seat-change guidance.\n- Confirmed the active streaming path uses the replacement instructions and added focused construction and wiring tests.\n\nTests and real-model replay were not run, so semantic improvement remains unvalidated.",
-  "inconsistency": ""
+  "title": "Ground airline support in authoritative state",
+  "summary": "Updated the active airline-support policy to prioritize authoritative lookups over customer summaries, reducing reliance on potentially stale or incomplete information.\n\n- Clarified action boundaries and required complete corrections covering current seats and authorization scope.\n- Added regression tests for policy consumption and unchanged tool/model wiring. Tests and simulations were not run, so behavioral improvement remains unverified.",
+  "inconsistency": "The change summary states that tests and simulations were not run, but the supplied environment outcomes report a score improvement. The source of that outcome is not explained."
 }

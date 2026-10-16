@@ -1,27 +1,97 @@
 {
-  "applied": true,
-  "accepted_commit": "7be6678a095bdc80eb1d28888c91e8cac105dd2e",
-  "head_unchanged": "1708690eaed46b43abd402d7e003e9fc1e858746",
-  "changed_files": [
+  "baseline_commit": "1708690eaed46b43abd402d7e003e9fc1e858746",
+  "accepted_commit": "5e92fdb86bfa2279c07d66645a5c3147bacf3714",
+  "cwd": "/private/tmp/playground-booking-grounding-clean",
+  "before_status": "?? .relai/\n",
+  "before_hashes": {
+    "src/airline_support/agent.py": "eae160993592e5b1ccd2b48ba2d47509935cfcc827726da94019cabefc6d6569",
+    "tests/test_agent_instructions.py": null
+  },
+  "patch_sha256": "9020c480c56810b08dc4aa097703af0fdee76e793b81c1c5f04621c4f314471b",
+  "changed_paths": [
     "src/airline_support/agent.py",
-    "tests/test_agent_policy.py",
-    "tests/test_trajectory.py"
+    "tests/test_agent_instructions.py"
   ],
-  "after_source_hashes": {
-    "src/airline_support/agent.py": "e9314ea2c668b79100ddf5659bf4a0feb6914e75531784c6dd06f233b57e957b",
-    "tests/test_agent_policy.py": "a1f53942c831b1cc39e66c86073c74e8a1c0da14df54745b32b5b64ef9d591a9",
-    "tests/test_trajectory.py": "3dac2b49a0211ec35fb8a2fd69849dfe0535a4a785863b9cc59783dd150d5f73"
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "apply",
+        "--check",
+        "/private/tmp/playground-booking-grounding-clean/work/live-recording/measured-evidence/accepted.patch"
+      ],
+      "exit_status": 0,
+      "duration_seconds": 0.008365957997739315,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "apply",
+        "/private/tmp/playground-booking-grounding-clean/work/live-recording/measured-evidence/accepted.patch"
+      ],
+      "exit_status": 0,
+      "duration_seconds": 0.008416166994720697,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "applied": true,
+  "after_hashes": {
+    "src/airline_support/agent.py": "6e8aa6c5aa42a3e1b777a736d1024d201f3cfd6435d0107714f93698c577acdf",
+    "tests/test_agent_instructions.py": "830711fdba26a4a75c3d9896062084f8859a7f2204642931dffb12e681758623"
   },
-  "exact_accepted_bytes": true,
+  "candidate_hashes": {
+    "src/airline_support/agent.py": "6e8aa6c5aa42a3e1b777a736d1024d201f3cfd6435d0107714f93698c577acdf",
+    "tests/test_agent_instructions.py": "830711fdba26a4a75c3d9896062084f8859a7f2204642931dffb12e681758623"
+  },
+  "exact_candidate_bytes": true,
+  "frozen_package_files": 40,
   "package_unchanged": true,
-  "status": " M src/airline_support/agent.py\n M tests/test_trajectory.py\n?? .relai/\n?? tests/test_agent_policy.py\n",
+  "head_unchanged": true,
+  "after_status": " M src/airline_support/agent.py\n?? .relai/\n?? tests/test_agent_instructions.py\n",
   "checks": {
-    "pytest": "46 passed using existing .venv; keys unset",
-    "shell_syntax": "passed",
-    "diff_check": "passed"
+    "30-apply-pytest": {
+      "argv": [
+        "env",
+        "-u",
+        "OPENAI_API_KEY",
+        "-u",
+        "ANTHROPIC_API_KEY",
+        "PYTHONPATH=/private/tmp/playground-booking-grounding-clean/src",
+        "work/live-recording/verification-checkout/.venv/bin/python",
+        "-m",
+        "pytest"
+      ],
+      "cwd": "/private/tmp/playground-booking-grounding-clean",
+      "started_at": "2026-10-16T04:18:57.753692+00:00",
+      "exit_status": 0,
+      "duration_seconds": 1.0999314161017537
+    },
+    "31-apply-shell": {
+      "argv": [
+        "bash",
+        "-n",
+        "start.sh"
+      ],
+      "cwd": "/private/tmp/playground-booking-grounding-clean",
+      "started_at": "2026-10-16T04:18:57.757674+00:00",
+      "exit_status": 0,
+      "duration_seconds": 0.0030657919123768806
+    },
+    "32-apply-diff": {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "cwd": "/private/tmp/playground-booking-grounding-clean",
+      "started_at": "2026-10-16T04:18:57.761714+00:00",
+      "exit_status": 0,
+      "duration_seconds": 0.01101470785215497
+    }
   },
-  "post_check_bytes_match": true,
-  "post_check_package_unchanged": true,
-  "startup_review": "Instruction and regression-test changes only; no bootstrap changes. App startup not run in this apply step.",
-  "uv_attempt": "Sandbox cache permission failure; preserved in phase 84; existing environment pytest passed in phase 87."
+  "post_check_hashes_verified": true,
+  "startup_review": "Instruction/test changes only, no bootstrap changes; prior fresh-process Harbor startup exercised real entrypoint. No app startup or new live evaluation in Apply step."
 }

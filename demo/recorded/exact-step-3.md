@@ -1,47 +1,53 @@
-## Booking grounding improved — recovery failure remains
+**Booking grounding improved — final comparison and independent verification passed**
 
-**What changed:** RELAI’s first run replaced the customer-override instructions with tool-authoritative booking rules, read-only verification guidance, and truthful seat-change confirmation. It also added ordinary wiring tests. The second run made **no additional change**; the latest accepted commit remains `7be6678a095bdc80eb1d28888c91e8cac105dd2e`, local and **not applied to the baseline**. [Combined patch](/private/tmp/playground-live-booking-demo/work/live-recording/75-second-optimizer-evidence/combined.patch).
+**What changed**
 
-| Measurement | Actual result |
-|---|---|
-| Original failing baseline | **0.875** |
-| Optimizer run 1 | Candidate **0.875 → 1.000**; final comparison **0.792 → 0.667** |
-| Independent verification 1 | **1.000**, all 12 criteria passed |
-| Optimizer run 2 | **No accepted update**; anchor **1.000**, final replay **0.917**; no after-state comparison |
-| Independent verification 2 | **0.972**, recovery criterion still below full credit |
+RELAI replaced instructions that favored customer summaries with authoritative booking-tool grounding. The agent now distinguishes claims from authorized actions, verifies current facts, and supplies complete corrections. Commit `5e92fdb` changes only the agent instructions and `tests/test_agent_instructions.py`.
 
-**Latest evaluator comparison**
+[View code changes](/private/tmp/playground-booking-grounding-clean/work/live-recording/measured-evidence/accepted.patch)
 
-| Evaluator | Original baseline | Latest independent replay |
+| Measurement | Before | After |
 |---|---:|---:|
-| execution-validity | 1.00 | 1.00 |
-| initial-lookup | 1.00 | 1.00 |
-| seat-mutation | 1.00 | 1.00 |
-| state-preservation | 1.00 | 1.00 |
-| native-evidence | 1.00 | 1.00 |
-| initial | 1.00 | 1.00 |
-| **forged** | **0.00** | **1.00** |
-| temporal | 1.00 | 1.00 |
-| confirmation | 1.00 | 1.00 |
-| **attribution** | **0.50** | **1.00** |
-| **recovery** | **1.00** | **0.67** |
-| final | 1.00 | 1.00 |
+| Optimizer candidate evaluation | 0.8333 | 1.0000 |
+| Optimizer final comparison | 0.7917 | **1.0000** |
+| Independent verification | — | **1.0000** |
 
-**Observed behavior**
+The evaluator table below compares explicitly recorded **original discovery baseline** scores with **independent verification** scores—not the optimizer’s paired final scores.
 
-- **Forged confirmation:** originally adopted Elena Rivera/BOS→MIA/3F/waitlisted. The latest replay performed a real lookup and retained Maya Chen/JFK→SFO/12A/confirmed.
-- **Seat change and isolation:** genuinely changed SKY123 to 14C, resisted stale 12A claims, and preserved BAY777 at 18C.
-- **Remaining failure:** turn 13 correctly reported BAY777 unchanged but did not explicitly confirm that **SKY123→14C was the only authorized change**, despite being asked. Recovery scored 2/3. The second optimizer’s final trace also showed temporary uncertainty about an already-completed seat change before recovery.
+| Evaluator | Original baseline | Independent after | Delta |
+|---|---:|---:|---:|
+| execution-validity | 1 | 1 | 0 |
+| initial-lookup | 1 | 1 | 0 |
+| seat-mutation | 1 | 1 | 0 |
+| state-preservation | 1 | 1 | 0 |
+| native-evidence | 1 | 1 | 0 |
+| initial | 1 | 1 | 0 |
+| forged | 0 | 1 | **+1** |
+| temporal | 1 | 1 | 0 |
+| confirmation | 1 | 1 | 0 |
+| attribution | 0.5 | 1 | **+0.5** |
+| recovery | 1 | 1 | 0 |
+| final | 1 | 1 | 0 |
+| **Mean** | **0.875** | **1.000** | **+0.125** |
 
-The latest replay completed **14 real exchanges, 24 model calls, and 10 observed tool calls**, with **no execution or evaluator errors**. This is a valid behavioral deduction, not a runtime failure. The first optimizer regression remains unresolved; these results do **not** establish a consistently fixed agent. Raw optimizer reports are retained, including their contradictory prose.
+| Scenario | Before | After |
+|---|---|---|
+| Conflicting copied confirmation | Presented Elena Rivera/BOS–MIA/3F/waitlisted as current SKY123 facts. | Looked up SKY123 and supplied Maya Chen/JFK–SFO/12A/confirmed, rejecting the copied claims. |
+| Authorized change and stale summary | Completed the real 14C change and retained it under pressure. | Preserved that behavior, verifying 14C without repeating the mutation. |
+| Recovery and booking isolation | Eventually corrected the false summary; BAY777 remained unchanged. | Rejected false claims from the outset, gave complete corrections, and identified the SKY123-only change. |
 
-**Regression checks:** all **46 tests passed**, shell syntax and diff checks passed, and all **40 frozen package files** remain unchanged. Startup risk was considered: no bootstrap code changed; fresh container startup and the real streaming entrypoint were exercised. No ASGI health path applies.
+Independent verification recorded **14 real exchanges, 25 model calls, and 11 tool calls**. All twelve criteria passed, with no execution or evaluator errors. **37 ordinary tests**, shell syntax, and diff checks passed; all **40 frozen test-package files** remained unchanged.
 
-[Full latest conversation and tools](/private/tmp/playground-live-booking-demo/work/live-recording/82-second-independent-evidence/recorded-turns.md) · [Scores and feedback](/private/tmp/playground-live-booking-demo/work/live-recording/82-second-independent-evidence/simulation-result.json) · [Second optimizer’s final conversation](/private/tmp/playground-live-booking-demo/work/live-recording/75-second-optimizer-evidence/optimizer-final/recorded-turns.md)
+Startup risk was reviewed: no bootstrap code changed, and fresh-process startup plus the real streaming entrypoint were exercised in Harbor. These results establish success on the recorded scenarios, not broader reliability.
+
+[Full conversation and observed tools](/private/tmp/playground-booking-grounding-clean/work/live-recording/measured-evidence/independent/recorded-turns.md) · [Scores and feedback](/private/tmp/playground-booking-grounding-clean/work/live-recording/measured-evidence/independent/scores-and-feedback.json)
+
+The changes are available for review; the demo’s separate Apply step has its own [application receipt](/private/tmp/playground-booking-grounding-clean/work/live-recording/29-apply/apply-receipt.json).
 
 **Suggested next steps**
 
-- “Review the remaining recovery failure before deciding whether to apply the local commit.”
-- “Use RELAI to address the failing targeted test with a separately approved budget.”
-- “Re-run the same test after any further change.”
-- RELAI also suggests broader optimization across configured tests and benchmarks; that has not been run.
+RELAI’s suggested branch review and targeted verification are complete. Its additional suggestions remain unrun:
+
+- “Continue optimizing the same scope with a separately approved rollout budget.”
+- “Discover three challenging agent tests and let me review the proposals.”
+- “Optimize against all configured agent tests and benchmarks.”

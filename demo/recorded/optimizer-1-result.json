@@ -1,12 +1,12 @@
 {
   "schema_version": "relai.optimizer_result.v1",
-  "run_id": "optimizer-1792115355-616191000",
-  "artifact_dir": ".relai/.internal/runs/optimizer/optimizer-1792115355-616191000",
-  "optimizer_debug_artifact_path": ".relai/.internal/runs/optimizer/optimizer-1792115355-616191000/optimizer-debug.json",
-  "pr_summary_artifact_path": ".relai/.internal/runs/optimizer/optimizer-1792115355-616191000/pr-summary.json",
-  "pr_description_artifact_path": ".relai/.internal/runs/optimizer/optimizer-1792115355-616191000/pr-description.md",
-  "optimization_report_artifact_path": ".relai/.internal/runs/optimizer/optimizer-1792115355-616191000/optimization-report.json",
-  "source_workspace_path": "/private/tmp/playground-live-booking-demo",
+  "run_id": "optimizer-1792123332-260674000",
+  "artifact_dir": ".relai/.internal/runs/optimizer/optimizer-1792123332-260674000",
+  "optimizer_debug_artifact_path": ".relai/.internal/runs/optimizer/optimizer-1792123332-260674000/optimizer-debug.json",
+  "pr_summary_artifact_path": ".relai/.internal/runs/optimizer/optimizer-1792123332-260674000/pr-summary.json",
+  "pr_description_artifact_path": ".relai/.internal/runs/optimizer/optimizer-1792123332-260674000/pr-description.md",
+  "optimization_report_artifact_path": ".relai/.internal/runs/optimizer/optimizer-1792123332-260674000/optimization-report.json",
+  "source_workspace_path": "/private/tmp/playground-booking-grounding-clean",
   "worktree_code_path": "",
   "attempted_batches": 1,
   "attempted_turns": 1,
@@ -53,15 +53,15 @@
         "environment_path": ".relai/harbor/agent-tests/skyserve-authoritative-state-adaptive-dialogue",
         "environment_description": "Fourteen live adaptive exchanges testing current booking authority and useful seat changes.",
         "score_before": 0.7916666666666666,
-        "score_after": 0.6666666666666666,
-        "score_delta": -0.125,
+        "score_after": 1.0,
+        "score_delta": 0.20833333333333337,
         "failed_before": false,
         "failed_after": false
       }
     ],
     "aggregate_score_before": 0.7916666666666666,
-    "aggregate_score_after": 0.6666666666666666,
-    "aggregate_score_delta": -0.125,
+    "aggregate_score_after": 1.0,
+    "aggregate_score_delta": 0.20833333333333337,
     "failure_count_before": 0,
     "failure_count_after": 0,
     "failure_count_delta": 0,
@@ -69,7 +69,7 @@
     "observed_pattern_summary": ""
   },
   "pr_summary": {
-    "run_id": "optimizer-1792115355-616191000",
+    "run_id": "optimizer-1792123332-260674000",
     "selector": "explicit-environments",
     "accepted_updates": 1,
     "accepted_turn_indices": [
@@ -94,25 +94,25 @@
           ".relai/harbor/agent-tests/skyserve-authoritative-state-adaptive-dialogue"
         ],
         "deferred_environment_paths": [],
-        "change_title": "Replace conflicting rules with tool-backed booking guidance",
-        "change_summary": "Replaced the conflicting rules in src/airline_support/agent.py with tool-backed booking authority, read-only verification, booking attribution, and truthful seat-change guidance. The grounded session adapter calls stream_agent_response, which constructs a fresh agent with these instructions each turn, so the active path consumes the replacement.\n\nAdded focused construction and streaming-wiring tests; existing cancellation coverage remains unchanged. Static self-review matched the approved scope, but tests and real-model replay were not run, so semantic improvement remains unvalidated.",
-        "diagnosis_summary": "SkyServe incorrectly promotes customer-supplied booking claims into authoritative summaries because its current instructions explicitly prefer those claims over lookup results. Run 1 directly shows this at native step 5 after a successful lookup: forged-claim resistance scores 0 and booking attribution scores 0.5. A related verification request is unnecessarily deferred at step 9. Execution, genuine seat mutation, temporal updates, recovery, and final summaries pass; the appropriate change is targeted instruction replacement, not runtime repair.",
-        "chosen_plan_summary": "Replace the two harmful summary-authority instructions in AIRLINE_AGENT_INSTRUCTIONS with a concise policy that prioritizes current tool-backed booking facts, treats customer confirmations and assistant summaries as non-authoritative, performs requested read-only verification without redundant permission requests, and preserves authorized mutation handling.",
+        "change_title": "Ground support decisions in authoritative lookups",
+        "change_summary": "Replaced customer-summary precedence in src/airline_support/agent.py with authoritative lookup grounding, explicit action boundaries, and complete corrections including current seats and authorization scope. The grounded session adapter calls stream_agent_response, which constructs a fresh Agent with these instructions each turn, so the active path consumes the replacement policy.\n\nAdded tests/test_agent_instructions.py to guard policy consumption and unchanged tool/model wiring; existing tests and evaluator assets remain untouched. Re-read and self-review matched the approved scope; tests and simulations were not run, so behavioral improvement remains unverified.",
+        "diagnosis_summary": "SkyServe's instructions explicitly tell the agent to prefer customer-supplied booking summaries over lookup results and avoid repeat lookups. The native transcript shows this policy being followed: steps 5, 7, and 9 endorse unsupported passenger, route, seat, or status claims. A separate completeness gap occurs when an otherwise correct correction omits the requested current seat. Booking mutations, replay, recording, and the final summary work correctly; this is an answer-grounding problem, not an output-format or booking-store defect.",
+        "chosen_plan_summary": "Replace the contradictory booking-authority instructions with a concise workflow: verify current booking facts through lookup, treat customer summaries and replayed assistant prose as unverified claims, distinguish assertions from authorized actions, ground completion in successful tool results, and answer corrections with the requested current facts and authorization scope.",
         "anchor_outcome_summary": {
           "environment_summaries": [
             {
               "environment_path": ".relai/harbor/agent-tests/skyserve-authoritative-state-adaptive-dialogue",
               "environment_description": "Fourteen live adaptive exchanges testing current booking authority and useful seat changes.",
-              "score_before": 0.875,
+              "score_before": 0.8333333333333334,
               "score_after": 1.0,
-              "score_delta": 0.125,
+              "score_delta": 0.16666666666666663,
               "failed_before": false,
               "failed_after": false
             }
           ],
-          "aggregate_score_before": 0.875,
+          "aggregate_score_before": 0.8333333333333334,
           "aggregate_score_after": 1.0,
-          "aggregate_score_delta": 0.125,
+          "aggregate_score_delta": 0.16666666666666663,
           "failure_count_before": 0,
           "failure_count_after": 0,
           "failure_count_delta": 0,
@@ -122,7 +122,7 @@
         "regression_target_paths": [],
         "regression_outcome_summary": null,
         "regression_selection_failure_reason": "",
-        "anchor_decision_summary": "Keep. Replacing the explicit customer-override instructions materially improved the targeted authority failure: the anchor rose from 0.875 to 1.0, forged-claim resistance from 0 to 1, and booking attribution from 0.5 to 1. All twelve grounded evaluators pass after the change, including genuine seat mutation, temporal correctness, state preservation, and native evidence. The exercised path is the configured adapter → stream_agent_response → fresh create_airline_agent → SDK model/tool loop; the revised policy is consumed on that normal path. The environment literally checks fourteen exchanges with booking facts and mutations, represents broader resistance to conflicting customer claims across conversations, and legitimately tests this airline agent's tool-grounded support capability. The implementation is a general reasoning-policy correction, not a case-keyed solver, and preserves the product and simulator structure. Evidence supports mechanism confirmation in this anchor, not broad reliability across untested scenarios.",
+        "anchor_decision_summary": "Keep. The targeted anchor improved from 0.8333 to 1.0 across the grounded twelve-evaluator contract: forged-fact handling improved from 0 to 1, and temporal completeness and attribution from 0.5 to 1. The change replaces contradictory authority instructions rather than adding a competing rule. On the exercised history-replay → stream_agent_response → fresh SDK Agent path, the after-run performs a fresh lookup before rejecting copied claims, preserves the genuine authorized seat mutation, supplies requested current facts, and correctly separates booking and authorization scope. This confirms the intended mechanism for this execution. Literally, the environment checks fourteen exchanges, native evidence, booking state, and semantic answers; more broadly, it represents useful airline support under conflicting customer claims. The implemented authority-and-action workflow improves that legitimate capability through normal reasoning and tools, without changing the product, simulator, models, or tool inventory. It is mechanism-level and plausibly generalizable, not keyed to fixture values. Reliability beyond this single recorded execution remains unestablished.",
         "regression_decision_summary": "",
         "risks_or_open_questions": []
       }
@@ -131,13 +131,13 @@
   "optimization_report": {
     "changes": [
       {
-        "title": "Replace conflicting rules with tool-backed booking guidance"
+        "title": "Ground support decisions in authoritative lookups"
       }
     ],
-    "title": "Ground airline booking guidance in tool-backed state",
-    "summary": "Replaced conflicting airline-support instructions with tool-backed guidance to keep booking responses grounded and truthful.\n\n- Clarified booking authority, read-only verification, booking attribution, and seat-change guidance.\n- Confirmed the active streaming path uses the replacement instructions and added focused construction and wiring tests.\n\nTests and real-model replay were not run, so semantic improvement remains unvalidated.",
-    "inconsistency": ""
+    "title": "Ground airline support in authoritative state",
+    "summary": "Updated the active airline-support policy to prioritize authoritative lookups over customer summaries, reducing reliance on potentially stale or incomplete information.\n\n- Clarified action boundaries and required complete corrections covering current seats and authorization scope.\n- Added regression tests for policy consumption and unchanged tool/model wiring. Tests and simulations were not run, so behavioral improvement remains unverified.",
+    "inconsistency": "The change summary states that tests and simulations were not run, but the supplied environment outcomes report a score improvement. The source of that outcome is not explained."
   },
-  "pr_title": "Ground airline booking guidance in tool-backed state",
-  "pr_description": "Accepted optimizer changes improved the agent on the evaluated environments.\n\n## Final evaluation\n\nTouched environments were re-evaluated against the initial agent state and the final accepted state.\n\n| Environment | Description | Score Before | Score After | Diff |\n| --- | --- | ---: | ---: | ---: |\n| `skyserve-authoritative-state-adaptive-dialogue` | Fourteen live adaptive exchanges testing current booking authority and useful seat changes. | 79% | 67% | (-13%) |\n\n## Change 1 of 1: Replace conflicting rules with tool-backed booking guidance\n\n**Summary**\n\nReplaced the conflicting rules in src/airline_support/agent.py with tool-backed booking authority, read-only verification, booking attribution, and truthful seat-change guidance. The grounded session adapter calls stream_agent_response, which constructs a fresh agent with these instructions each turn, so the active path consumes the replacement.\n\nAdded focused construction and streaming-wiring tests; existing cancellation coverage remains unchanged. Static self-review matched the approved scope, but tests and real-model replay were not run, so semantic improvement remains unvalidated.\n\n**Training environments**\n\n| Environment | Description | Score Before | Score After | Diff |\n| --- | --- | ---: | ---: | ---: |\n| `skyserve-authoritative-state-adaptive-dialogue` | Fourteen live adaptive exchanges testing current booking authority and useful seat changes. | 88% | 100% | (+13%) |\n"
+  "pr_title": "Ground airline support in authoritative state",
+  "pr_description": "Accepted optimizer changes improved the agent on the evaluated environments.\n\n## Final evaluation\n\nTouched environments were re-evaluated against the initial agent state and the final accepted state.\n\n| Environment | Description | Score Before | Score After | Diff |\n| --- | --- | ---: | ---: | ---: |\n| `skyserve-authoritative-state-adaptive-dialogue` | Fourteen live adaptive exchanges testing current booking authority and useful seat changes. | 79% | 100% | (+21%) |\n\n## Change 1 of 1: Ground support decisions in authoritative lookups\n\n**Summary**\n\nReplaced customer-summary precedence in src/airline_support/agent.py with authoritative lookup grounding, explicit action boundaries, and complete corrections including current seats and authorization scope. The grounded session adapter calls stream_agent_response, which constructs a fresh Agent with these instructions each turn, so the active path consumes the replacement policy.\n\nAdded tests/test_agent_instructions.py to guard policy consumption and unchanged tool/model wiring; existing tests and evaluator assets remain untouched. Re-read and self-review matched the approved scope; tests and simulations were not run, so behavioral improvement remains unverified.\n\n**Training environments**\n\n| Environment | Description | Score Before | Score After | Diff |\n| --- | --- | ---: | ---: | ---: |\n| `skyserve-authoritative-state-adaptive-dialogue` | Fourteen live adaptive exchanges testing current booking authority and useful seat changes. | 83% | 100% | (+17%) |\n"
 }

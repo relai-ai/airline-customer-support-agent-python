@@ -5,12 +5,14 @@
     "OPENAI_API_KEY",
     "-u",
     "ANTHROPIC_API_KEY",
+    "UV_OFFLINE=1",
     "uv",
     "run",
+    "--frozen",
     "pytest"
   ],
-  "cwd": "/private/tmp/playground-live-booking-demo/work/live-recording/verification-checkout-2",
-  "started_at": "2026-10-16T03:03:35.422832+00:00",
+  "cwd": "/private/tmp/playground-booking-grounding-clean/work/live-recording/verification-checkout",
+  "started_at": "2026-10-16T04:15:26.385279+00:00",
   "exit_status": 0,
-  "duration_seconds": 4.8130018333904445
+  "duration_seconds": 3.1498839580453932
 }

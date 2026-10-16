@@ -1,7 +1,7 @@
-Applied the accepted candidate `7be6678` to this local demo workspace. Booking-tool facts now take precedence over customer claims and stale summaries. The three changed Python files match the accepted commit exactly; RELAI test artifacts are unchanged.
+Applied the exact accepted change from `5e92fdb` to this local demo workspace. Booking summaries now follow authoritative tool results, preserve the authorized seat change, and keep separate bookings distinct.
 
-All 46 ordinary tests, shell syntax, and diff checks passed. Startup risk was reviewed; no bootstrap changes were involved, and the app was not started. No new live evaluation, commit, or deployment occurred.
+The prior final comparison improved **0.7917 → 1.0000**, and independent verification passed **all 12 criteria**. After application, all **37 ordinary tests**, shell syntax, and diff checks passed. Both changed files match the accepted commit; all 40 test-package files remain unchanged.
 
-This remains a **partial improvement**: latest independent verification scored 0.972, with recovery at 2/3; the earlier optimizer comparison regressed from 0.792 to 0.667.
+Startup risk was reviewed: no bootstrap code changed, and prior live verification exercised fresh-process startup. No new live evaluation, commit, deployment, or preview change occurred.
 
-[Application receipt](</private/tmp/playground-live-booking-demo/work/live-recording/83-apply-accepted/apply-receipt.json>)
+[Application receipt](/private/tmp/playground-booking-grounding-clean/work/live-recording/29-apply/apply-receipt.json)

@@ -1,12 +1,7 @@
 {
   "verification-outcome.json": {
-    "sourceSha256": "b2f0ceab79dccfb8b02f4ba4368fc6d02f01db4dd90500fc9ecb788f72f1bd35",
-    "packagedSha256": "7979834c2faf258b48ba37f6308f44c7d9d37822d2241495390ecf162d576222",
-    "operation": "JSON whitespace normalization only; all fields retained"
-  },
-  "verification-1-outcome.json": {
-    "sourceSha256": "3ab4a34357f13f45b86f2efc5cd35c29dcaf79a79b65659cac3dd0347686deea",
-    "packagedSha256": "0e0e2ed4b3c7b419670d0d17daafc403dbf75d93788a0d5e27b4d994b72f1986",
+    "sourceSha256": "8cda89ce5d687155c2b9b6b0ab3565a25847ec95900f2d5e45b7ff58695c4658",
+    "packagedSha256": "ff22b1e890ddbfd2763067011b272832b1fc529819bbc51c88255e7283b35adb",
     "operation": "JSON whitespace normalization only; all fields retained"
   }
 }

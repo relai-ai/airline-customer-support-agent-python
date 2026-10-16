@@ -1,5 +1,5 @@
 {
-  "status": "mixed",
+  "status": "verified",
   "prompts": [
     "What are the risks identified for this agent by RELAI?",
     "Use RELAI to build a multi-turn test for the highest-impact risk you found.",
@@ -10,27 +10,27 @@
   "capture_thread": "01a14222-3492-7d61-a605-71f1e97e68de",
   "test_id": "skyserve-authoritative-state-adaptive-dialogue",
   "seeded_bug": "customer claims overriding authoritative booking facts",
-  "optimizer_rollout_limit": 12,
-  "optimizer_rollouts_used": 6,
-  "optimizer_runs": 2,
-  "independent_verifications": 2,
-  "fix_method": "RELAI accepted instruction change with ordinary wiring tests; separate targeted live verification",
+  "optimizer_rollout_limit": 6,
+  "optimizer_rollouts_used": 4,
+  "optimizer_runs": 1,
+  "independent_verifications": 1,
+  "fix_method": "RELAI accepted booking-authority instruction change and ordinary construction/policy tests; separate targeted live verification",
   "original_mean": 0.875,
-  "latest_independent_mean": 0.9722222222222222,
-  "remaining_failure": "recovery criterion 2/3",
-  "earlier_optimizer_final_comparison": {
-    "before": 0.7916666666666666,
-    "after": 0.6666666666666666
-  },
+  "latest_independent_mean": 1.0,
+  "remaining_failure": null,
   "test_package_files": 40,
   "existing_recordings": "Archived outside the active demo in the task output directory.",
   "required_artifacts": [
     "four exact native replies",
     "real baseline and latest independent trajectories",
-    "both complete optimizer reports and receipts",
+    "complete optimizer report, final comparison and receipt",
     "unchanged full generated test package",
     "actual accepted patch and source snapshots",
     "genuine local Apply receipt"
   ],
-  "blocker": null
+  "blocker": null,
+  "optimizer_final_comparison": {
+    "before": 0.7916666666666666,
+    "after": 1.0
+  }
 }

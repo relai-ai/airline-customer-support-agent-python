@@ -336,7 +336,7 @@ test("recorded presets use complete sentences without changing historical captur
   assert.equal(recordedPromptText("My edited request"), "My edited request");
 });
 
-test("live recorded replies keep readable tables, remaining failures and original native text", () => {
+test("live recorded replies keep readable measured tables and original native text", () => {
   const { recordedReplyText } = require('./workflow');
   const fs = require('node:fs'), path = require('node:path');
   const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../demo/recorded/walkthrough.json')));
@@ -348,8 +348,11 @@ test("live recorded replies keep readable tables, remaining failures and origina
   assert.match(reply, /Suggested next steps/);
   assert.equal(manifest.steps[1].text, original);
   const fixed = recordedReplyText(2, manifest.steps[2].text);
-  assert.match(fixed, /recovery.*0\.67|0\.67.*recovery/i);
-  assert.match(fixed, /0\.792.*0\.667/);
+  assert.match(fixed, /Original baseline \| Independent after/);
+  assert.match(fixed, /0\.7917.*1\.0000/);
+  assert.doesNotMatch(fixed, /0\.667|scripted SDK/);
+  const mixed = 'Recovery remains 0.67; final comparison 0.792 → 0.667.';
+  assert.equal(recordedReplyText(2, mixed), mixed);
   assert.match(fixed, /Suggested next steps/);
   assert.doesNotMatch(recordedReplyText(0, manifest.steps[0].text), /^Public evidence:/m);
 });

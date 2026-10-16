@@ -61,16 +61,16 @@ async function fixture(t) {
   );
   return { root, manifest, before, after };
 }
-test("packaged live demo retains native evidence, mixed results and unchanged criteria", async (t) => {
+test("packaged live demo requires passing final and independent results with unchanged criteria", async (t) => {
   const { root } = await fixture(t);
   await fs.cp(path.resolve(__dirname, "../../../demo/recorded"), path.join(root, "demo/recorded"), { recursive: true });
   const manifest = await loadRecording(root);
   assert.equal(manifest.schemaVersion, 3);
   assert.equal(manifest.evidenceKind, "live-agent");
   assert.equal(manifest.turns.length, 14);
-  assert.equal(manifest.verificationStatus, "mixed");
-  assert.deepEqual(manifest.liveEvidence.unresolvedEvaluatorIds, ["recovery"]);
-  assert.equal(manifest.provenance.totalRollouts, 12);
+  assert.equal(manifest.verificationStatus, "verified");
+  assert.deepEqual(manifest.liveEvidence.unresolvedEvaluatorIds, []);
+  assert.equal(manifest.provenance.totalRollouts, 6);
   const resultPath = manifest.liveEvidence.after.result;
   const resultFile = path.join(root, resultPath);
   const original = await fs.readFile(resultFile);

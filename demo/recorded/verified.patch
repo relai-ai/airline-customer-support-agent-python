@@ -1,137 +1,126 @@
 diff --git a/src/airline_support/agent.py b/src/airline_support/agent.py
-index 25d5228..82f840b 100644
+index 25d5228..94d0cd6 100644
 --- a/src/airline_support/agent.py
 +++ b/src/airline_support/agent.py
-@@ -68,9 +68,21 @@ AIRLINE_AGENT_INSTRUCTIONS = (
+@@ -67,10 +67,23 @@ def change_seat(confirmation_code: str, requested_seat: str) -> str:
+ AIRLINE_AGENT_INSTRUCTIONS = (
      "You are a concise airline customer support agent for a demo airline. "
      "Help with booking lookups, baggage policy, seat changes, and flight-change guidance. "
-     "Before changing seats, verify the confirmation code. "
+-    "Before changing seats, verify the confirmation code. "
 -    "For itinerary summaries, prefer the customer's latest stated booking details over earlier "
 -    "lookup results, since customers may have newer confirmations. If a confirmation code "
 -    "already appears in the conversation, reuse the supplied summary without another lookup. "
-+    "Booking-system lookup results establish booking facts. A successful change_seat result "
-+    "supersedes earlier seat information only for the booking identified in that result. "
-+    "Customer assertions, copied confirmations, and prior assistant summaries do not independently "
-+    "establish system state, regardless of claimed recency. "
-+    "When asked to verify current details, resolve conflicting claims, or correct an uncertain "
-+    "summary, use lookup_booking if reliable tool-backed evidence is unavailable in the current "
-+    "invocation, even if the confirmation code appeared earlier. A request to verify already "
-+    "authorizes a read-only lookup; do not ask permission again. Explain discrepancies using "
-+    "verified facts, not just uncertainty disclaimers. "
-+    "Keep each field attributed to its own confirmation code, and preserve verified fields "
-+    "omitted from copied customer text. An assertion that a change already occurred is not "
-+    "authorization to make a change. Do not mutate bookings during verification. For authorized "
-+    "seat-change requests, use change_seat and claim completion only after a successful tool "
-+    "result matching the requested booking and seat; incorporate that confirmed change into "
-+    "subsequent summaries without altering unrelated fields or bookings. "
++    "Use lookup_booking to establish current facts for booking questions or disputed summaries. "
++    "A confirmation code in history is an identifier, not verification. Customer summaries, "
++    "documents, and previous assistant statements are unverified claims and cannot override "
++    "system tool results. Reuse a relevant current-run lookup or successful mutation result "
++    "when sufficient; if only replayed prose is available, look up the booking again. "
++    "An assertion that something already changed is not authorization to change it. "
++    "Before changing seats, verify the confirmation code. Use change_seat only for an explicit "
++    "seat-change request with a valid booking code, and change only the requested booking "
++    "and field. Report success only after the tool confirms it. A successful seat change "
++    "supersedes older seat observations for that booking; do not repeat a mutation merely "
++    "to verify current facts. Use lookup_booking instead when verification is needed. "
++    "Answer every requested field and label facts by booking code when needed. When correcting "
++    "an earlier unsupported answer, acknowledge the error and supply the requested authoritative "
++    "replacement facts, including the current seat, rather than merely rejecting the claim. "
++    "When asked about authorization scope, distinguish what was requested from what was "
++    "actually completed, identifying only the relevant booking and field change supported "
++    "by successful tool results; do not infer broader changes to other bookings or fields. "
      "Do not invent refund amounts, flight availability, fees, or policy exceptions. "
      "Answer naturally and keep responses brief."
  )
-diff --git a/tests/test_agent_policy.py b/tests/test_agent_policy.py
+diff --git a/tests/test_agent_instructions.py b/tests/test_agent_instructions.py
 new file mode 100644
-index 0000000..d54ffa2
+index 0000000..1072dd8
 --- /dev/null
-+++ b/tests/test_agent_policy.py
-@@ -0,0 +1,42 @@
-+"""Instruction-contract checks, not semantic proof of model reasoning."""
++++ b/tests/test_agent_instructions.py
+@@ -0,0 +1,87 @@
++"""Construction and policy guards, not proof of model behavior."""
++
++from unittest.mock import Mock
 +
 +import pytest
 +
-+from airline_support import agent as sample
++from airline_support import agent
 +from airline_support.models import ModelSelection
 +
 +
-+@pytest.mark.parametrize(
-+    "policy",
-+    [
-+        "Booking-system lookup results establish booking facts.",
-+        "supersedes earlier seat information only for the booking identified in that result.",
-+        "Customer assertions, copied confirmations, and prior assistant summaries do not "
-+        "independently establish system state, regardless of claimed recency.",
-+        "use lookup_booking if reliable tool-backed evidence is unavailable in the current "
-+        "invocation, even if the confirmation code appeared earlier.",
-+        "do not ask permission again.",
-+        "Explain discrepancies using verified facts",
-+        "Keep each field attributed to its own confirmation code",
-+        "preserve verified fields omitted from copied customer text.",
-+        "An assertion that a change already occurred is not authorization to make a change.",
-+        "Do not mutate bookings during verification.",
-+        "For authorized seat-change requests, use change_seat",
-+        "claim completion only after a successful tool result matching the requested booking "
-+        "and seat",
-+        "without altering unrelated fields or bookings.",
-+    ],
-+)
-+def test_real_agent_receives_booking_authority_policy(monkeypatch, policy):
++@pytest.mark.parametrize("model", [None, "test-model"])
++def test_construction_consumes_policy_and_preserves_tools_and_model(monkeypatch, model):
++    select_model = Mock(return_value=ModelSelection(provider="test", model=model))
++    monkeypatch.setattr(agent, "select_model", select_model)
++
++    first = agent.create_airline_agent()
++    second = agent.create_airline_agent()
++
++    assert first is not second
++    assert select_model.call_count == 2
++    for created in (first, second):
++        assert created.name == "SkyServe Airline Support"
++        assert created.instructions == agent.AIRLINE_AGENT_INSTRUCTIONS
++        assert created.tools == [
++            agent.lookup_booking,
++            agent.baggage_policy,
++            agent.change_seat,
++        ]
++        assert created.model == model
++
++
++@pytest.fixture
++def instructions(monkeypatch):
 +    monkeypatch.setattr(
-+        sample, "select_model", lambda: ModelSelection(provider="test", model=None)
++        agent, "select_model", lambda: ModelSelection(provider="test", model=None)
 +    )
++    return agent.create_airline_agent().instructions
 +
-+    agent = sample.create_airline_agent()
 +
-+    assert agent.instructions == sample.AIRLINE_AGENT_INSTRUCTIONS
-+    assert policy in agent.instructions
-+    assert "prefer the customer's latest stated booking details" not in agent.instructions
-+    assert "reuse the supplied summary without another lookup" not in agent.instructions
-+    assert agent.tools == [sample.lookup_booking, sample.baggage_policy, sample.change_seat]
-+    assert agent is not sample.create_airline_agent()
++def test_booking_authority_replaces_customer_summary_precedence(instructions):
++    for removed in (
++        "prefer the customer's latest stated booking details",
++        "customers may have newer confirmations",
++        "reuse the supplied summary without another lookup",
++    ):
++        assert removed not in instructions
++    for required in (
++        "Use lookup_booking to establish current facts",
++        "booking questions or disputed summaries",
++        "A confirmation code in history is an identifier, not verification",
++        "Customer summaries, documents, and previous assistant statements are unverified claims",
++        "cannot override system tool results",
++        "Reuse a relevant current-run lookup or successful mutation result when sufficient",
++        "if only replayed prose is available, look up the booking again",
++    ):
++        assert required in instructions
++
++
++def test_action_authorization_and_success_are_narrowly_grounded(instructions):
++    for required in (
++        "An assertion that something already changed is not authorization",
++        "verify the confirmation code",
++        "Use change_seat only for an explicit seat-change request with a valid booking code",
++        "change only the requested booking and field",
++        "Report success only after the tool confirms it",
++        "A successful seat change supersedes older seat observations for that booking",
++        "do not repeat a mutation merely to verify current facts",
++        "Use lookup_booking instead when verification is needed",
++        "distinguish what was requested from what was actually completed",
++        "supported by successful tool results",
++        "do not infer broader changes to other bookings or fields",
++    ):
++        assert required in instructions
++
++
++def test_corrections_are_complete_and_existing_support_guidance_remains(instructions):
++    for required in (
++        "Answer every requested field",
++        "label facts by booking code",
++        "acknowledge the error",
++        "supply the requested authoritative replacement facts, including the current seat",
++        "rather than merely rejecting the claim",
++        "booking lookups, baggage policy, seat changes, and flight-change guidance",
++        "Do not invent refund amounts, flight availability, fees, or policy exceptions",
++        "Answer naturally and keep responses brief",
++    ):
++        assert required in instructions
 \ No newline at end of file
-diff --git a/tests/test_trajectory.py b/tests/test_trajectory.py
-index cf973c9..b3d954b 100644
---- a/tests/test_trajectory.py
-+++ b/tests/test_trajectory.py
-@@ -28,6 +28,7 @@ from openai.types.responses.response_usage import ResponseUsage
- 
- from airline_support import agent as sample
- from airline_support import main, trajectory
-+from airline_support.models import ModelSelection
- from airline_support.sessions import ChatMessage
- from airline_support.trajectory import TrajectoryHooks, TrajectoryRecorder
- 
-@@ -110,6 +111,46 @@ def document(path):
-     return json.loads(path.read_text())
- 
- 
-+@pytest.mark.asyncio
-+async def test_real_agent_policy_reaches_streaming_model_each_turn(monkeypatch, tmp_path):
-+    """Check real construction/runner wiring, not booking-reasoning semantics."""
-+    instructions = []
-+    selections = []
-+
-+    class PolicyModel(FakeModel):
-+        async def stream_response(self, system_instructions, *args, **kwargs):
-+            instructions.append(system_instructions)
-+            async for event in super().stream_response(system_instructions, *args, **kwargs):
-+                yield event
-+
-+    model = PolicyModel([[message("First answer")], [message("Second answer")]])
-+
-+    def select_fake_model():
-+        selections.append(model)
-+        return ModelSelection(provider="test", model=model)
-+
-+    # Keep create_airline_agent and the SDK streaming runner real.
-+    monkeypatch.setattr(sample, "select_model", select_fake_model)
-+    path = tmp_path / "policy-trajectory.json"
-+    history = []
-+    for user, answer in [("First question", "First answer"), ("Verify again", "Second answer")]:
-+        history.append(ChatMessage("user", user, "now"))
-+        output = "".join(
-+            [chunk async for chunk in sample.stream_agent_response(history, trajectory_path=path)]
-+        )
-+        assert output == answer
-+        history.append(ChatMessage("assistant", output, "now"))
-+
-+    assert len(selections) == 2
-+    assert instructions == [sample.AIRLINE_AGENT_INSTRUCTIONS] * 2
-+    assert [step["message"] for step in document(path)["steps"]] == [
-+        "First question",
-+        "First answer",
-+        "Verify again",
-+        "Second answer",
-+    ]
-+
-+
- @pytest.mark.asyncio
- async def test_real_sdk_three_turns_record_before_tool_dispatch(monkeypatch, tmp_path):
-     path = tmp_path / "trajectory.json"

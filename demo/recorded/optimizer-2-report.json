@@ -1,6 +1,0 @@
-{
-  "changes": [],
-  "title": "No accepted optimizer changes",
-  "summary": "No accepted changes were provided, so there is no optimization outcome to summarize.",
-  "inconsistency": "The request describes a completed run with accepted changes, but the provided changes list is empty."
-}

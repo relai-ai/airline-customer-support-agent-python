@@ -6,9 +6,9 @@
     "skyserve-authoritative-state-adaptive-dialogue",
     "--agent-interaction",
     "--result-json",
-    ".relai/.internal/runs/second-independent-result.json",
+    ".relai/.internal/runs/independent-result.json",
     "--outcome-intent",
-    "independent-verification-after-second-optimizer",
+    "independent-verification-accepted-5e92fdb",
     "--timeout",
     "25m",
     "--wait",
@@ -16,8 +16,8 @@
   ],
   "exitCode": 0,
   "initialExitCode": 75,
-  "durationSeconds": 122.907626,
-  "startedAt": "2026-10-16T03:03:23.346699+00:00",
+  "durationSeconds": 116.249192,
+  "startedAt": "2026-10-16T04:15:12.714733+00:00",
   "terminalCommand": [
     "env",
     "CODEX_ALLOW_AI_KEYS=1",
@@ -25,14 +25,14 @@
     "relai",
     "runs",
     "wait",
-    "1792119803412-97063",
+    "1792124112770-10900",
     "--log-offset",
     "273",
     "--wait",
     "45s"
   ],
   "receiptKind": "completed-background-workflow",
-  "sourceStartReceipt": "/private/tmp/playground-live-booking-demo/work/live-recording/76-second-independent/result.json",
-  "sourceTerminalReceipt": "/private/tmp/playground-live-booking-demo/work/live-recording/81-second-independent-wait/result.json",
-  "outcomeInvocationId": "1792119803434-97077"
+  "sourceStartReceipt": "/private/tmp/playground-booking-grounding-clean/work/live-recording/23-independent-simulation/result.json",
+  "sourceTerminalReceipt": "/private/tmp/playground-booking-grounding-clean/work/live-recording/28-independent-wait/result.json",
+  "outcomeInvocationId": "1792124112787-10913"
 }

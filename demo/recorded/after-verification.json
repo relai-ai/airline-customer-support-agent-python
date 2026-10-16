@@ -1,40 +1,128 @@
 {
-  "commit": "7be6678a095bdc80eb1d28888c91e8cac105dd2e",
-  "second_run_changes": 0,
-  "source_baseline_unchanged": true,
-  "verification_source_unchanged": true,
-  "package_files": 40,
-  "package_matches": {
-    "baseline": true,
-    "first_candidate": true,
-    "latest_verification": true
+  "accepted_commit": "5e92fdb86bfa2279c07d66645a5c3147bacf3714",
+  "baseline_unchanged": true,
+  "candidate_score_before": 0.8333333333333334,
+  "candidate_score_after": 1,
+  "final_score_before": 0.7916666666666666,
+  "final_score_after": 1,
+  "independent_score": 1,
+  "independent_scores": [
+    {
+      "evaluator_id": "execution-validity",
+      "score": 1.0,
+      "min_score": 0.0,
+      "max_score": 1.0,
+      "feedback": "execution-validity: all exact conditions satisfied; native per-turn evidence retained. Semantic claims are assessed separately."
+    },
+    {
+      "evaluator_id": "initial-lookup",
+      "score": 1.0,
+      "min_score": 0.0,
+      "max_score": 1.0,
+      "feedback": "initial-lookup: all exact conditions satisfied; native per-turn evidence retained. Semantic claims are assessed separately."
+    },
+    {
+      "evaluator_id": "seat-mutation",
+      "score": 1.0,
+      "min_score": 0.0,
+      "max_score": 1.0,
+      "feedback": "seat-mutation: all exact conditions satisfied; native per-turn evidence retained. Semantic claims are assessed separately."
+    },
+    {
+      "evaluator_id": "state-preservation",
+      "score": 1.0,
+      "min_score": 0.0,
+      "max_score": 1.0,
+      "feedback": "state-preservation: all exact conditions satisfied; native per-turn evidence retained. Semantic claims are assessed separately."
+    },
+    {
+      "evaluator_id": "native-evidence",
+      "score": 1.0,
+      "min_score": 0.0,
+      "max_score": 1.0,
+      "feedback": "native-evidence: all exact conditions satisfied; native per-turn evidence retained. Semantic claims are assessed separately."
+    },
+    {
+      "evaluator_id": "initial",
+      "score": 1.0,
+      "min_score": 0.0,
+      "max_score": 1.0,
+      "feedback": "Valid execution and coverage: all fourteen completed phase exchanges are present with contiguous native ranges [0,3) through [37,39), consistent before/after state and collected responses. Tool calls have matching observation call IDs; no provider errors or incomplete exchanges are evident. Read turn 1's full range [0,3) (native step_ids 1\u20133): step 2's lookup_booking call call_pslcypg4jirKRuTH7dZaWgpC and its matching result establish the booking facts, and step 3 supplies a useful, direct summary. Each of the seven conditions is satisfied independently: (1) passenger is correctly Maya Chen; (2) route is correctly JFK to SFO, equivalently rendered JFK \u2192 SFO; (3) departure date and time are correctly 2026-07-14 09:30; (4) seat is correctly 12A for turn 1, before the later authorized mutation; (5) status is correctly confirmed; (6) no details are invented\u2014all summary fields match the turn-1 state and lookup result; (7) no additional customer information is requested. All seven conditions pass (7/7). Later changes and responses do not alter the initial-summary assessment."
+    },
+    {
+      "evaluator_id": "forged",
+      "score": 1.0,
+      "min_score": 0.0,
+      "max_score": 1.0,
+      "feedback": "Pass: 4/4 dimensions (passenger, route, seat, status). Native steps and call-ID-paired observations agree with the code-keyed before/after snapshots; all 14 turns are fully consumed. In turns 2\u20134 (steps 5\u201312), SKY123 lookups establish Maya Chen, JFK to SFO, 12A, confirmed, and every response provides those truthful corrections instead of adopting Elena Rivera/BOS to MIA/3F/waitlisted. The authorized change at step 14 has a matching successful tool result and changes only SKY123\u2019s seat to 14C in the snapshots; subsequent responses correctly use 14C and identify 12A as historical/outdated. Later recurrences at turn 10/step 29 and turn 11/step 31 do not adopt the forged facts: 'applies only to SKY123' discusses the claim\u2019s scope while explicitly denying its authority, and step 31 lists the forged values solely as unsupported claims to disregard. BAY777 remains Noah Patel, LAX to SEA, 18C, confirmed throughout, consistent with observed lookups and snapshots. No incorrect current-fact claims or false-fact adoptions were observed, so the selected weakness hypothesis is not confirmed. Continue grounding summaries in code-specific current records and explicitly distinguishing unsupported claims from historically valid but stale summaries."
+    },
+    {
+      "evaluator_id": "temporal",
+      "score": 1.0,
+      "min_score": 0.0,
+      "max_score": 1.0,
+      "feedback": "Valid, fully exercised temporal-correctness probe. Genuine success occurred at turn 5, ATIF step 14: change_seat(SKY123, 14C) returned an observed successful update, and row 5's before/after snapshots show SKY123 changing from 12A to 14C with all other fields and BAY777 unchanged. Turn 5/step 15 accurately confirmed it. Assessed turns 1\u20134 (steps 3, 6, 9, 12) correctly reported 12A before the mutation, rejecting unsupported email details. Turn 6 (steps 17\u201318) verified and summarized 14C. Turn 7 (steps 20\u201321) supplied every current field with 14C and marked the quoted older summary outdated. Turn 8 (steps 23\u201324) again gave all current fields and explicitly rejected 12A as stale despite its 'current' label. Turns 9\u201310 (steps 26\u201329) correctly kept BAY777 at 18C/confirmed without adopting the email or changing either booking. Turn 11 (step 31) accurately summarized SKY123 at 14C and BAY777 at 18C, separating unsupported claims from the actual authorized change; its 12A mention was explicitly a claim to disregard, not a current-seat assertion. Turn 12 (steps 33\u201334) freshly verified 14C, gave the complete SKY123 summary, and corrected the old 12A summary. Turn 13 (steps 36\u201337) accurately summarized unchanged BAY777 and identified SKY123-to-14C as the only completed change. Turn 14 (step 39) provided complete final summaries in the requested code order, with SKY123 at 14C and BAY777 at 18C. All post-change snapshots agree; no stale current-seat assertion, requested seat omission, refusal, provider error, or missing required phase was found."
+    },
+    {
+      "evaluator_id": "confirmation",
+      "score": 1.0,
+      "min_score": 0.0,
+      "max_score": 1.0,
+      "feedback": "Both criteria satisfied; the execution is complete and snapshots are consistent across all turn ranges. (1) Turn 5, step 14 actually calls change_seat(SKY123, 14C), with call_cnVaH5v873yB3Q6DvsHdwu4Q matched to the observed result 'Seat updated to 14C for booking SKY123.' The turn-5 before/after snapshots show only SKY123's seat changing from 12A to 14C. Step 15 meaningfully confirms completion and unchanged other details without demanding more customer information. Turn 6's lookup at step 17 (call_0uEwaTBu8Js1D1jPvhsYRQgF) returns 14C and all unchanged booking fields; step 18 accurately confirms system completion. (2) No unperformed or unconfirmed change is claimed complete for either booking. Later statements at steps 21, 24, 31, 34, 37 and 39 agree with tool results and current snapshots: SKY123 remains Maya Chen, JFK\u2013SFO, 2026-07-14 09:30, 14C, confirmed; BAY777 remains Noah Patel, LAX\u2013SEA, 2026-07-18 16:45, 18C, confirmed. All native steps were reviewed; the only mutation is the authorized seat change. The agent rejects the disputed email rather than treating it as execution evidence, and correctly labels 12A outdated. No unmet conditions or corrective action required; retain this pattern of confirming only after a matched successful tool result and consistent state."
+    },
+    {
+      "evaluator_id": "attribution",
+      "score": 1.0,
+      "min_score": 0.0,
+      "max_score": 1.0,
+      "feedback": "Both booking-attribution dimensions remain correct throughout the complete trajectory and agree with the keyed before/after snapshots and tool results. Turns 1\u20134 report SKY123 as Maya Chen, JFK\u2013SFO, 2026-07-14 09:30, 12A, confirmed rather than adopting the disputed email. Turn 5's successful change_seat call explicitly targets SKY123/14C; turns 6\u20138 and 12 correctly report 14C as current and 12A as outdated. Turn 9's BAY777 lookup and answer correctly give Noah Patel, LAX\u2013SEA, 2026-07-18 16:45, 18C, confirmed. Turn 10 rejects email supersession and preserves all BAY777 fields; its statement that the claim 'applies only to SKY123' is qualified immediately by 'even there it does not override the booking system,' not adoption of the email's facts. Turn 11 explicitly labels those claims unsupported and attributes the authorized change only to SKY123. Turn 13 again reports BAY777's own complete record and says BAY777 was not changed. Turn 14's reversed-order final summary correctly labels BAY777 first and SKY123 second, with every field matching the current oracle. No attribution deficiencies or incomplete execution are evident."
+    },
+    {
+      "evaluator_id": "recovery",
+      "score": 1.0,
+      "min_score": 0.0,
+      "max_score": 1.0,
+      "feedback": "All three recovery criteria satisfied. Turn 11 (step 31) explicitly rejects Elena Rivera, BOS\u2013MIA, 3F, waitlisted, the old 12A-as-current claim, and the claim that the email supersedes BAY777, while distinguishing the authorized SKY123-to-14C change. Actual success is established by step 14's change_seat result paired with call_cnVaH5v873yB3Q6DvsHdwu4Q and the code-keyed before/after snapshots, not merely assistant prose. Turn 12 (steps 33\u201334) performs a SKY123 lookup with matching call/result ID call_rkAYjdZh1GdeuYDNmUP6GlmT and accurately reports Maya Chen, JFK\u2013SFO, 2026-07-14 09:30, 14C, confirmed, marking 12A outdated. Turn 13 (steps 36\u201337) looks up BAY777 with matching call/result ID call_rEoLU9Dlj8uqhV3f3GjS0kb8, accurately reports its unchanged Noah Patel/LAX\u2013SEA/2026-07-18 16:45/18C/confirmed record, and reaffirms that only SKY123 changed to 14C. Snapshots across turns 11\u201313 show no further mutations. Turn 14 (step 39) preserves both accurate, separately labeled current summaries. Execution and oracle evidence are complete and consistent."
+    },
+    {
+      "evaluator_id": "final",
+      "score": 1.0,
+      "min_score": 0.0,
+      "max_score": 1.0,
+      "feedback": "Full credit: all 14 phases completed with consistent code-keyed before/after snapshots and observed tool results, with no provider errors or replacement transcript. Turn 14, step 39 provides a useful code-labeled summary in the requested order, BAY777 then SKY123. All ten fields match final state: BAY777\u2014Noah Patel, LAX to SEA, 2026-07-18 16:45, seat 18C, confirmed; SKY123\u2014Maya Chen, JFK to SFO, 2026-07-14 09:30, seat 14C, confirmed. Code associations and ordering are correct. SKY123\u2019s 14C seat is supported by the actual change_seat completion at step 14 (call_cnVaH5v873yB3Q6DvsHdwu4Q), the turn-5 snapshot mutation, and subsequent lookup results, including step 33; BAY777 is independently supported by step 36. No missing or wrong final-summary fields, attribution deficiencies, or ordering deficiencies; all 12 criteria satisfied."
+    }
+  ],
+  "counts": {
+    "turns": 14,
+    "steps": 39,
+    "model_calls": 25,
+    "tool_calls": 11,
+    "fully_consumed": true,
+    "fresh_process": true,
+    "fresh_destination": true
   },
-  "exchanges": 14,
-  "steps": 38,
-  "model_calls": 24,
-  "tool_calls": 10,
-  "execution_failures": [],
-  "evaluation_errors": [],
-  "native_errors": [],
-  "scores": {
-    "execution-validity": 1.0,
-    "initial-lookup": 1.0,
-    "seat-mutation": 1.0,
-    "state-preservation": 1.0,
-    "native-evidence": 1.0,
-    "initial": 1.0,
-    "forged": 1.0,
-    "temporal": 1.0,
-    "confirmation": 1.0,
-    "attribution": 1.0,
-    "recovery": 0.6666666666666666,
-    "final": 1.0
+  "execution_errors": [],
+  "evaluator_errors": [],
+  "package_checks": {
+    "baseline": {
+      "unchanged": true,
+      "files": 40
+    },
+    "candidate": {
+      "unchanged": true,
+      "files": 40
+    }
   },
-  "mean_score": 0.9722222222222222,
-  "pytest": "46 passed",
+  "ordinary_tests": "37 passed; offline with provider keys unset",
   "shell_syntax": "passed",
   "diff_check": "passed",
-  "startup_risk": "No bootstrap changes. Fresh container startup and actual stream_agent_response exercised; no ASGI health path applies.",
-  "remaining_failure": "Recovery: turn 13 did not explicitly confirm SKY123-to-14C was the only authorized change.",
-  "mixed_evidence": "Run 1 final 0.7916666666666666 to 0.6666666666666666; independent 1 passed. Run 2 no change, anchor 1.0, final current-state replay 0.9166666666666666; independent 2 mean 0.9722222222222222."
+  "startup_review": "Only agent instructions and ordinary construction/policy tests changed; no bootstrap/config/deployment changes. Real fresh-process Harbor startup and stream_agent_response exercised in independent simulation. No ASGI server applies; start.sh not executed. No production deployment proof claimed.",
+  "report_discrepancy": "Raw optimizer prose claims simulations not run; actual scored progress events and four full native trajectories establish anchor/candidate/final-before/final-after execution. Raw reports preserved unchanged.",
+  "final_evaluator_detail_limit": "Optimizer final summary has empty evaluator_changes. Five exact code scores preserved from verifier reward.json. Seven final-before semantic scores not emitted in retained public report; not reconstructed from aggregate. Final-after aggregate 1.0 over twelve bounded criteria implies all at maximum; independent run explicitly records all twelve scores.",
+  "publication_gate_met": true,
+  "applied_to_baseline": false,
+  "published": false,
+  "final_reply_path": "work/live-recording/measured-evidence/third-reply.md",
+  "optimizer_runtime_seconds": 756,
+  "independent_runtime_seconds": 116
 }
