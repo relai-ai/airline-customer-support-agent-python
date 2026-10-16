@@ -3,9 +3,10 @@ const fs = require("node:fs/promises");
 const crypto = require("node:crypto");
 const path = require("node:path");
 const recorded = require("./recorded");
+const { reviewHtml } = require("./review");
 const { CodexBridge } = require("./codex-bridge");
 function activate(context) {
-  let panel, terminal;
+  let panel, terminal, reviewPanel;
   const reviewDocuments = new Map();
   context.subscriptions.push(
     vscode.workspace.registerTextDocumentContentProvider(
@@ -60,26 +61,19 @@ function activate(context) {
     let recording,
       recordingBusy = false;
     const reviewChange = async (name) => {
-      const content = recorded.reviewFile(recording, name);
-      const before = vscode.Uri.from({
-        scheme: "relai-recorded-change",
-        path: "/before/" + name,
-        query: recording.patchSha256,
-      });
-      const after = vscode.Uri.from({
-        scheme: "relai-recorded-change",
-        path: "/after/" + name,
-        query: recording.patchSha256,
-      });
-      reviewDocuments.set(before.toString(), content.before);
-      reviewDocuments.set(after.toString(), content.after);
-      await vscode.commands.executeCommand(
-        "vscode.diff",
-        before,
-        after,
-        name + " · RELAI proposed change",
-        { viewColumn: vscode.ViewColumn.Beside, preview: true },
-      );
+      const html = reviewHtml(recording, name);
+      if (!reviewPanel) {
+        reviewPanel = vscode.window.createWebviewPanel(
+          "relaiReview", name + " · RELAI proposed change", vscode.ViewColumn.Beside,
+          { enableScripts: false, localResourceRoots: [] },
+        );
+        context.subscriptions.push(reviewPanel);
+        reviewPanel.onDidDispose(() => { reviewPanel = undefined; });
+      } else {
+        reviewPanel.title = name + " · RELAI proposed change";
+        reviewPanel.reveal(vscode.ViewColumn.Beside);
+      }
+      reviewPanel.webview.html = html;
     };
     current.webview.onDidReceiveMessage(async (msg) => {
       try {
