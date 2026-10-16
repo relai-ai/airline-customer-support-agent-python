@@ -1,15 +1,13 @@
 {
-  "orchestrator": "Codex",
-  "startedAt": "2026-10-13T17:58:05.908876+00:00",
-  "durationSeconds": 191.94924091594294,
-  "exitCode": 0,
   "argv": [
     "relai",
     "init",
     "--agent-interaction",
-    "--permissions",
-    "auto",
-    "--agent-target",
-    "SkyServe Airline Support"
-  ]
+    "--timeout",
+    "25m"
+  ],
+  "exitCode": 0,
+  "durationSeconds": 185.80121062509716,
+  "startedAt": "2026-10-16T00:35:24.257047+00:00",
+  "sourceReceipt": "RELAI command receipt 05-init"
 }

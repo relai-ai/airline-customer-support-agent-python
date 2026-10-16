@@ -1,0 +1,40 @@
+{
+  "argv": [
+    "relai",
+    "optimize",
+    "--tests",
+    "skyserve-authoritative-state-adaptive-dialogue",
+    "--agent-interaction",
+    "--total-rollouts",
+    "6",
+    "--batch-size",
+    "1",
+    "--no-pr",
+    "--timeout",
+    "25m",
+    "--wait",
+    "45s",
+    "--interaction-response",
+    "{\"schema_version\":\"relai.agent_interaction.v1\",\"session_id\":\"optimize-9a93f80bb7817415\",\"request_id\":\"approve_optimizer_run\",\"answer\":\"approve\"}"
+  ],
+  "exitCode": 0,
+  "initialExitCode": 75,
+  "durationSeconds": 796.725331,
+  "startedAt": "2026-10-16T01:49:06.211700+00:00",
+  "terminalCommand": [
+    "env",
+    "CODEX_ALLOW_AI_KEYS=1",
+    "with-ai-keys",
+    "relai",
+    "runs",
+    "wait",
+    "1792115346288-85938",
+    "--log-offset",
+    "5361",
+    "--wait",
+    "45s"
+  ],
+  "receiptKind": "completed-background-workflow",
+  "sourceStartReceipt": "/private/tmp/playground-live-booking-demo/work/live-recording/35-approved-optimize/result.json",
+  "sourceTerminalReceipt": "/private/tmp/playground-live-booking-demo/work/live-recording/50-optimize-wait/result.json"
+}

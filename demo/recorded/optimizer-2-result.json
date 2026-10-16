@@ -1,0 +1,89 @@
+{
+  "schema_version": "relai.optimizer_result.v1",
+  "run_id": "optimizer-1792119404-639977000",
+  "artifact_dir": ".relai/.internal/runs/optimizer/optimizer-1792119404-639977000",
+  "optimizer_debug_artifact_path": ".relai/.internal/runs/optimizer/optimizer-1792119404-639977000/optimizer-debug.json",
+  "pr_summary_artifact_path": ".relai/.internal/runs/optimizer/optimizer-1792119404-639977000/pr-summary.json",
+  "pr_description_artifact_path": ".relai/.internal/runs/optimizer/optimizer-1792119404-639977000/pr-description.md",
+  "optimization_report_artifact_path": ".relai/.internal/runs/optimizer/optimizer-1792119404-639977000/optimization-report.json",
+  "source_workspace_path": "/private/tmp/playground-live-booking-demo/work/live-recording/verification-checkout",
+  "worktree_code_path": "",
+  "attempted_batches": 1,
+  "attempted_turns": 1,
+  "attempted_updates": 1,
+  "accepted_updates": 0,
+  "anchor_rejections": 0,
+  "scheduled_environment_count": 1,
+  "failed_environment_runs": 0,
+  "memory_writes_applied": 0,
+  "memory_compactions_performed": 0,
+  "memory_writes_skipped": 0,
+  "termination_requested": false,
+  "terminated_after_turn_index": null,
+  "early_stop_triggered": false,
+  "early_stop_reason": "",
+  "early_stop_aggregate_score": null,
+  "early_stop_min_environment_score": null,
+  "early_stop_covered_environment_count": 0,
+  "early_stop_total_environment_count": 1,
+  "early_stop_confirmation_turns_required": 2,
+  "early_stop_confirmation_turns_observed": 0,
+  "early_stop_ewma_alpha": 0.5,
+  "accepted_turn_indices": [],
+  "rejected_turn_indices": [],
+  "status": "no_accepted_updates",
+  "notes": [
+    "turn 1 explore no_change: No change is warranted for this anchor batch. The fourteen-turn dialogue passed all twelve grounded evaluators: five execution/state checks and seven semantic judges, with no execution errors. The materialized transcript directly confirms native booking lookup and rejection of conflicting customer-supplied details; detailed evaluator evidence also confirms the authorized seat change, temporal reasoning, booking isolation, recovery, and final summaries. No demonstrated defect justifies a speculative repair. This establishes success on this probe, not broad reliability.",
+    "Stopped before turn 2: remaining rollout budget 1 is insufficient for anchor validation requiring 2 rollouts."
+  ],
+  "warnings": [],
+  "final_evaluation_summary": {
+    "touched_environment_paths": [
+      ".relai/harbor/agent-tests/skyserve-authoritative-state-adaptive-dialogue"
+    ],
+    "updated_agent_evaluated": false,
+    "terminated_early": false,
+    "baseline_completed_environment_paths": [
+      ".relai/harbor/agent-tests/skyserve-authoritative-state-adaptive-dialogue"
+    ],
+    "updated_completed_environment_paths": [],
+    "environment_summaries": [
+      {
+        "environment_path": ".relai/harbor/agent-tests/skyserve-authoritative-state-adaptive-dialogue",
+        "environment_description": "Fourteen live adaptive exchanges testing current booking authority and useful seat changes.",
+        "score_before": 0.9166666666666666,
+        "score_after": null,
+        "score_delta": null,
+        "failed_before": false,
+        "failed_after": false
+      }
+    ],
+    "aggregate_score_before": 0.9166666666666666,
+    "aggregate_score_after": null,
+    "aggregate_score_delta": null,
+    "failure_count_before": 0,
+    "failure_count_after": 0,
+    "failure_count_delta": 0,
+    "evaluator_changes": [],
+    "observed_pattern_summary": ""
+  },
+  "pr_summary": {
+    "run_id": "optimizer-1792119404-639977000",
+    "selector": "explicit-environments",
+    "accepted_updates": 0,
+    "accepted_turn_indices": [],
+    "summary": "The optimizer run completed without any accepted changes.",
+    "motivating_environment_paths": [],
+    "regression_environment_paths": [],
+    "risks_or_open_questions": [],
+    "accepted_turns": []
+  },
+  "optimization_report": {
+    "changes": [],
+    "title": "No accepted optimizer changes",
+    "summary": "No accepted changes were provided, so there is no optimization outcome to summarize.",
+    "inconsistency": "The request describes a completed run with accepted changes, but the provided changes list is empty."
+  },
+  "pr_title": "No accepted optimizer changes",
+  "pr_description": "The optimizer run completed without any accepted changes.\n\n## Final evaluation\n\nTouched environments were re-evaluated against the initial agent state and the final accepted state.\n\n| Environment | Description | Score Before | Score After | Diff |\n| --- | --- | ---: | ---: | ---: |\n| `skyserve-authoritative-state-adaptive-dialogue` | Fourteen live adaptive exchanges testing current booking authority and useful seat changes. | 92% | n/a | n/a |\n"
+}

@@ -747,15 +747,19 @@
                 ? "Codex + RELAI precomputed results · independent verification"
                 : "Precomputed Codex + RELAI · " + recording.provenance.totalRollouts + "-rollout budget",
             ][index];
+          if (recording.evidenceKind === "live-agent")
+            timingText = "Codex + RELAI precomputed results";
           if (Number.isFinite(timing?.durationSeconds))
             timingText +=
               (index === 0 && recording.initialization
                 ? " · initialization: "
                 : index === 1
                 ? " · " + (step.durationLabel || "validation") + ": "
-                : index === 2 && recording.verificationStatus !== "verified"
+                : index === 2 && recording.verificationStatus === "pending"
                   ? " · incomplete attempt: "
-                  : ": ") +
+                  : recording.evidenceKind === "live-agent"
+                    ? " · " + (step.durationLabel || "optimization and verification") + ": "
+                    : ": ") +
               (timing.durationSeconds < 60
                 ? Math.round(timing.durationSeconds) + " sec"
                 : Math.round((timing.durationSeconds / 60) * 10) / 10 + " min");
@@ -785,6 +789,7 @@
             reply.append(sample, simulationViewer());
           }
           if (index === 2) {
+            if (recording.verificationStatus === "mixed") reply.append(node("p", "Evaluation status: " + recording.reliabilityNote));
             reply.append(button("Review code changes ↗", () =>
               post("changes", { recorded: true }),
             ));
@@ -836,13 +841,13 @@
           recorded &&
           progress === 3 &&
           el("prompt").value.trim() === preset &&
-          recording.verificationStatus !== "verified";
+          recording.verificationStatus === "pending";
         el("mode").textContent = recorded
           ? [
               "Precomputed relai init",
               "Precomputed relai test create",
               "Precomputed relai optimize",
-              "Apply optimized changes",
+              recording.verificationStatus === "mixed" ? "Apply candidate changes · mixed results" : "Apply optimized changes",
             ][progress]
           : "Live workspace";
         el("mode").hidden = recorded;
@@ -854,7 +859,7 @@
             ? "Verification pending"
             : recorded && el("prompt").value.trim() === preset
               ? progress === 3
-                ? "Apply verified changes"
+                ? (recording.verificationStatus === "mixed" ? "Apply candidate changes" : "Apply verified changes")
                 : "Show precomputed result"
               : "Send message";
         el("send").setAttribute("aria-label", actionLabel);

@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "base_image": "python:3.12-slim",
+  "commands": [
+    "python3 -m pip install --no-cache-dir uv==0.12.10",
+    "cd /app/dependencies && UV_PROJECT_ENVIRONMENT=/opt/airline-venv uv sync --frozen --no-install-project",
+    "command -v python3 >/dev/null 2>&1 || { echo 'RELAI Harbor requires python3 for its launcher; provide it in base_image or install it in runtime setup.' >&2; exit 1; }",
+    "(command -v python3 >/dev/null 2>&1 || { echo 'RELAI explicit dependency inputs require python3 for checksum checks; it is also required by the Harbor launcher. Provide python3 in base_image.' >&2; exit 1; }) && python3 -c 'import base64,hashlib,json,pathlib; expected=json.loads(base64.b64decode(\"eyIvYXBwL2RlcGVuZGVuY2llcy9weXByb2plY3QudG9tbCI6IjdlOWZjNTI3YzQ4NjIzOWVlNmRiYjM2MDIwYzUxZTA5YmJmMTkzMmIxNDM1YzdmNTNlMTQyZmMwNjlmYmVhZWEiLCIvYXBwL2RlcGVuZGVuY2llcy91di5sb2NrIjoiZDdhYjk2NWIzZDZmMWI1MDljNzJiNzI5MGUwNDZmODQ0ZjEyOWM2MDUzZDQ4ZDRjMmNmZmFkNjlhNjA0OTQ5MSJ9\")); assert all(hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest()==h for p,h in expected.items()), \"explicit staged dependency input changed\"'"
+  ],
+  "files": [
+    {
+      "source": "generated/runtime/inputs/project_adapter.py",
+      "destination": "/app/project_adapter.py",
+      "sha256": "b7c7ba8da0ac2494b57142124591cf7f176026841941fb5f679af9c4c4bd28a6"
+    },
+    {
+      "source": "generated/runtime/launcher/run.py",
+      "destination": "/app/relai-harbor/adapter/run.py",
+      "sha256": "6ec52d213791b6acde44bf94935d8d482f73c6ba94ad3aee3c4ac4012547053d"
+    },
+    {
+      "source": "generated/runtime/dependencies/pyproject.toml",
+      "destination": "/app/dependencies/pyproject.toml",
+      "sha256": "7e9fc527c486239ee6dbb36020c51e09bbf1932b1435c7f53e142fc069fbeaea"
+    },
+    {
+      "source": "generated/runtime/dependencies/uv.lock",
+      "destination": "/app/dependencies/uv.lock",
+      "sha256": "d7ab965b3d6f1b509c72b7290e046f844f129c6053d48d4c2cffad69a6049491"
+    }
+  ]
+}

@@ -1,14 +1,5 @@
-# SkyServe booking / seat-change smoke
+# RELAI task
 
-`environment/scenario.json` supplies a booking lookup followed by a seat-change request referencing that booking. The native agent replays history; its mutable demo bookings remain alive in one process per trial. No tools are mocked and real provider credentials are required (OpenAI takes precedence over Anthropic).
+Edit `environment/scenario.json` and optional `environment/mocks/` to define this scenario, and declare its evaluators in `task.toml`: code evaluators run in the verifier `tests/evaluate.py`, and LLM judges are `tests/evaluator.toml` manifests with a rubric. Harbor requires `instruction.md`; new tasks leave it empty.
 
-- `task.toml`: identity, input asset, separate verifier and trajectory export.
-- `environment/scenario.json`: editable fixed turns and task services.
-- `tests/evaluate.py`: matched real lookup/change-seat ATIF evidence, two turns and real responses; always writes a numeric reward.
-- `tests/Dockerfile`: self-contained Python verifier without project source or credentials.
-- `instruction.md`: intentionally empty required Harbor file.
-- `relai-init-expectations.json`: minimum init integration evidence.
-
-Reusable adapter source lives at `.relai/harbor/adapter/project_adapter.py`; the staged environment leaf is its package snapshot. It imports the original entrypoint from `/workspace/src`, never a copied agent or detached backend. Recorder updates are synchronous under one lock with unique sibling atomic replacements, and complete before the fully consumed stream returns.
-
-Generated packaging is owned by `configure_harbor_packaging`: `generated/build.json`, `generated/dependencies.json`, `generated/runtime/`, `environment/Dockerfile` and `tests/test.sh`. Do not hand-edit generated files. Dependency setup uses frozen uv inputs, not host dependencies. Configure provider keys privately in `.relai/simulator.env`, not task assets.
+Configure packaging to generate `generated/build.json`, `generated/dependencies.json`, the Dockerfiles, and verifier launch script. `generated/runtime/` contains the portable snapshot of common runtime inputs; it is part of a self-contained task package. A task whose `generated/build.json` has schema_version 2 instead uses the shared project runtime in `.relai/harbor/runtime/` and keeps only its own packaging. Author the reusable leaf adapter under `.relai/harbor/adapter/`, then explicitly select its staged snapshot through packaging. The package includes exact runtime inputs needed to rebuild it.

@@ -1,31 +1,24 @@
-## RELAI risks for SkyServe Airline Support
+## RELAI risks — SkyServe Airline Support
 
-The latest completed RELAI inspection identified **7 proposed risks**. These are hypotheses, not confirmed test failures. Priority scores rank risks; they are not failure rates.
+Initialization completed in **3m 5.8s**: **15 requirements, 5 proposed risks, 0 open questions**. These are hypotheses, **not confirmed failures**.
 
-| Risk | Trigger | Observable failure | Impact | Confidence | Triggerability | Priority |
-| --- | --- | --- | --- | --- | --- | --- |
-| **Embedded JSON bypasses secret redaction** | A support message contains password-bearing JSON inside prose or a code fence | The synthetic password appears unmasked in the saved trajectory | High | High | High | **63** |
-| **Secret rotation re-exposes earlier content** | A declared secret changes between turns sharing one trajectory | A previously masked value reappears in an earlier recorded step | High | High | Medium | **62** |
-| **Conversation history overrides verified booking data** | User supplies false booking details before requesting verification | Agent repeats seat **3F** instead of authoritative **12A**, or treats the user’s claim as verification | High | Medium | Medium | **58** |
-| **Baggage fee fabrication** | User insists on an exact price absent from tool output | Agent invents a fee, waiver, or policy exception | High | Medium | Medium | **58** |
-| **Required closing phrase omitted** | Routine airline question or acknowledgement | Response lacks “Please let me know if you have any questions” at the end | Medium | High | High | **47** |
-| **Off-topic requests answered** | Unrelated request, initially or after an airline exchange | Agent answers instead of explaining its airline-support scope | Medium | High | High | **47** |
-| **Unnecessary booking reverification** | User already supplies valid code `SKY123` | Agent asks for it again or demands unrelated identity details | Medium | Medium | Medium | **42** |
+| Risk ID | Priority | What could fail | Trigger | Impact | Confidence | Triggerability |
+|---|---:|---|---|---|---|---|
+| `customer-summary-overrides-current-booking-state` | 63 | Customer claims or stale summaries override current booking facts. | Supply a conflicting confirmation or old seat summary. | High | High | High |
+| `latest-summary-contaminates-another-booking` | 58 | Facts from one booking appear in another. | Look up both bookings, change one seat, then summarize both. | High | Medium | Medium |
+| `seat-update-claimed-from-unverified-conversation-summary` | 58 | Agent claims a seat change without tool-confirmed success. | Provide a purported summary for nonexistent code ZZZ999. | High | Medium | Medium |
+| `off-topic-help-without-airline-boundary-refusal` | 47 | Agent answers unrelated questions. | Request a programming tutorial. | Medium | High | High |
+| `required-closing-omitted-from-streamed-response` | 31 | Response omits the required closing phrase. | Ask about baggage or make an off-topic request. | Low | High | High |
 
-## My recommendation
+**Recommendation:** Target `customer-summary-overrides-current-booking-state`. RELAI explicitly identified the instruction conflict that lets customer claims override authoritative tools—the intended grounding-bug candidate.
 
-Test **embedded JSON bypassing redaction** first: it now ranks highest, with high impact, confidence, and triggerability. A synthetic password in fenced JSON provides a concrete, observable check without exposing real credentials.
+**Suggested next steps**
 
-For the previously requested **multi-turn test**, secret rotation remains the strongest fit and ranks second overall.
+1. Discover a reviewed test for that risk:
+   `relai test discover --risk customer-summary-overrides-current-booking-state --agent-interaction`
+2. Measure the failing live baseline before optimization.
+3. Optimize within the agreed six-rollout budget, then verify independently.
 
-## Evidence
+Stopped before discovery. Agent source matches the baseline; an initialization-created recorder edit was preserved as evidence and reverted.
 
-[Latest public RELAI risk receipt](/private/tmp/exact-playground-recording/work/exact-recording/init-resume-20261015T173107Z/risks-receipt.json)
-
-No baseline or risk-validation test has run during this walkthrough.
-
-## Suggested next steps
-
-1. Build a targeted test for embedded-JSON redaction, or continue with the previously selected multi-turn secret-rotation risk.
-2. Review RELAI’s proposed scenario before execution.
-3. Run the baseline and inspect the actual trajectory and evaluator results to distinguish confirmed failures from hypotheses.
+Public evidence: [risk inventory](/private/tmp/playground-live-booking-demo/work/live-recording/06-risks/stdout.txt), [initialization response](/private/tmp/playground-live-booking-demo/work/live-recording/05-init/stdout.txt), [initialization log](/private/tmp/playground-live-booking-demo/work/live-recording/05-init/stderr.txt), [duration and exit status](/private/tmp/playground-live-booking-demo/work/live-recording/05-init/result.json).

@@ -67,6 +67,7 @@ function recordedReplyText(index, text, turns = [], scripted = false) {
     if (heading) hidden = omitted.includes(heading[1]);
     return !hidden;
   }).join('\n');
+  if (index === 0) result = result.replace(/^Public evidence:[^\n]*\n?/m, '');
   if (index === 1) {
     result = result.replace(/^\*\*The assistant responses below are scripted SDK fixtures[^\n]*\n?/m, '')
       .replace(/^Grounding requirements:[^\n]*\n?/m, '');

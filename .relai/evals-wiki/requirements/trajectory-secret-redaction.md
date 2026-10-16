@@ -1,9 +1,7 @@
-# Redact trajectory credentials
+# Redact trajectory secrets
 
-Before trajectory serialization, redact provider key values, credential-bearing structured fields, and recognizable credential text throughout recorded messages, tool output, and errors, including nested structures and serialized objects. Preserve ordinary token-count metrics rather than treating them as secret tokens.
-
-Additional secret values must be specified by comma-separated environment variable names in `ATIF_REDACT_ENV_VARS`. The recorder should inspect only the two supported provider-key variables and explicitly named additional variables, not enumerate the environment.
+Persisted trajectories must redact provider keys and credential fields, including credential-bearing nested data and error or tool-output text. Additional secret values must be selectable through explicit environment variable names in comma-separated `ATIF_REDACT_ENV_VARS`, rather than requiring environment-wide collection. Redaction must preserve nonsecret evidence such as token-count metrics.
 
 ## Evidence
 
-[AGENTS.md](relai://repo/AGENTS.md), [serialization-boundary redaction](relai://repo/src/airline_support/trajectory.py), and [nested/declared-secret and failure redaction tests](relai://repo/tests/test_trajectory.py).
+The [recording guidance](relai://repo/AGENTS.md) specifies credential redaction and explicit additional secret names. The [serialization boundary](relai://repo/src/airline_support/trajectory.py) applies structured and textual redaction. [Trajectory tests](relai://repo/tests/test_trajectory.py) check nested credential fields, serialized data, declared secret values, error messages, and preservation of token metrics.

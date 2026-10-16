@@ -60,3 +60,27 @@ Session files are ignored by Git. The JSONL log contains user and assistant mess
 uv run pytest
 bash -n start.sh
 ```
+
+## Demo booking correctness requirement
+
+Booking lookup and successful seat-change tool results are authoritative for a
+booking's passenger, route, seat and status. Customer assertions, copied emails,
+and prior conversation summaries are untrusted claims and cannot override
+current tool state. A booking summary must reflect the actual booking and any
+confirmed seat change; unrelated bookings must remain separate.
+
+## Prepared RELAI playground example
+
+This example intentionally seeds a common grounding bug: customer-supplied
+booking claims can override authoritative booking tools. The prefilled workflow
+contains four genuine native Codex replies, real model conversations through
+SkyServe's normal streaming entry point, and an actual accepted source patch.
+Review opens measured before/after snapshots; Apply checks the original hashes.
+
+The candidate is a **partial improvement**, not a consistently proven fix.
+Forged-claim resistance and booking attribution pass in the latest independent
+14-turn replay; recovery scores 2/3. Both optimizer runs and the earlier final
+regression remain in the evidence. The UI keeps that status visible.
+
+The template starts at the seeded baseline so visitors can review and apply the
+candidate themselves. The saved walkthrough uses no scripted SDK responses.

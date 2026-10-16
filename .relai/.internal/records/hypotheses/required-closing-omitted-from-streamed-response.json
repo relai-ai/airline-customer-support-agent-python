@@ -1,0 +1,34 @@
+{
+  "schema_version": "relai.hypothesis.v1",
+  "id": "required-closing-omitted-from-streamed-response",
+  "lifecycle": "proposed",
+  "target": "SkyServe Airline Support",
+  "git_revision": "1708690eaed46b43abd402d7e003e9fc1e858746",
+  "requirement_refs": [
+    "response-ending"
+  ],
+  "expectation_refs": [],
+  "mechanism": "The exact required closing is missing from the runtime instructions, which instead emphasize brevity and natural answers. stream_agent_response forwards model text deltas without appending or validating the required ending.",
+  "trigger": "Collect the fully consumed response to a simple standard-baggage question and to an off-topic request. Check each completed assistant response independently for the required closing rather than checking only the last response of the conversation.",
+  "observable_failure": "A completed response omits or paraphrases “Please let me know if you have any questions”, or places substantive text after that closing. Apply the same check to refusals as to airline answers.",
+  "rationale": "This is a directly documented, exact-output obligation with a concrete prompt omission and no output enforcement. It warrants a narrow behavioral check, not a claim that any particular live response has already failed.",
+  "impact": "low",
+  "confidence": "high",
+  "triggerability": "high",
+  "citations": [
+    {
+      "reference": "relai://wiki/requirements/response-ending.md",
+      "rationale": "Requires the exact closing on every response, including off-topic refusals, and notes its absence from current instructions."
+    },
+    {
+      "reference": "relai://repo/README.md",
+      "rationale": "States the required response-ending phrase explicitly."
+    },
+    {
+      "reference": "relai://repo/src/airline_support/agent.py",
+      "rationale": "The instruction string omits the phrase and the streaming loop yields raw text deltas without closing enforcement."
+    }
+  ],
+  "artifact_lineage": [],
+  "probes": []
+}

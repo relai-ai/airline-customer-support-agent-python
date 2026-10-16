@@ -3,26 +3,26 @@
   "setup_commands": [],
   "assets": [
     {
-      "source": "adapter.json",
-      "destination": "/app/adapter.json"
+      "source": "component_adapter.json",
+      "destination": "/app/component_adapter.json"
     },
     {
-      "source": "mocks/sdk_model.json",
-      "destination": "/app/mocks/sdk_model.json"
-    },
-    {
-      "source": "offline_adapter.py",
-      "destination": "/app/offline_adapter.py"
+      "source": "persona.json",
+      "destination": "/app/persona.json"
     },
     {
       "source": "scenario.json",
       "destination": "/app/scenario.json"
+    },
+    {
+      "source": "session_adapter.py",
+      "destination": "/app/session_adapter.py"
     }
   ],
   "verifier_command": "python3 /tests/evaluate.py",
   "trajectory_example": null,
   "rendered_sha256": {
-    "environment/Dockerfile": "56ec652047f1d3da7a58df80beafc8f410db127babe44cd5170462b0d9a2c1ad",
-    "tests/test.sh": "d05932f788f7232e4525e96f52a66a2c026efc62b149189bf2e1387dcd7595bb"
+    "environment/Dockerfile": "aa69410a655135210d34224dab00420804b39635adc1bc7ac1dde78ccd587ed2",
+    "tests/test.sh": "01a069393b659f4ba5d30544cb81f0cb72f255234df9c732e865e9aa82d43b59"
   }
 }

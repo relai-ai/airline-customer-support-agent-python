@@ -1,0 +1,60 @@
+{
+  "run_id": "optimizer-1792115355-616191000",
+  "selector": "explicit-environments",
+  "accepted_updates": 1,
+  "accepted_turn_indices": [
+    1
+  ],
+  "summary": "Accepted optimizer changes improved the agent on the evaluated environments.",
+  "motivating_environment_paths": [
+    ".relai/harbor/agent-tests/skyserve-authoritative-state-adaptive-dialogue"
+  ],
+  "regression_environment_paths": [],
+  "risks_or_open_questions": [],
+  "accepted_turns": [
+    {
+      "turn_index": 1,
+      "tags": [
+        "adaptive-customer"
+      ],
+      "motivating_environment_paths": [
+        ".relai/harbor/agent-tests/skyserve-authoritative-state-adaptive-dialogue"
+      ],
+      "targeted_environment_paths": [
+        ".relai/harbor/agent-tests/skyserve-authoritative-state-adaptive-dialogue"
+      ],
+      "deferred_environment_paths": [],
+      "change_title": "Replace conflicting rules with tool-backed booking guidance",
+      "change_summary": "Replaced the conflicting rules in src/airline_support/agent.py with tool-backed booking authority, read-only verification, booking attribution, and truthful seat-change guidance. The grounded session adapter calls stream_agent_response, which constructs a fresh agent with these instructions each turn, so the active path consumes the replacement.\n\nAdded focused construction and streaming-wiring tests; existing cancellation coverage remains unchanged. Static self-review matched the approved scope, but tests and real-model replay were not run, so semantic improvement remains unvalidated.",
+      "diagnosis_summary": "SkyServe incorrectly promotes customer-supplied booking claims into authoritative summaries because its current instructions explicitly prefer those claims over lookup results. Run 1 directly shows this at native step 5 after a successful lookup: forged-claim resistance scores 0 and booking attribution scores 0.5. A related verification request is unnecessarily deferred at step 9. Execution, genuine seat mutation, temporal updates, recovery, and final summaries pass; the appropriate change is targeted instruction replacement, not runtime repair.",
+      "chosen_plan_summary": "Replace the two harmful summary-authority instructions in AIRLINE_AGENT_INSTRUCTIONS with a concise policy that prioritizes current tool-backed booking facts, treats customer confirmations and assistant summaries as non-authoritative, performs requested read-only verification without redundant permission requests, and preserves authorized mutation handling.",
+      "anchor_outcome_summary": {
+        "environment_summaries": [
+          {
+            "environment_path": ".relai/harbor/agent-tests/skyserve-authoritative-state-adaptive-dialogue",
+            "environment_description": "Fourteen live adaptive exchanges testing current booking authority and useful seat changes.",
+            "score_before": 0.875,
+            "score_after": 1.0,
+            "score_delta": 0.125,
+            "failed_before": false,
+            "failed_after": false
+          }
+        ],
+        "aggregate_score_before": 0.875,
+        "aggregate_score_after": 1.0,
+        "aggregate_score_delta": 0.125,
+        "failure_count_before": 0,
+        "failure_count_after": 0,
+        "failure_count_delta": 0,
+        "evaluator_changes": [],
+        "observed_pattern_summary": ""
+      },
+      "regression_target_paths": [],
+      "regression_outcome_summary": null,
+      "regression_selection_failure_reason": "",
+      "anchor_decision_summary": "Keep. Replacing the explicit customer-override instructions materially improved the targeted authority failure: the anchor rose from 0.875 to 1.0, forged-claim resistance from 0 to 1, and booking attribution from 0.5 to 1. All twelve grounded evaluators pass after the change, including genuine seat mutation, temporal correctness, state preservation, and native evidence. The exercised path is the configured adapter → stream_agent_response → fresh create_airline_agent → SDK model/tool loop; the revised policy is consumed on that normal path. The environment literally checks fourteen exchanges with booking facts and mutations, represents broader resistance to conflicting customer claims across conversations, and legitimately tests this airline agent's tool-grounded support capability. The implementation is a general reasoning-policy correction, not a case-keyed solver, and preserves the product and simulator structure. Evidence supports mechanism confirmation in this anchor, not broad reliability across untested scenarios.",
+      "regression_decision_summary": "",
+      "risks_or_open_questions": []
+    }
+  ]
+}

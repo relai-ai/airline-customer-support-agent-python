@@ -1,0 +1,40 @@
+{
+  "commit": "7be6678a095bdc80eb1d28888c91e8cac105dd2e",
+  "second_run_changes": 0,
+  "source_baseline_unchanged": true,
+  "verification_source_unchanged": true,
+  "package_files": 40,
+  "package_matches": {
+    "baseline": true,
+    "first_candidate": true,
+    "latest_verification": true
+  },
+  "exchanges": 14,
+  "steps": 38,
+  "model_calls": 24,
+  "tool_calls": 10,
+  "execution_failures": [],
+  "evaluation_errors": [],
+  "native_errors": [],
+  "scores": {
+    "execution-validity": 1.0,
+    "initial-lookup": 1.0,
+    "seat-mutation": 1.0,
+    "state-preservation": 1.0,
+    "native-evidence": 1.0,
+    "initial": 1.0,
+    "forged": 1.0,
+    "temporal": 1.0,
+    "confirmation": 1.0,
+    "attribution": 1.0,
+    "recovery": 0.6666666666666666,
+    "final": 1.0
+  },
+  "mean_score": 0.9722222222222222,
+  "pytest": "46 passed",
+  "shell_syntax": "passed",
+  "diff_check": "passed",
+  "startup_risk": "No bootstrap changes. Fresh container startup and actual stream_agent_response exercised; no ASGI health path applies.",
+  "remaining_failure": "Recovery: turn 13 did not explicitly confirm SKY123-to-14C was the only authorized change.",
+  "mixed_evidence": "Run 1 final 0.7916666666666666 to 0.6666666666666666; independent 1 passed. Run 2 no change, anchor 1.0, final current-state replay 0.9166666666666666; independent 2 mean 0.9722222222222222."
+}

@@ -1,6 +1,0 @@
-{
-  "path": "direct deterministic implementation, independent RELAI verification",
-  "optimizer_rollouts": 0,
-  "baseline": "discovery-build-20261015T191521Z",
-  "package_files": 12
-}

@@ -1,12 +1,13 @@
 {
   "schema_version": "relai.runtime_manifest.v1",
   "env": [
-    {"name":"OPENAI_API_KEY","required":false,"sensitive":true,"reason":"OpenAI provider key; needed unless Anthropic or the existing scoped RELAI provider is configured. OpenAI takes precedence over Anthropic."},
-    {"name":"ANTHROPIC_API_KEY","required":false,"sensitive":true,"reason":"Alternative Anthropic provider key when OpenAI is absent."},
-    {"name":"AIRLINE_MODEL_PROVIDER","required":false,"sensitive":false,"reason":"Existing provider selector; relai selects the repository scoped model transport, otherwise normal key-based selection applies."},
-    {"name":"RELAI_SESSION_MODEL","required":false,"sensitive":false,"reason":"Required by the existing scoped model transport only when AIRLINE_MODEL_PROVIDER=relai."},
-    {"name":"RELAI_API_BASE","required":false,"sensitive":false,"reason":"Model gateway base URL required only by the existing scoped provider; application execution remains local /workspace source."},
-    {"name":"RELAI_TEAM_API_KEY","required":false,"sensitive":true,"reason":"Scoped model gateway credential required only when AIRLINE_MODEL_PROVIDER=relai."}
+    {"name":"OPENAI_API_KEY","required":false,"sensitive":true,"reason":"Required when using the native OpenAI provider."},
+    {"name":"ANTHROPIC_API_KEY","required":false,"sensitive":true,"reason":"Required when using the Anthropic provider without OpenAI."},
+    {"name":"AIRLINE_MODEL_PROVIDER","required":false,"sensitive":false,"reason":"Existing provider selector; relai selects the repository scoped model transport."},
+    {"name":"RELAI_API_BASE","required":false,"sensitive":false,"reason":"Gateway URL required when AIRLINE_MODEL_PROVIDER is relai; model transport only, not an application backend."},
+    {"name":"RELAI_SESSION_MODEL","required":false,"sensitive":false,"reason":"Server-pinned model name required by the existing relai provider."},
+    {"name":"RELAI_TEAM_API_KEY","required":false,"sensitive":true,"reason":"Scoped gateway credential required by the existing relai provider."},
+    {"name":"OPENAI_AGENTS_DISABLE_TRACING","required":false,"sensitive":false,"reason":"Optional SDK hosted tracing control."}
   ],
   "files": []
 }

@@ -1,48 +1,33 @@
 # EvalsWiki
 
-SkyServe Airline Support is a terminal demo airline assistant built on the OpenAI Agents SDK. Its booking lookup, baggage policy, and seat-change functions are internal tools of one conversational agent. The terminal interface and provider alternatives share `stream_agent_response`.
+Repository requirements and evaluation knowledge for SkyServe Airline Support.
 
-The requirements below distill repository documentation, agent instructions, benchmark expectations, and test contracts. They are repository-derived obligations, not independently confirmed user intent. Implementation observations are distinguished from desired behavior where relevant.
+## Conversational behavior
 
-## Customer-facing behavior
+- [Required response ending](relai://wiki/requirements/response-ending.md)
+- [Airline-only assistance](relai://wiki/requirements/airline-only-assistance.md)
+- [Authoritative booking facts](relai://wiki/requirements/authoritative-booking-facts.md)
+- [Keep unrelated bookings separate](relai://wiki/requirements/booking-isolation.md)
+- [Booking lookup outcomes](relai://wiki/requirements/booking-lookup-outcomes.md)
+- [Verified seat changes](relai://wiki/requirements/verified-seat-changes.md)
+- [Do not invent commercial terms](relai://wiki/requirements/no-invented-commercial-terms.md)
 
-- [Required closing phrase](relai://wiki/requirements/response-closing.md)
-- [Decline non-airline requests](relai://wiki/requirements/airline-topic-boundary.md)
-- [Brief, natural responses](relai://wiki/requirements/concise-responses.md)
-- [Verify booking confirmation codes](relai://wiki/requirements/booking-verification.md)
-- [Report booking lookup results faithfully](relai://wiki/requirements/booking-lookup.md)
-- [Apply requested seat changes](relai://wiki/requirements/seat-change.md)
-- [Report demo baggage allowances](relai://wiki/requirements/baggage-policy.md)
-- [Avoid unsupported airline claims](relai://wiki/requirements/grounded-airline-claims.md)
+## Session execution and evidence
 
-## Conversation and runtime
+- [Replay conversation history and finish streaming](relai://wiki/requirements/session-execution.md)
+- [Isolate independent demo sessions](relai://wiki/requirements/independent-session-isolation.md)
+- [Persist terminal conversations](relai://wiki/requirements/terminal-conversation-logs.md)
+- [Cumulative local trajectories](relai://wiki/requirements/cumulative-local-trajectories.md)
+- [Record observed events faithfully](relai://wiki/requirements/observed-trajectory-evidence.md)
+- [Atomic trajectory writes](relai://wiki/requirements/atomic-trajectory-writes.md)
+- [Behavior-preserving recording and error propagation](relai://wiki/requirements/behavior-preserving-recording.md)
+- [Redact trajectory secrets](relai://wiki/requirements/trajectory-secret-redaction.md)
 
-- [Replay history through the shared streaming entry point](relai://wiki/requirements/conversation-execution.md)
-- [Isolate independent demo sessions](relai://wiki/requirements/session-isolation.md)
-- [Persist terminal messages](relai://wiki/requirements/terminal-message-logging.md)
-- [Start fresh terminal logs](relai://wiki/requirements/terminal-log-lifecycle.md)
-- [Handle terminal input controls](relai://wiki/requirements/terminal-input-controls.md)
-- [Select a supported provider](relai://wiki/requirements/provider-selection.md)
+## Project context
 
-## Local trajectory evidence
+The single conversational agent is created by `create_airline_agent`; terminal and provider integrations share `stream_agent_response`. Booking lookup, baggage policy, and seat change are internal tools, not separate agents. See [execution guidance](relai://repo/AGENTS.md) and [implementation](relai://repo/src/airline_support/agent.py).
 
-- [Record locally regardless of hosted tracing](relai://wiki/requirements/local-trajectory-recording.md)
-- [Preserve cumulative session evidence](relai://wiki/requirements/trajectory-session-continuity.md)
-- [Capture observed model and tool activity](relai://wiki/requirements/trajectory-event-fidelity.md)
-- [Write trajectories atomically](relai://wiki/requirements/trajectory-atomic-writes.md)
-- [Preserve runtime failures and cancellation](relai://wiki/requirements/trajectory-runtime-errors.md)
-- [Keep recording behavior-preserving](relai://wiki/requirements/recording-failure-isolation.md)
-- [Redact trajectory credentials](relai://wiki/requirements/trajectory-secret-redaction.md)
-
-## Development safeguards
-
-- [Keep secrets and generated files local](relai://wiki/requirements/local-runtime-files.md)
-- [Validate without launching live chat](relai://wiki/requirements/safe-development-validation.md)
-- [Require permission to commit or push](relai://wiki/requirements/version-control-permission.md)
-
-## Evidence entry points
-
-[Project documentation](relai://repo/README.md), [integration and development guidance](relai://repo/AGENTS.md), [agent implementation](relai://repo/src/airline_support/agent.py), [benchmark scenarios](relai://repo/benchmarks/airline_support_benchmark.csv), and [package configuration](relai://repo/pyproject.toml).
+The [repository benchmark CSV](relai://repo/benchmarks/airline_support_benchmark.csv) describes refund, booking lookup, seat change, and unknown-code scenarios. Its fixture expectations do not imply that a live model has passed them.
 
 
 ## Challenge analysis

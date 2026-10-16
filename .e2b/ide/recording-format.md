@@ -63,54 +63,58 @@ For a newly captured walkthrough, every step has `exactResponse: {path, sha256}`
 
 `step.text` must equal the exported `response` exactly, including headings, tables and Suggested next steps. The loader rejects a modified reply, mismatched prompt, incomplete step set or invalid hash. Original summaries remain summaries until genuine exact captures replace all three steps. Capture the revised risk, highest-impact multi-turn test, and failure-fix prompts in order; preserve failed/recovery attempts separately rather than presenting them as successful simulations. The screenshot examples specify layout, not a required scenario or score.
 
-## Deterministic recorder evidence (schema 2)
+## Live conversational evidence (schema 3)
 
-The current bundle uses `schemaVersion: 2` and
-`evidenceKind: deterministic-recorder`. It records two scripted SDK exchanges
-through the real streaming/recording implementation. The UI labels these as
-scripted responses; neither the fixtures nor their token metadata establish
-live model quality. The exact Codex replies are native assistant output.
+New conversational recordings use `schemaVersion: 3` and `evidenceKind:
+live-agent`. All four replies, including Apply, are completed native Codex
+captures from the same thread. The target responses come from real model
+calls through the agent's normal entry point and its actual booking tools.
+No scripted SDK responses are used as demo evidence. Legacy schemas remain
+readable for compatibility.
 
-The independent result must show both redaction checks improving from 0 to 1,
-with all four continuity/execution checks passing before and after. Validation
-requires both native snapshots per phase, their full trajectory, successful
-RELAI discovery/simulation receipts, a distinct verification invocation/outcome,
-and the complete frozen test package with equal before/after hashes. Any
-execution or evaluator error fails validation. Legacy ten-turn conversation
-requirements remain unchanged for schema 1.
+The bundle preserves a measured failing baseline, an accepted RELAI optimizer
+change, and a separate targeted verification with a distinct invocation and
+run ID. Validation checks complete exchanges, observed tool results, scored
+execution without evaluator errors, and the frozen generated test package.
+Every artifact is hashed. Before/after source snapshots and the patch must
+agree, so review works even in a workspace without Git history.
 
-This deterministic bug was fixed directly by Codex following the RELAI optimize
-skill and verified with `relai simulate`; `totalRollouts: 0` is intentional.
-The 3.2-minute original initialization and later runtime recovery have separate
-receipts. The 23.58-second timing describes independent verification only.
+Each six-rollout optimizer budget includes its final before/after evaluation.
+When a separately approved follow-up is needed, preserve both complete reports
+and receipts in `optimizerHistory`; their budgets must sum to `totalRollouts`.
+A later passing run must not erase an earlier regression from the evidence.
+Independent targeted verification is recorded separately; never label that
+extra verification as an optimizer rollout. Describe remaining deductions and
+limitations accurately. The loader requires passing independent verification
+before a recording can be released as verified.
 
-`savedLinks` maps original response links to hashed packaged artifacts. Unknown
-links remain literal text, and artifact opening checks the saved hashes again.
-Native response bytes remain unchanged, including disclosed warnings: the
-generated README still says proposal-only, and RELAI emitted a raw-input
-matching warning after credential masking. Neither was concealed or repaired
-by changing evaluator criteria. The structured verification completed cleanly.
+`savedLinks` maps response links to hashed packaged public artifacts. Unknown
+links remain literal text. Keep raw native events, private reasoning,
+credentials, simulator environment files, and private CLI state outside the
+bundle. Historical bundles belong in task output, not the active demo.
 
-The prior conversation bundle is retained in the task's
-`output/exact-codex-recording/previous-published-recording` directory. Older
-unreferenced saved files are historical; only the current manifest selects what
-the UI replays. No raw Codex JSONL events, private reasoning, or credentials are
-packaged.
+The risk reply displays one risk table and keeps Open saved wiki results.
+Timing badges consistently read “Codex + RELAI precomputed results ·” followed
+by the actual measured phase and duration. Prefilled prompts use complete
+sentences. Exact response exports remain unchanged; display trimming is
+presentation only. Baseline turns appear in a table, and submitting a prompt
+anchors it near the top so the answer can be read from its beginning.
 
-The risk reply's presentation omits its Evidence section and the repeated
-assistant label beside the timing badge. When an exact Codex risk reply already
-contains its table, the UI does not append the separate inventory table. The
-saved-wiki button remains available. These are display-only changes: the exact
-JSON/Markdown response exports and their hashes remain untouched.
+The UI does not display a Saved run artifacts inventory or append a separate
+fixture response/viewer. The Apply reply comes from its captured coding-agent
+response; applying the saved patch still validates source hashes and preserves
+visitor edits. A new preview session must use a new session ID and clear its
+saved workspace state before presenting the first prompt again.
 
-Prefilled prompts use corrected spelling, RELAI capitalization, and complete
-sentences in the UI. Replay matches these displayed presets; original captured
-prompts remain verbatim in the manifest and exact-response exports. Saved drafts
-matching an old preset are upgraded; user-edited drafts are preserved.
-
-The baseline presentation uses a table of saved turns, labels fixture responses
-as scripted, and omits the verbose fixture paragraph, grounding list, validity
-section, artifact list, and extra simulation viewer. The fix reply omits its
-turn evidence, limitations, and artifact sections. All full exports remain
-unchanged. Replay anchors the latest submitted prompt at the top for reading.
-The recorder verification example says “after the fix”: no optimizer ran.
+A schema-3 recording may have `verificationStatus: mixed` when the independent
+replay passes but the retained optimizer history contains a regression or
+remaining deductions. This is distinct from a consistently verified fix.
+It requires an explicit `reliabilityNote`, shown with the fix reply. The actual
+scores and full historical reports remain hashed and unchanged. Applying such
+a candidate still requires the visitor's explicit Apply step; that action does
+not convert its evaluation status to verified. A failed independent execution or code validity check still prevents release.
+A partially improved candidate must explicitly list every remaining semantic
+deduction in `unresolvedEvaluatorIds`, pass its originally failing targeted
+evaluators, and improve its independent mean over the original baseline. It
+remains `mixed`; neither a user Apply action nor a passing unit test changes
+that behavioral status.

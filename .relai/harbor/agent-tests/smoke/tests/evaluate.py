@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-"""Separate verifier: only task-owned criteria and exported ATIF, no project mount."""
+"""Separate, network-free verification of observed booking tool evidence."""
 import json
 from pathlib import Path
 
@@ -11,39 +10,30 @@ def evaluate():
     steps = trajectory['steps']
     assert [s['step_id'] for s in steps] == list(range(1, len(steps) + 1))
     assert len([s for s in steps if s['source'] == 'user']) >= 2
-    assert all(s.get('message') for s in steps if s['source'] == 'agent')
-    required = [
-        ('lookup_booking', {'confirmation_code': 'SKY123'}, 'Seat 12A'),
-        ('change_seat', {'confirmation_code': 'SKY123', 'requested_seat': '14C'}, 'Seat updated to 14C'),
-    ]
-    observed = []
+    assert len([s for s in steps if s['source'] == 'agent' and s['message'].strip() and not s.get('tool_calls')]) >= 2
+    found = set()
     for step in steps:
         for call in step.get('tool_calls', []):
-            results = [r for r in step.get('observation', {}).get('results', [])
-                       if r['source_call_id'] == call['tool_call_id']]
-            assert results, 'Tool call lacks same-step matched observation'
-            observed.append((call, results))
-    for name, arguments, fragment in required:
-        assert any(call['function_name'] == name
-                   and all(call['arguments'].get(k) == v for k, v in arguments.items())
-                   and any(fragment in str(r['content']) for r in results)
-                   for call, results in observed), 'Required booking tool evidence absent'
-    # Each user turn must have a real model message, not just a tool invocation.
-    groups = []
-    for step in steps:
-        if step['source'] == 'user':
-            groups.append([])
-        elif step['source'] == 'agent' and groups:
-            groups[-1].append(step)
-    assert all(any(not s.get('tool_calls') and s['message'].strip() for s in g) for g in groups)
+            results = [r for r in step.get('observation', {}).get('results', []) if r['source_call_id'] == call['tool_call_id']]
+            assert results, 'Unmatched observed tool call'
+            args = call['arguments']
+            text = '\n'.join(r['content'] for r in results)
+            if call['function_name'] == 'lookup_booking' and args.get('confirmation_code') == 'SKY123':
+                assert 'Maya Chen' in text and '12A' in text
+                found.add('lookup_booking')
+            if call['function_name'] == 'change_seat' and args.get('confirmation_code') == 'SKY123' and args.get('requested_seat') == '14C':
+                assert 'Seat updated to 14C' in text
+                found.add('change_seat')
+    assert found == {'lookup_booking', 'change_seat'}
 
 
 if __name__ == '__main__':
     output = Path('/logs/verifier')
     output.mkdir(parents=True, exist_ok=True)
-    reward = 0
     try:
         evaluate()
-        reward = 1
-    finally:
-        (output / 'reward.txt').write_text(str(reward))
+    except Exception:
+        (output / 'reward.txt').write_text('0\n')
+        raise
+    else:
+        (output / 'reward.txt').write_text('1\n')

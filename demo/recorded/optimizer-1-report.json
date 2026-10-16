@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "title": "Replace conflicting rules with tool-backed booking guidance"
+    }
+  ],
+  "title": "Ground airline booking guidance in tool-backed state",
+  "summary": "Replaced conflicting airline-support instructions with tool-backed guidance to keep booking responses grounded and truthful.\n\n- Clarified booking authority, read-only verification, booking attribution, and seat-change guidance.\n- Confirmed the active streaming path uses the replacement instructions and added focused construction and wiring tests.\n\nTests and real-model replay were not run, so semantic improvement remains unvalidated.",
+  "inconsistency": ""
+}

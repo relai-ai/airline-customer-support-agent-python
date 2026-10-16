@@ -1,0 +1,27 @@
+{
+  "applied": true,
+  "accepted_commit": "7be6678a095bdc80eb1d28888c91e8cac105dd2e",
+  "head_unchanged": "1708690eaed46b43abd402d7e003e9fc1e858746",
+  "changed_files": [
+    "src/airline_support/agent.py",
+    "tests/test_agent_policy.py",
+    "tests/test_trajectory.py"
+  ],
+  "after_source_hashes": {
+    "src/airline_support/agent.py": "e9314ea2c668b79100ddf5659bf4a0feb6914e75531784c6dd06f233b57e957b",
+    "tests/test_agent_policy.py": "a1f53942c831b1cc39e66c86073c74e8a1c0da14df54745b32b5b64ef9d591a9",
+    "tests/test_trajectory.py": "3dac2b49a0211ec35fb8a2fd69849dfe0535a4a785863b9cc59783dd150d5f73"
+  },
+  "exact_accepted_bytes": true,
+  "package_unchanged": true,
+  "status": " M src/airline_support/agent.py\n M tests/test_trajectory.py\n?? .relai/\n?? tests/test_agent_policy.py\n",
+  "checks": {
+    "pytest": "46 passed using existing .venv; keys unset",
+    "shell_syntax": "passed",
+    "diff_check": "passed"
+  },
+  "post_check_bytes_match": true,
+  "post_check_package_unchanged": true,
+  "startup_review": "Instruction and regression-test changes only; no bootstrap changes. App startup not run in this apply step.",
+  "uv_attempt": "Sandbox cache permission failure; preserved in phase 84; existing environment pytest passed in phase 87."
+}

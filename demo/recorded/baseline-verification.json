@@ -1,0 +1,14 @@
+{
+  "source_unchanged": true,
+  "completed_exchanges": 14,
+  "native_steps": 34,
+  "model_calls": 20,
+  "observed_tool_calls": 7,
+  "execution_failures": [],
+  "evaluation_errors": [],
+  "native_errors": [],
+  "frozen_files": 40,
+  "entrypoint": "airline_support.agent.stream_agent_response",
+  "all_streams_fully_consumed": true,
+  "startup_risk_review": "No agent source changes; actual fresh-process task startup and entrypoint exercised in live container simulation. No ASGI/Django deployment path exists in this task; no separate deployment smoke test run."
+}

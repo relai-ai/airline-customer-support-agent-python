@@ -17,6 +17,12 @@ const exactPrompts = [
   "Use relai to fix the failures the test found",
   prompts[3],
 ];
+const livePrompts = [
+  prompts[0],
+  "Use RELAI to build a multi-turn test for the highest-impact risk you found.",
+  "Use RELAI to fix the failures the test found.",
+  "These changes look great. Apply them.",
+];
 const digest = (data) => crypto.createHash("sha256").update(data).digest("hex");
 async function regular(root, name) {
   if (
@@ -37,14 +43,16 @@ async function loadRecording(root) {
     await regular(root, "demo/recorded/walkthrough.json"),
   );
   if (
-    ![1, 2].includes(manifest.schemaVersion) ||
-    !["pending", "verified"].includes(manifest.verificationStatus) ||
+    ![1, 2, 3].includes(manifest.schemaVersion) ||
+    !["pending", "verified", "mixed"].includes(manifest.verificationStatus) ||
+    (manifest.verificationStatus === "mixed" && manifest.schemaVersion !== 3) ||
     manifest.steps?.length !== 3 ||
     !Array.isArray(manifest.files) ||
     !manifest.files.length
   )
     throw Error("Recorded walkthrough is incomplete");
   if (manifest.schemaVersion === 2) await validateRecorderEvidence(root, manifest);
+  if (manifest.schemaVersion === 3) await validateLiveEvidence(root, manifest);
   for (const step of manifest.steps)
     if (
       !Number.isFinite(step.durationSeconds) ||
@@ -61,7 +69,7 @@ async function loadRecording(root) {
         throw Error("Exact Codex response integrity check failed");
       const response = JSON.parse(bytes);
       if (response.engine !== "codex-cli" || response.turnStatus !== "completed" || !response.threadId ||
-          (manifest.schemaVersion === 2 && response.threadId !== manifest.provenance.threadId) ||
+          ([2, 3].includes(manifest.schemaVersion) && response.threadId !== manifest.provenance.threadId) ||
           response.prompt !== manifest.prompts[index] || response.response !== step.text ||
           digest(response.response) !== response.responseSha256)
         throw Error("Recorded reply does not match its exact Codex response");
@@ -227,7 +235,7 @@ async function loadRecording(root) {
   if (
     !Array.isArray(manifest.prompts) ||
     manifest.prompts.length !== 4 ||
-    !manifest.prompts.every((p, i) => p === (manifest.steps.every(step => step.exactResponse) ? exactPrompts[i] : prompts[i]))
+    !manifest.prompts.every((p, i) => p === (manifest.schemaVersion === 3 ? livePrompts[i] : manifest.steps.every(step => step.exactResponse) ? exactPrompts[i] : prompts[i]))
   )
     throw Error("Recorded prompts do not match the walkthrough");
   if (manifest.fixedExample) {
@@ -248,6 +256,141 @@ async function loadRecording(root) {
   if (manifest.diff !== patch.toString())
     throw Error("Displayed changes do not match the recorded patch");
   return manifest;
+}
+// Live conversational demos keep their native simulation, frozen criteria and
+// optimizer provenance separate from deterministic recorder probes.
+async function validateLiveEvidence(root, manifest) {
+  const p = manifest.provenance, e = manifest.liveEvidence;
+  if (manifest.evidenceKind !== "live-agent" || !["verified", "mixed"].includes(manifest.verificationStatus) ||
+      p?.orchestrator !== "Codex" || !/^[a-f0-9-]{36}$/.test(p.threadId || "") ||
+      !/^[a-f0-9]{40}$/.test(p.sourceRevision || "") || ![6, 12].includes(p.totalRollouts) ||
+      !manifest.steps.every(step => step.exactResponse) || !e)
+    throw Error("Live agent evidence provenance is incomplete");
+  const artifacts = new Map();
+  for (const ref of p.artifacts || []) {
+    if (artifacts.has(ref.path)) throw Error("Duplicate live agent evidence");
+    const bytes = await regular(root, ref.path);
+    if (digest(bytes) !== ref.sha256) throw Error("Live agent evidence integrity check failed");
+    artifacts.set(ref.path, bytes);
+  }
+  const read = name => {
+    if (!artifacts.has(name)) throw Error("Missing live agent evidence");
+    return JSON.parse(artifacts.get(name));
+  };
+  for (const target of Object.values(manifest.savedLinks || {}))
+    if (!artifacts.has(target)) throw Error("Saved link is not a verified artifact");
+  let baselineFailed = false;
+  const phaseScores = {};
+  for (const phase of ["before", "after"]) {
+    const suite = read(e[phase].result), result = suite.runs?.[0]?.result;
+    if (suite.schema_version !== "relai.simulation_suite_result.v1" || suite.total_count !== 1 ||
+        suite.success_count !== 1 || suite.failure_count !== 0 || suite.failures?.length ||
+        suite.runs?.length !== 1 || result?.evaluation_errors?.length ||
+        result?.learning_environment_id !== e.testId || !result.evaluations?.length)
+      throw Error("Live agent simulation did not complete cleanly");
+    phaseScores[phase] = result.evaluations;
+    for (const score of result.evaluations) {
+      if (!Number.isFinite(score.score) || !Number.isFinite(score.max_score) ||
+          !Number.isFinite(score.min_score) || score.max_score <= score.min_score ||
+          score.score < score.min_score || score.score > score.max_score)
+        throw Error("Invalid live agent evaluation score");
+      if (phase === "before" && score.score < score.max_score) baselineFailed = true;
+      if (phase === "after" && score.score !== score.max_score &&
+          (manifest.verificationStatus === "verified" || score.evaluator_type === "code"))
+        throw Error("Live verification still has failing criteria");
+    }
+    const trajectory = read(e[phase].trajectory);
+    const turns = [];
+    for (const step of trajectory.steps || []) {
+      if (step.source === "user") turns.push({ user: step.message, agent: "" });
+      else if (step.source === "agent" && !step.tool_calls?.length && step.message && turns.length)
+        turns.at(-1).agent = step.message;
+    }
+    if (turns.length < 10 || turns.some(turn => !turn.user || !turn.agent) ||
+        !trajectory.steps.some(step => step.tool_calls?.length && step.observation?.results?.length) ||
+        !(trajectory.final_metrics?.total_completion_tokens > 0))
+      throw Error("Live demo requires complete tool-backed model exchanges");
+    if (phase === "before" && JSON.stringify(turns) !== JSON.stringify(manifest.turns))
+      throw Error("Displayed live exchanges differ from the actual trajectory");
+  }
+  if (!baselineFailed) throw Error("Live demo requires a measured baseline failure");
+  const beforeScores = new Map(phaseScores.before.map(score => [score.evaluator_id, score]));
+  const afterScores = new Map(phaseScores.after.map(score => [score.evaluator_id, score]));
+  if (beforeScores.size !== phaseScores.before.length || afterScores.size !== phaseScores.after.length ||
+      beforeScores.size !== afterScores.size || [...beforeScores].some(([id, score]) =>
+        !afterScores.has(id) || score.min_score !== afterScores.get(id).min_score || score.max_score !== afterScores.get(id).max_score))
+    throw Error("Live before/after evaluator contracts differ");
+  if (manifest.verificationStatus === "mixed") {
+    const unresolved = phaseScores.after.filter(score => score.score < score.max_score).map(score => score.evaluator_id).sort();
+    const declared = [...(e.unresolvedEvaluatorIds || [])].sort();
+    const targets = e.targetedEvaluatorIds || [];
+    const mean = scores => scores.reduce((sum, score) => sum + (score.score - score.min_score) / (score.max_score - score.min_score), 0) / scores.length;
+    if (JSON.stringify(unresolved) !== JSON.stringify(declared) ||
+        mean(phaseScores.after) <= mean(phaseScores.before) || !targets.length ||
+        targets.some(id => !beforeScores.has(id) || beforeScores.get(id).score >= beforeScores.get(id).max_score ||
+          afterScores.get(id).score !== afterScores.get(id).max_score))
+      throw Error("Mixed candidate must improve the targeted failure and disclose every remaining deduction");
+  }
+  const before = read(e.criteriaBefore), after = read(e.criteriaAfter);
+  if (!Object.keys(before).length || JSON.stringify(before) !== JSON.stringify(after) ||
+      Object.keys(before).length !== Object.keys(e.packageFiles || {}).length)
+    throw Error("Live test criteria changed during optimization");
+  for (const [name, hash] of Object.entries(before))
+    if (!artifacts.has(e.packageFiles[name]) || digest(artifacts.get(e.packageFiles[name])) !== hash)
+      throw Error("Live test package differs from frozen criteria");
+  const receipt = read(e.optimizerReceipt), argv = receipt.argv || [];
+  if (receipt.exitCode !== 0 || argv[0] !== "relai" || argv[1] !== "optimize" ||
+      argv[argv.indexOf("--total-rollouts") + 1] !== "6" ||
+      argv[argv.indexOf("--batch-size") + 1] !== "1" || !argv.includes("--no-pr"))
+    throw Error("Live demo requires completed bounded RELAI optimization");
+  const history = e.optimizerHistory || [{ receipt: e.optimizerReceipt, result: e.optimizerResult, report: e.optimizerReport, budget: 6 }];
+  if (history.length !== p.totalRollouts / 6 || history.some(run => run.budget !== 6) ||
+      new Set(history.map(run => run.result)).size !== history.length ||
+      new Set(history.map(run => run.receipt)).size !== history.length ||
+      history.at(-1).receipt !== e.optimizerReceipt || history.at(-1).result !== e.optimizerResult ||
+      history.at(-1).report !== e.optimizerReport)
+    throw Error("Optimizer history differs from the approved total budget");
+  let accepted = false;
+  for (const run of history) {
+    const r = read(run.receipt), args = r.argv || [], result = read(run.result), report = read(run.report);
+    if (r.exitCode !== 0 || args[0] !== "relai" || args[1] !== "optimize" ||
+        args[args.indexOf("--total-rollouts") + 1] !== String(run.budget) ||
+        args[args.indexOf("--batch-size") + 1] !== "1" || !args.includes("--no-pr") ||
+        !result.final_evaluation_summary || result.repair_blocker)
+      throw Error("Optimizer history has an incomplete run");
+    accepted ||= result.accepted_updates > 0 && result.accepted_turn_indices?.length > 0 && report.changes?.length > 0;
+  }
+  if (!accepted) throw Error("Optimizer did not produce a verified accepted change");
+  const final = read(e.optimizerResult).final_evaluation_summary;
+  const finalPasses = Number.isFinite(final.aggregate_score_before) && final.aggregate_score_after === 1 &&
+      final.aggregate_score_after >= final.aggregate_score_before && final.updated_agent_evaluated &&
+      !final.terminated_early && final.environment_summaries?.length && final.environment_summaries.every(item =>
+        Number.isFinite(item.score_before) && item.score_after === 1 && item.score_after >= item.score_before);
+  if (manifest.verificationStatus === "verified" && !finalPasses)
+    throw Error("Optimizer final evaluation does not establish an improvement");
+  const mixedHistory = history.some(run => {
+    const summary = read(run.result).final_evaluation_summary;
+    return summary.aggregate_score_after < summary.aggregate_score_before ||
+      summary.environment_summaries?.some(item => item.score_after < 1 || item.score_before < 1);
+  });
+  if (manifest.verificationStatus === "mixed" &&
+      (!mixedHistory || typeof manifest.reliabilityNote !== "string" || !manifest.reliabilityNote.trim()))
+    throw Error("Mixed results require their actual evaluation history and an explicit reliability note");
+  const outcome = read(e.outcome), verification = read(e.after.receipt);
+  if (verification.exitCode !== 0 || verification.argv?.[0] !== "relai" || verification.argv[1] !== "simulate" ||
+      outcome.schema_version !== "relai.agent_simulation_outcome.v1" ||
+      outcome.invocation_id !== verification.outcomeInvocationId || outcome.execution?.status !== "completed" ||
+      outcome.execution.failures?.length || outcome.execution.runs?.length !== 1 ||
+      outcome.execution.runs[0].evaluator_errors?.length || outcome.execution.runs[0].failure ||
+      outcome.execution.runs[0].run_id !== read(e.after.result).runs[0].result.run_id ||
+      read(e.before.result).runs[0].result.run_id === read(e.after.result).runs[0].result.run_id)
+    throw Error("Live independent verification is incomplete");
+  const apply = read(manifest.exactApplyResponse?.path);
+  if (digest(artifacts.get(manifest.exactApplyResponse.path)) !== manifest.exactApplyResponse.sha256 ||
+      apply.engine !== "codex-cli" || apply.turnStatus !== "completed" || apply.threadId !== p.threadId ||
+      apply.prompt !== livePrompts[3] || apply.response !== manifest.applyMessage ||
+      digest(apply.response) !== apply.responseSha256)
+    throw Error("Apply reply must match its exact native Codex capture");
 }
 // Recorder probes use deterministic SDK fixtures rather than ten-turn model-quality
 // trials. Keep their evidence contract explicit and separate from legacy recordings.
@@ -335,7 +478,7 @@ async function validateRecorderEvidence(root, manifest) {
     throw Error("Recorder independent verification outcome is invalid");
 }
 async function applyRecording(root, manifest) {
-  if (manifest.verificationStatus !== "verified")
+  if (manifest.verificationStatus !== "verified" && !(manifest.schemaVersion === 3 && manifest.verificationStatus === "mixed"))
     throw Error(
       "Independent verification is pending. The recorded patch cannot be applied yet.",
     );
@@ -361,7 +504,9 @@ async function applyRecording(root, manifest) {
     after &&= hash === file.after;
   }
   if (after)
-    return "The verified changes are already applied to this workspace.";
+    return manifest.verificationStatus === "mixed"
+      ? "The recorded candidate is already applied; evaluation results remain mixed."
+      : "The verified changes are already applied to this workspace.";
   if (!before)
     throw Error(
       "These files have changed since the recorded baseline. Your edits were preserved; review the diff before applying.",
@@ -382,7 +527,9 @@ async function applyRecording(root, manifest) {
   for (const file of manifest.files)
     if (digest(await regular(root, file.path)) !== file.after)
       throw Error("Applied file does not match verified evidence");
-  return "Applied the recorded, verified improvement to this workspace. New requests now use these files.";
+  return manifest.verificationStatus === "mixed"
+    ? "Applied the recorded candidate to this workspace. Evaluation results remain mixed; review the recorded limitations."
+    : "Applied the recorded, verified improvement to this workspace. New requests now use these files.";
 }
 function reviewFile(manifest, name) {
   const file = manifest.files.find((item) => item.path === name);

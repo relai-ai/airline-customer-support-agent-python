@@ -1,8 +1,0 @@
-{
-  "injection_point": "airline_support.agent.select_model -> ModelSelection(model=ScriptedModel)",
-  "responses": [
-    "Standard tickets include one carry-on and one checked bag up to 50 pounds.",
-    "The checked-bag weight limit for a standard ticket is 50 pounds."
-  ],
-  "notice": "Scripted SDK response fixtures only; not spontaneous conversational reasoning."
-}

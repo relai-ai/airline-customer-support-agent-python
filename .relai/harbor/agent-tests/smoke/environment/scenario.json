@@ -1,8 +1,8 @@
 {
   "id": "smoke",
-  "input": {"type":"fixed", "turns":[
-    "Please look up my booking. My confirmation code is SKY123. What is my current seat?",
-    "Please change my seat to 14C on that booking."
+  "input": {"type": "fixed", "turns": [
+    "Please look up my booking SKY123 and tell me my current seat.",
+    "Please change the seat on that booking to 14C."
   ]},
   "services": {},
   "evaluator": {}

@@ -336,18 +336,20 @@ test("recorded presets use complete sentences without changing historical captur
   assert.equal(recordedPromptText("My edited request"), "My edited request");
 });
 
-test("recorded reply presentation removes verbose sections and tabulates saved turns", () => {
+test("live recorded replies keep readable tables, remaining failures and original native text", () => {
   const { recordedReplyText } = require('./workflow');
   const fs = require('node:fs'), path = require('node:path');
   const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../demo/recorded/walkthrough.json')));
   const original = manifest.steps[1].text;
-  const reply = recordedReplyText(1, original, manifest.turns, true);
-  assert.match(reply, /\| Turn \| User’s challenge \| Agent’s response \(scripted SDK fixture\)/);
-  assert.doesNotMatch(reply, /## Validity checks|## Artifacts and export|Grounding requirements:|The assistant responses below|### Turn/);
-  assert.match(reply, /## Suggested next steps/);
+  const reply = recordedReplyText(1, original, manifest.turns, false);
+  assert.match(reply, /\| Turn \| User’s challenge \| Agent’s response \|/);
+  assert.match(reply, /\| 14 \|/);
+  assert.doesNotMatch(reply, /scripted SDK|## Validity checks|## Artifacts and export/);
+  assert.match(reply, /Suggested next steps/);
   assert.equal(manifest.steps[1].text, original);
   const fixed = recordedReplyText(2, manifest.steps[2].text);
-  assert.doesNotMatch(fixed, /## Actual turn evidence|## Regressions and limitations|## Artifacts and export/);
-  assert.match(fixed, /## Simulation complete/);
-  assert.match(fixed, /## Suggested next steps/);
+  assert.match(fixed, /recovery.*0\.67|0\.67.*recovery/i);
+  assert.match(fixed, /0\.792.*0\.667/);
+  assert.match(fixed, /Suggested next steps/);
+  assert.doesNotMatch(recordedReplyText(0, manifest.steps[0].text), /^Public evidence:/m);
 });

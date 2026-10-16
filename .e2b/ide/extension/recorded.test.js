@@ -61,15 +61,17 @@ async function fixture(t) {
   );
   return { root, manifest, before, after };
 }
-test("deterministic recorder replay requires unchanged criteria and independently passing native evidence", async (t) => {
+test("packaged live demo retains native evidence, mixed results and unchanged criteria", async (t) => {
   const { root } = await fixture(t);
   await fs.cp(path.resolve(__dirname, "../../../demo/recorded"), path.join(root, "demo/recorded"), { recursive: true });
   const manifest = await loadRecording(root);
-  assert.equal(manifest.schemaVersion, 2);
-  assert.equal(manifest.evidenceKind, "deterministic-recorder");
-  assert.equal(manifest.turns.length, 2);
-  assert.equal(manifest.provenance.totalRollouts, 0);
-  const resultPath = manifest.recorderEvidence.after.result;
+  assert.equal(manifest.schemaVersion, 3);
+  assert.equal(manifest.evidenceKind, "live-agent");
+  assert.equal(manifest.turns.length, 14);
+  assert.equal(manifest.verificationStatus, "mixed");
+  assert.deepEqual(manifest.liveEvidence.unresolvedEvaluatorIds, ["recovery"]);
+  assert.equal(manifest.provenance.totalRollouts, 12);
+  const resultPath = manifest.liveEvidence.after.result;
   const resultFile = path.join(root, resultPath);
   const original = await fs.readFile(resultFile);
   const result = JSON.parse(original);
@@ -79,10 +81,10 @@ test("deterministic recorder replay requires unchanged criteria and independentl
   manifest.provenance.artifacts.find(ref => ref.path === resultPath).sha256 = digest(changed);
   const manifestFile = path.join(root, "demo/recorded/walkthrough.json");
   await fs.writeFile(manifestFile, JSON.stringify(manifest));
-  await assert.rejects(loadRecording(root), /scores do not prove/);
+  await assert.rejects(loadRecording(root), /still has failing criteria/);
   await fs.writeFile(resultFile, original);
   manifest.provenance.artifacts.find(ref => ref.path === resultPath).sha256 = digest(original);
-  const criteriaPath = manifest.recorderEvidence.criteriaAfter;
+  const criteriaPath = manifest.liveEvidence.criteriaAfter;
   const criteria = JSON.parse(await fs.readFile(path.join(root, criteriaPath)));
   criteria["tests/evaluate.py"] = "0".repeat(64);
   const altered = Buffer.from(JSON.stringify(criteria));
@@ -407,4 +409,148 @@ test("exact Codex replay requires matching prompt, unchanged reply and completed
   manifest.steps[1].text = "Invented result";
   await fs.writeFile(manifestPath, JSON.stringify(manifest));
   await assert.rejects(loadRecording(root), /does not match its exact Codex response/);
+});
+
+// These are offline loader fixtures, never shipped as measured demo evidence.
+async function liveFixture(t) {
+  const { root, manifest } = await fixture(t);
+  manifest.schemaVersion = 3;
+  manifest.evidenceKind = "live-agent";
+  manifest.prompts = [prompts[0], "Use RELAI to build a multi-turn test for the highest-impact risk you found.", "Use RELAI to fix the failures the test found.", "These changes look great. Apply them."];
+  manifest.provenance = { orchestrator: "Codex", threadId: "11111111-1111-4111-8111-111111111111", sourceRevision: "a".repeat(40), totalRollouts: 6, artifacts: [] };
+  const put = async (name, value) => {
+    const file = "demo/recorded/" + name;
+    const bytes = JSON.stringify(value);
+    await fs.writeFile(path.join(root, file), bytes);
+    manifest.provenance.artifacts.push({ path: file, sha256: digest(bytes) });
+    return file;
+  };
+  const capture = async (index, response) => {
+    const file = await put(`exact-${index}.json`, { engine: "codex-cli", turnStatus: "completed", threadId: manifest.provenance.threadId, prompt: manifest.prompts[index], response, responseSha256: digest(response) });
+    return manifest.provenance.artifacts.find(ref => ref.path === file);
+  };
+  for (const [index, step] of manifest.steps.entries()) step.exactResponse = await capture(index, step.text);
+  manifest.applyMessage = "Applied the verified booking fix.";
+  manifest.exactApplyResponse = await capture(3, manifest.applyMessage);
+  const e = manifest.liveEvidence = { testId: "booking-grounding", targetedEvaluatorIds: ["booking-correctness"], unresolvedEvaluatorIds: [] };
+  for (const [phase, score] of [["before", 0], ["after", 1]]) {
+    const steps = manifest.turns.flatMap((turn, index) => [
+      { source: "user", message: turn.user },
+      { source: "agent", tool_calls: [{ function_name: "lookup_booking" }], observation: { results: [{ content: "Authoritative booking" }] } },
+      { source: "agent", message: turn.agent },
+    ]);
+    e[phase] = {
+      result: await put(`${phase}-result.json`, { schema_version: "relai.simulation_suite_result.v1", total_count: 1, success_count: 1, failure_count: 0, failures: [], runs: [{ result: { run_id: phase, learning_environment_id: e.testId, evaluation_errors: [], evaluations: [{ evaluator_id: "booking-correctness", score, min_score: 0, max_score: 1 }] } }] }),
+      trajectory: await put(`${phase}-trajectory.json`, { steps, final_metrics: { total_completion_tokens: 100 } }),
+    };
+  }
+  e.after.receipt = await put("verify-receipt.json", { argv: ["relai", "simulate", "--tests", e.testId], exitCode: 0, outcomeInvocationId: "verify-1" });
+  e.outcome = await put("verify-outcome.json", { schema_version: "relai.agent_simulation_outcome.v1", invocation_id: "verify-1", execution: { status: "completed", failures: [], runs: [{ run_id: "after", evaluator_errors: [] }] } });
+  const content = { checks: ["authoritative booking state"] };
+  const packageFile = await put("test-scenario.json", content);
+  const hashes = { "scenario.json": digest(JSON.stringify(content)) };
+  e.criteriaBefore = await put("criteria-before.json", hashes);
+  e.criteriaAfter = await put("criteria-after.json", hashes);
+  e.packageFiles = { "scenario.json": packageFile };
+  e.optimizerReceipt = await put("optimizer-receipt.json", { argv: ["relai", "optimize", "--tests", e.testId, "--total-rollouts", "6", "--batch-size", "1", "--no-pr"], exitCode: 0 });
+  e.optimizerReport = await put("optimizer-report.json", { changes: [{ title: "Ground booking facts in tools" }] });
+  e.optimizerResult = await put("optimizer-result.json", { accepted_updates: 1, accepted_turn_indices: [1], final_evaluation_summary: { aggregate_score_before: 0.8, aggregate_score_after: 1, updated_agent_evaluated: true, terminated_early: false, environment_summaries: [{ score_before: 0.8, score_after: 1 }] } });
+  const save = () => fs.writeFile(path.join(root, "demo/recorded/walkthrough.json"), JSON.stringify(manifest));
+  await save();
+  return { root, manifest, save };
+}
+test("live demo requires measured failure, genuine tool evidence, unchanged criteria and exact Apply capture", async (t) => {
+  const { root, manifest, save } = await liveFixture(t);
+  assert.equal((await loadRecording(root)).evidenceKind, "live-agent");
+  manifest.turns[0].agent = "Invented displayed response";
+  await save();
+  await assert.rejects(loadRecording(root), /differ from the actual trajectory/);
+  manifest.turns[0].agent = "Actual response";
+  manifest.applyMessage = "Invented Apply confirmation";
+  await save();
+  await assert.rejects(loadRecording(root), /exact native Codex capture/);
+});
+test("live verification rejects a failing result even when artifact hashes are updated", async (t) => {
+  const { root, manifest, save } = await liveFixture(t);
+  const file = manifest.liveEvidence.after.result;
+  const result = JSON.parse(await fs.readFile(path.join(root, file)));
+  result.runs[0].result.evaluations[0].score = 0;
+  const bytes = JSON.stringify(result);
+  await fs.writeFile(path.join(root, file), bytes);
+  manifest.provenance.artifacts.find(ref => ref.path === file).sha256 = digest(bytes);
+  await save();
+  await assert.rejects(loadRecording(root), /still has failing criteria/);
+});
+
+test("a passing independent replay cannot hide a regressed optimizer final comparison", async (t) => {
+  const { root, manifest, save } = await liveFixture(t);
+  const target = manifest.liveEvidence.optimizerResult;
+  const result = JSON.parse(await fs.readFile(path.join(root, target)));
+  result.final_evaluation_summary.aggregate_score_after = 0.7;
+  const bytes = Buffer.from(JSON.stringify(result));
+  await fs.writeFile(path.join(root, target), bytes);
+  manifest.provenance.artifacts.find(item => item.path === target).sha256 = digest(bytes);
+  await save();
+  await assert.rejects(loadRecording(root), /final evaluation does not establish an improvement/);
+});
+
+test("follow-up budgets retain distinct historical reports and cannot discard a prior regression", async (t) => {
+  const { root, manifest, save } = await liveFixture(t);
+  const e = manifest.liveEvidence;
+  const first = { budget: 6 };
+  for (const key of ["receipt", "result", "report"]) {
+    const source = e["optimizer" + key[0].toUpperCase() + key.slice(1)];
+    const file = "demo/recorded/first-" + key + ".json";
+    const data = JSON.parse(await fs.readFile(path.join(root, source)));
+    if (key === "result") data.final_evaluation_summary.aggregate_score_after = 0.6;
+    const bytes = JSON.stringify(data);
+    await fs.writeFile(path.join(root, file), bytes);
+    manifest.provenance.artifacts.push({ path: file, sha256: digest(bytes) });
+    first[key] = file;
+  }
+  manifest.provenance.totalRollouts = 12;
+  e.optimizerHistory = [first, { budget: 6, receipt: e.optimizerReceipt, result: e.optimizerResult, report: e.optimizerReport }];
+  await save();
+  assert.equal((await loadRecording(root)).liveEvidence.optimizerHistory.length, 2);
+  e.optimizerHistory.shift();
+  await save();
+  await assert.rejects(loadRecording(root), /history differs from the approved total budget/);
+});
+
+test("mixed results remain explicit and applying the candidate does not rewrite their scores", async (t) => {
+  const { root, manifest, save } = await liveFixture(t);
+  const file = manifest.liveEvidence.optimizerResult;
+  const result = JSON.parse(await fs.readFile(path.join(root, file)));
+  result.final_evaluation_summary.aggregate_score_after = 0.7;
+  result.final_evaluation_summary.environment_summaries[0].score_after = 0.7;
+  const bytes = JSON.stringify(result);
+  await fs.writeFile(path.join(root, file), bytes);
+  manifest.provenance.artifacts.find(ref => ref.path === file).sha256 = digest(bytes);
+  manifest.verificationStatus = "mixed";
+  await save();
+  await assert.rejects(loadRecording(root), /explicit reliability note/);
+  manifest.reliabilityNote = "Independent replay passed; the optimizer final comparison regressed from 0.8 to 0.7.";
+  await save();
+  const loaded = await loadRecording(root);
+  assert.match(await applyRecording(root, loaded), /results remain mixed/);
+  assert.equal(JSON.parse(await fs.readFile(path.join(root, file))).final_evaluation_summary.aggregate_score_after, 0.7);
+});
+
+test("partial improvement must disclose the exact remaining semantic deductions", async (t) => {
+  const { root, manifest, save } = await liveFixture(t);
+  for (const [phase, score] of [["before", 1], ["after", 0.67]]) {
+    const file = manifest.liveEvidence[phase].result;
+    const suite = JSON.parse(await fs.readFile(path.join(root, file)));
+    suite.runs[0].result.evaluations.push({ evaluator_id: "recovery", evaluator_type: "llm", score, min_score: 0, max_score: 1 });
+    const bytes = JSON.stringify(suite);
+    await fs.writeFile(path.join(root, file), bytes);
+    manifest.provenance.artifacts.find(ref => ref.path === file).sha256 = digest(bytes);
+  }
+  manifest.verificationStatus = "mixed";
+  manifest.reliabilityNote = "Booking grounding improved; recovery remains 0.67.";
+  await save();
+  await assert.rejects(loadRecording(root), /disclose every remaining deduction/);
+  manifest.liveEvidence.unresolvedEvaluatorIds = ["recovery"];
+  await save();
+  assert.equal((await loadRecording(root)).verificationStatus, "mixed");
 });

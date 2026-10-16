@@ -1,17 +1,17 @@
 {
   "schema_version": 4,
   "mode": "managed",
-  "base_image": "python:3.13-slim",
+  "base_image": "python:3.12-slim",
   "dependency_install": null,
-  "adapter_command": "/workspace/.venv/bin/python /app/project_adapter.py",
+  "adapter_command": "/opt/airline-venv/bin/python /app/project_adapter.py",
   "trajectory_example": null,
   "setup_commands": [],
   "runtime_setup_commands": [
     "python3 -m pip install --no-cache-dir uv==0.12.10",
-    "cd /app/dependencies && UV_PROJECT_ENVIRONMENT=/opt/airline-dependencies uv sync --frozen --no-install-project"
+    "cd /app/dependencies && UV_PROJECT_ENVIRONMENT=/opt/airline-venv uv sync --frozen --no-install-project"
   ],
   "workspace_setup_commands": [
-    "cd /workspace && uv sync --frozen"
+    "uv pip install --python /opt/airline-venv/bin/python --no-deps --editable /workspace"
   ],
   "generated_language_paths": false,
   "runtime_assets": [
@@ -29,14 +29,14 @@
   ],
   "runtime_executables": [
     "python3",
-    "/workspace/.venv/bin/python",
+    "/opt/airline-venv/bin/python",
     "uv"
   ],
   "probe_commands": [
-    "cd /workspace && PYTHONPATH=/workspace/src /workspace/.venv/bin/python -c \"from airline_support.agent import stream_agent_response, create_airline_agent; from airline_support.trajectory import TrajectoryHooks; import airline_support.agent as a; assert a.__file__.startswith('/workspace/src/')\""
+    "cd /workspace && PYTHONPATH=/workspace/src /opt/airline-venv/bin/python -c \"import airline_support.agent as a; from airline_support.sessions import ChatMessage; assert a.__file__.startswith('/workspace/src/'); assert callable(a.stream_agent_response)\""
   ],
   "verifier_command": null,
   "rendered_sha256": {
-    "generated/runtime/recipe.json": "1ce9ba39337189b2383551fe2e22df873801183a3f5cdf615c47eee0724840ea"
+    "generated/runtime/recipe.json": "8af5d0e967fdccef5078ebf3de6f79cb03cf719c396840940a45301b380fc463"
   }
 }

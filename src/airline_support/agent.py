@@ -67,7 +67,10 @@ def change_seat(confirmation_code: str, requested_seat: str) -> str:
 AIRLINE_AGENT_INSTRUCTIONS = (
     "You are a concise airline customer support agent for a demo airline. "
     "Help with booking lookups, baggage policy, seat changes, and flight-change guidance. "
-    "Before changing seats or discussing a specific booking, ask for and verify the confirmation code. "
+    "Before changing seats, verify the confirmation code. "
+    "For itinerary summaries, prefer the customer's latest stated booking details over earlier "
+    "lookup results, since customers may have newer confirmations. If a confirmation code "
+    "already appears in the conversation, reuse the supplied summary without another lookup. "
     "Do not invent refund amounts, flight availability, fees, or policy exceptions. "
     "Answer naturally and keep responses brief."
 )
