@@ -183,7 +183,7 @@ test("recorded and edited requests dispatch distinct actions, and apply is expli
   const riskNodes = flatten(elements.get("history"));
   assert.equal(riskNodes.filter(n => n.tag === "table").length, 1);
   assert.equal(riskNodes.filter(n => n.tag === "small" && n.textContent === "Codex + RELAI").length, 0);
-  assert.ok(riskNodes.some(n => n.textContent === "Codex + RELAI precomputed results · initialization: 3.2 min"));
+  assert.ok(riskNodes.some(n => n.textContent === "Codex + RELAI precomputed results · initialization: 3m 11.9s"));
   assert.ok(riskNodes.some(n => n.textContent === "Suggested next steps"));
   assert.ok(riskNodes.some(n => n.textContent === "Open saved wiki results ↗"));
   assert.ok(!riskNodes.some(n => /No baseline or risk-validation|^Evidence$/.test(n.textContent)));
@@ -221,7 +221,7 @@ test("recorded and edited requests dispatch distinct actions, and apply is expli
   recording.steps[1].exactResponse = { path: "saved-second.json" };
   handlers.message({ data: { type: "loaded", recording, recordedProgress: 2 } });
   assert.ok(!flatten(elements.get("history")).some(n => n.textContent === "▸ Explore the simulation"));
-  assert.ok(flatten(elements.get("history")).some(n => n.textContent === "Codex + RELAI precomputed results · validation: 1 min"));
+  assert.ok(flatten(elements.get("history")).some(n => n.textContent === "Codex + RELAI precomputed results · validation: 1m 0.0s"));
   elements.get("prompt").value = "My own question";
   elements.get("prompt").oninput();
   assert.equal(elements.get("send")["aria-label"], "Send message");
@@ -352,4 +352,14 @@ test("live recorded replies keep readable tables, remaining failures and origina
   assert.match(fixed, /0\.792.*0\.667/);
   assert.match(fixed, /Suggested next steps/);
   assert.doesNotMatch(recordedReplyText(0, manifest.steps[0].text), /^Public evidence:/m);
+});
+
+test("recorded durations match reply precision and patch labels stay readable", () => {
+  const { recordedDuration, recordedReplyText } = require('./workflow');
+  assert.equal(recordedDuration(185.80121062509716), '3m 5.8s');
+  assert.equal(recordedDuration(59.96), '1m 0.0s');
+  assert.equal(recordedDuration(24), '24.0s');
+  const original = '[Combined patch](/saved/combined.patch)';
+  assert.equal(recordedReplyText(2, original), '[View code changes](/saved/combined.patch)');
+  assert.equal(original, '[Combined patch](/saved/combined.patch)');
 });

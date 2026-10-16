@@ -56,6 +56,12 @@ function recordedPromptText(prompt) {
   };
   return corrections[prompt] || prompt;
 }
+function recordedDuration(seconds) {
+  const tenths = Math.round(seconds * 10);
+  const minutes = Math.floor(tenths / 600);
+  const remainder = ((tenths % 600) / 10).toFixed(1);
+  return (minutes ? minutes + 'm ' : '') + remainder + 's';
+}
 // Presentation-only trimming; the original Codex response stays unchanged in the bundle.
 function recordedReplyText(index, text, turns = [], scripted = false) {
   const omitted = index === 0 ? ['Evidence'] : index === 1
@@ -80,6 +86,6 @@ function recordedReplyText(index, text, turns = [], scripted = false) {
       result = result.replace(/^## Every recorded turn\n[\s\S]*?(?=^## |$(?![\s\S]))/m, table);
     }
   }
-  return result;
+  return result.replace(/\[Combined patch\]\(/g, '[View code changes](');
 }
-if (typeof module !== 'undefined') module.exports = { workflowSteps, workflowView, shouldPrefill, startingRequest, stepValue, restoreOutputScroll, commandResultView, recordedReplyText, recordedPromptText };
+if (typeof module !== 'undefined') module.exports = { workflowSteps, workflowView, shouldPrefill, startingRequest, stepValue, restoreOutputScroll, commandResultView, recordedReplyText, recordedPromptText, recordedDuration };

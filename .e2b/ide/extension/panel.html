@@ -760,9 +760,7 @@
                   : recording.evidenceKind === "live-agent"
                     ? " · " + (step.durationLabel || "optimization and verification") + ": "
                     : ": ") +
-              (timing.durationSeconds < 60
-                ? Math.round(timing.durationSeconds) + " sec"
-                : Math.round((timing.durationSeconds / 60) * 10) / 10 + " min");
+              recordedDuration(timing.durationSeconds);
           const badge = node("span", timingText);
           badge.className = "badge";
           reply.prepend(badge);
