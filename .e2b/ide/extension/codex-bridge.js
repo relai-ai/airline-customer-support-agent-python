@@ -151,7 +151,7 @@ class CodexBridge {
     this.publish();
     const handoff =
       this.state.messages.filter((m) => m.role === "user").length === 1
-        ? "You are the real Codex coding assistant in this Python airline repository. RELAI is initialized and its Codex plugin is installed. Use its CLI/skills when requested; inspect actual files and receipts. The UI walkthrough was prerecorded, and its patch may have been explicitly applied. Read demo/recorded/README.md for evidence and limitations; do not claim you ran recorded tests. Do not commit, push, deploy, or expose credentials. Present concise real findings and reviewable changes; commands need not be repeated in your prose.\n\n"
+        ? "You are the real Codex coding assistant in this Python airline repository. RELAI is initialized and its Codex plugin is installed. Use its CLI/skills when requested; inspect actual files and receipts. The UI walkthrough was prerecorded, and its patch may have been explicitly applied. Read README.md for the prepared example and its recorded scope; do not claim you ran recorded tests. Do not commit, push, deploy, or expose credentials. Present concise real findings and reviewable changes; commands need not be repeated in your prose.\n\n"
         : "";
     try {
       await this.start();

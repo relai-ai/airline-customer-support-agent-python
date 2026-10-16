@@ -16,6 +16,8 @@ curl --fail --silent --show-error --location https://api.relai.ai/install.sh -o 
 printf '%s  %s\n' fd95daad8ef085b8bc2d8ffbd085da9f4ff5b244aa632204bb66df59f82f8069 "$installer" | sha256sum --check --status
 RELAI_INSTALL_COMPLETIONS=0 bash "$installer"
 relai plugins install --agent codex
+# Materialize and enable the plugin cache before the first app-server session.
+codex plugin add relai@relai-codex --json
 
 # Make tools available to new interactive shells as well as this hook.
 path_line='export PATH="$HOME/.local/bin:$PATH"'

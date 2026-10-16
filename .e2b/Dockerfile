@@ -2,7 +2,7 @@ FROM python:3.13-slim-bookworm
 ARG TARGETARCH
 
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl git nodejs npm python3 python3-venv sudo && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends bubblewrap ca-certificates curl git nodejs npm python3 python3-venv sudo && rm -rf /var/lib/apt/lists/*
 RUN TARGETARCH="${TARGETARCH:-$(dpkg --print-architecture)}" && install -m 0755 -d /etc/apt/keyrings && curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc && chmod a+r /etc/apt/keyrings/docker.asc && echo "deb [arch=${TARGETARCH} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian bookworm stable" > /etc/apt/sources.list.d/docker.list && apt-get update && apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin && rm -rf /var/lib/apt/lists/*
 RUN (id user >/dev/null 2>&1 || useradd --create-home --shell /bin/bash user) && usermod -aG docker user && echo 'user ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/playground
 ENV PATH=/home/user/.local/bin:/usr/local/bin:/usr/bin:/bin
@@ -38,10 +38,11 @@ RUN git config --global user.name "RELAI Playground" && git config --global user
 # Keep UI iteration independent of tool installation.
 USER root
 COPY .e2b/ide/start-ide.py /opt/playground/start-ide.py
+COPY .e2b/ide/verify-codex.cjs /opt/playground/verify-codex.cjs
 COPY .e2b/ide/session_config.py /opt/playground/session_config.py
 COPY .e2b/ide/local_gateway.py /opt/playground/local_gateway.py
 COPY .e2b/ide/try-agent.py /opt/playground/try-agent.py
 COPY .e2b/ide/extension/ /opt/playground/extensions/relai.relai-playground-0.1.0/
 RUN chmod -R a+rX /opt/playground && chown -R user:user /opt/playground/extensions
 USER user
-RUN node /opt/playground/extensions/relai.relai-playground-0.1.0/validate-recording.js /home/user/airline
+RUN node /opt/playground/extensions/relai.relai-playground-0.1.0/validate-recording.js /home/user/airline && node /opt/playground/verify-codex.cjs

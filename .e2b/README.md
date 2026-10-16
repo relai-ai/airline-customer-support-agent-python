@@ -1,7 +1,7 @@
 # Python airline playground
 
 The image packages the Python SkyServe source, initialized RELAI EvalsWiki,
-a two-turn recorder-redaction test, saved real command artifacts, and a pinned Codex
+a fourteen-turn booking-grounding test, saved real command artifacts, and a pinned Codex
 app-server. Tool installation and image validation make no model calls.
 The Docker copy allowlist excludes host credentials and private CLI state.
 
@@ -11,12 +11,16 @@ image; review uses read-only before/after documents. Applying checks every sourc
 hash and preserves visitor edits on mismatch. Edited or custom requests run the
 real Codex process with actual commands, approvals, Stop, and persistent history.
 
-The current recording was orchestrated by the real Codex CLI. Its test uses
-scripted SDK responses to exercise real recorder persistence; it does not
-measure live airline-model answer quality. Both redaction checks improve from
-0/1 to 1/1, with four continuity/validity checks unchanged at 1/1. The fix is
-deterministic, so no optimizer rollouts ran. Exact replies and native evidence
-are reusable from `demo/recorded/exact-step-*.json`.
+The current recording was orchestrated by the real Codex CLI with real target
+model completions and booking tools. Its final comparison improves from 0.7917
+to 1.0000, and a separate verification passes all twelve criteria. The original
+source and all forty generated test files remain unchanged in the template.
+Exact replies and native evidence are in `demo/recorded/exact-step-*.json`.
+
+The build explicitly installs `relai@relai-codex` through Codex's plugin command,
+then initializes a real app-server and verifies RELAI skill discovery. These
+startup checks make no model calls; a model-backed staging turn is a separate
+verification requiring the caller's authorization.
 
 The companion dashboard service must set `PLAYGROUND_ASSISTANT_ENGINE=codex`
 and issue a pinned native Responses model profile with scoped session access.
