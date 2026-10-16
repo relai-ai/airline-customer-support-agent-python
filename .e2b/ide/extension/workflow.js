@@ -71,7 +71,12 @@ function recordedReplyText(index, text, turns = [], scripted = false) {
   let result = text.split('\n').filter(line => {
     const heading = line.match(/^## (.*)$/);
     if (heading) hidden = omitted.includes(heading[1]);
-    return !hidden;
+    const hiddenLink = index === 1
+      ? line.startsWith('[Full recorded conversation and tools](')
+      : index === 2
+        ? /^(?:\[View code changes\]\(|\[Full conversation and observed tools\]\(|The changes are available for review; the demo’s separate Apply step)/.test(line)
+        : index === 3 && line.startsWith('[Application receipt](');
+    return !hidden && !hiddenLink;
   }).join('\n');
   if (index === 0) result = result.replace(/^Public evidence:[^\n]*\n?/m, '');
   if (index === 1) {
