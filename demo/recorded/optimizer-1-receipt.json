@@ -1,0 +1,42 @@
+{
+  "argv": [
+    "relai",
+    "optimize",
+    "--tests",
+    "skyserve-authoritative-state-adaptive-dialogue",
+    "--agent-interaction",
+    "--total-rollouts",
+    "6",
+    "--batch-size",
+    "1",
+    "--no-pr",
+    "--timeout",
+    "25m",
+    "--wait",
+    "45s",
+    "--scope-instructions",
+    "Resolve customer-summary overrides of authoritative booking facts and provide complete useful answers, including corrections and authorization scope. Preserve all existing behavior and every unchanged test criterion. Prefer focused changes without unnecessary modifications. Keep current models fixed and add no paid tools.",
+    "--interaction-response",
+    "{\"schema_version\": \"relai.agent_interaction.v1\", \"session_id\": \"optimize-3047add709f76476\", \"request_id\": \"approve_optimizer_run\", \"answer\": \"approve\"}"
+  ],
+  "exitCode": 0,
+  "initialExitCode": 75,
+  "durationSeconds": 756.908263,
+  "startedAt": "2026-10-16T04:02:03.001893+00:00",
+  "terminalCommand": [
+    "env",
+    "CODEX_ALLOW_AI_KEYS=1",
+    "with-ai-keys",
+    "relai",
+    "runs",
+    "wait",
+    "1792123323125-8255",
+    "--log-offset",
+    "5250",
+    "--wait",
+    "45s"
+  ],
+  "receiptKind": "completed-background-workflow",
+  "sourceStartReceipt": "/private/tmp/playground-booking-grounding-clean/work/live-recording/06-optimize-resume/result.json",
+  "sourceTerminalReceipt": "/private/tmp/playground-booking-grounding-clean/work/live-recording/20-optimize-wait/result.json"
+}

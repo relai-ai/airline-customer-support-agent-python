@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "engine": "codex-cli",
+  "threadId": "01a14222-3492-7d61-a605-71f1e97e68de",
+  "turnStatus": "completed",
+  "prompt": "These changes look great. Apply them.",
+  "response": "Applied the exact accepted change from `5e92fdb` to this local demo workspace. Booking summaries now follow authoritative tool results, preserve the authorized seat change, and keep separate bookings distinct.\n\nThe prior final comparison improved **0.7917 \u2192 1.0000**, and independent verification passed **all 12 criteria**. After application, all **37 ordinary tests**, shell syntax, and diff checks passed. Both changed files match the accepted commit; all 40 test-package files remain unchanged.\n\nStartup risk was reviewed: no bootstrap code changed, and prior live verification exercised fresh-process startup. No new live evaluation, commit, deployment, or preview change occurred.\n\n[Application receipt](/private/tmp/playground-booking-grounding-clean/work/live-recording/29-apply/apply-receipt.json)",
+  "responseSha256": "d61866b534b3fd766c92b4778a943ebd2acea083b6983332510eb052c58e6845",
+  "eventsSha256": "2b911aacb1d25dcd086b773ab762c6eea5cad8548fe425d4fc7dc3573786a47b"
+}

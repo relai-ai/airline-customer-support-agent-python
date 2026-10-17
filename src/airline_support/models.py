@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 
-from agents import set_tracing_disabled
+from agents import Model, set_tracing_disabled
 
 
 ANTHROPIC_DEFAULT_MODEL = "litellm/anthropic/claude-sonnet-5"
@@ -12,11 +12,16 @@ ANTHROPIC_DEFAULT_MODEL = "litellm/anthropic/claude-sonnet-5"
 @dataclass(frozen=True)
 class ModelSelection:
     provider: str
-    model: str | None
+    model: str | Model | None
 
 
 def select_model() -> ModelSelection:
     """Select the runtime model provider from environment keys."""
+    if os.environ.get("AIRLINE_MODEL_PROVIDER") == "relai":
+        from .playground_model import playground_model
+
+        return ModelSelection(provider="relai", model=playground_model(os.environ))
+
     if os.environ.get("OPENAI_API_KEY"):
         return ModelSelection(provider="openai", model=None)
 

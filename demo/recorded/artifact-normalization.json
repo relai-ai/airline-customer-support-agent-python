@@ -1,0 +1,7 @@
+{
+  "verification-outcome.json": {
+    "sourceSha256": "8cda89ce5d687155c2b9b6b0ab3565a25847ec95900f2d5e45b7ff58695c4658",
+    "packagedSha256": "ff22b1e890ddbfd2763067011b272832b1fc529819bbc51c88255e7283b35adb",
+    "operation": "JSON whitespace normalization only; all fields retained"
+  }
+}

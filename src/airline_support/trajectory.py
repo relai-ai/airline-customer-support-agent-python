@@ -111,6 +111,9 @@ class TrajectoryRecorder:
                 self.document["final_metrics"] = final_metrics
                 # Only read explicitly named credential variables, never enumerate the environment.
                 names = {"OPENAI_API_KEY", "ANTHROPIC_API_KEY"}
+                if os.environ.get("RELAI_ATIF_TRAJECTORY_PATH"):
+                    # Bounded sensitive-name allowlist from the RELAI runtime manifest.
+                    names.add("RELAI_TEAM_API_KEY")
                 names.update(
                     filter(
                         None,
@@ -189,7 +192,7 @@ def get_recorder(
 ) -> TrajectoryRecorder | None:
     """Reuse the session writer, with an optional destination override."""
     try:
-        destination = os.environ.get("ATIF_TRAJECTORY_PATH")
+        destination = os.environ.get("RELAI_ATIF_TRAJECTORY_PATH") or os.environ.get("ATIF_TRAJECTORY_PATH")
         path = (
             Path(destination)
             if destination

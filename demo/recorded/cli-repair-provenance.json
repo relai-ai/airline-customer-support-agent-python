@@ -1,0 +1,8 @@
+{
+  "releaseBase": "fc444eb4e0f3b044d78f56ee4e81a28b0b139d0f",
+  "head": "997cefe2fc9fdb5a3acb9b209a7f76587dd1e10e",
+  "targetedTestsPassed": 23,
+  "binarySha256": "360746d50fecf706be52115aa7907655d71fe4252da65adc8613c0a5958c038a",
+  "binary": "/private/tmp/live-booking-cli-bin/relai",
+  "globalCliReplaced": false
+}

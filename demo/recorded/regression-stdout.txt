@@ -1,0 +1,18 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.13.15, pytest-9.1.1, pluggy-1.6.0
+rootdir: /private/tmp/playground-booking-grounding-clean/work/live-recording/verification-checkout
+configfile: pyproject.toml
+testpaths: tests
+plugins: anyio-4.14.1, asyncio-1.4.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 37 items
+
+tests/test_agent_instructions.py .....                                   [ 13%]
+tests/test_cli.py ....                                                   [ 24%]
+tests/test_models.py ....                                                [ 35%]
+tests/test_playground_model.py ......                                    [ 51%]
+tests/test_relai_trajectory.py .                                         [ 54%]
+tests/test_sessions.py ..                                                [ 59%]
+tests/test_trajectory.py ...............                                 [100%]
+
+============================== 37 passed in 2.12s ==============================

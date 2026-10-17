@@ -1,0 +1,38 @@
+{
+  "argv": [
+    "relai",
+    "simulate",
+    "--tests",
+    "skyserve-authoritative-state-adaptive-dialogue",
+    "--agent-interaction",
+    "--result-json",
+    ".relai/.internal/runs/independent-result.json",
+    "--outcome-intent",
+    "independent-verification-accepted-5e92fdb",
+    "--timeout",
+    "25m",
+    "--wait",
+    "45s"
+  ],
+  "exitCode": 0,
+  "initialExitCode": 75,
+  "durationSeconds": 116.249192,
+  "startedAt": "2026-10-16T04:15:12.714733+00:00",
+  "terminalCommand": [
+    "env",
+    "CODEX_ALLOW_AI_KEYS=1",
+    "with-ai-keys",
+    "relai",
+    "runs",
+    "wait",
+    "1792124112770-10900",
+    "--log-offset",
+    "273",
+    "--wait",
+    "45s"
+  ],
+  "receiptKind": "completed-background-workflow",
+  "sourceStartReceipt": "/private/tmp/playground-booking-grounding-clean/work/live-recording/23-independent-simulation/result.json",
+  "sourceTerminalReceipt": "/private/tmp/playground-booking-grounding-clean/work/live-recording/28-independent-wait/result.json",
+  "outcomeInvocationId": "1792124112787-10913"
+}

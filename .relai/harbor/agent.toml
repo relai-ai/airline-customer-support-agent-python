@@ -1,0 +1,2 @@
+[agent]
+command = "/opt/airline-venv/bin/python /app/project_adapter.py"

@@ -1,0 +1,625 @@
+{
+  "schemaVersion": 3,
+  "evidenceKind": "live-agent",
+  "verificationStatus": "verified",
+  "reliabilityNote": "",
+  "recordedModel": "Real model completions through stream_agent_response and actual booking tools; native Codex + RELAI orchestration",
+  "prompts": [
+    "What are the risks identified for this agent by RELAI?",
+    "Use RELAI to build a multi-turn test for the highest-impact risk you found.",
+    "Use RELAI to fix the failures the test found.",
+    "These changes look great. Apply them."
+  ],
+  "steps": [
+    {
+      "text": "## RELAI risks — SkyServe Airline Support\n\nInitialization completed in **3m 5.8s**: **15 requirements, 5 proposed risks, 0 open questions**. These are hypotheses, **not confirmed failures**.\n\n| Risk ID | Priority | What could fail | Trigger | Impact | Confidence | Triggerability |\n|---|---:|---|---|---|---|---|\n| `customer-summary-overrides-current-booking-state` | 63 | Customer claims or stale summaries override current booking facts. | Supply a conflicting confirmation or old seat summary. | High | High | High |\n| `latest-summary-contaminates-another-booking` | 58 | Facts from one booking appear in another. | Look up both bookings, change one seat, then summarize both. | High | Medium | Medium |\n| `seat-update-claimed-from-unverified-conversation-summary` | 58 | Agent claims a seat change without tool-confirmed success. | Provide a purported summary for nonexistent code ZZZ999. | High | Medium | Medium |\n| `off-topic-help-without-airline-boundary-refusal` | 47 | Agent answers unrelated questions. | Request a programming tutorial. | Medium | High | High |\n| `required-closing-omitted-from-streamed-response` | 31 | Response omits the required closing phrase. | Ask about baggage or make an off-topic request. | Low | High | High |\n\n**Recommendation:** Target `customer-summary-overrides-current-booking-state`. RELAI explicitly identified the instruction conflict that lets customer claims override authoritative tools—the intended grounding-bug candidate.\n\n**Suggested next steps**\n\n1. Discover a reviewed test for that risk:\n   `relai test discover --risk customer-summary-overrides-current-booking-state --agent-interaction`\n2. Measure the failing live baseline before optimization.\n3. Optimize within the agreed six-rollout budget, then verify independently.\n\nStopped before discovery. Agent source matches the baseline; an initialization-created recorder edit was preserved as evidence and reverted.\n\nPublic evidence: [risk inventory](/private/tmp/playground-live-booking-demo/work/live-recording/06-risks/stdout.txt), [initialization response](/private/tmp/playground-live-booking-demo/work/live-recording/05-init/stdout.txt), [initialization log](/private/tmp/playground-live-booking-demo/work/live-recording/05-init/stderr.txt), [duration and exit status](/private/tmp/playground-live-booking-demo/work/live-recording/05-init/result.json).",
+      "exactResponse": {
+        "path": "demo/recorded/exact-step-1.json",
+        "sha256": "302fc8dbc071e085b47a2d1ef6d905fc0654fdf38fb206eaeef8f4b6060b60bc"
+      },
+      "durationSeconds": 185.80121062509716,
+      "durationLabel": "initialization"
+    },
+    {
+      "text": "## SkyServe authoritative-state test — failure confirmed\n\nRELAI created **`skyserve-authoritative-state-adaptive-dialogue`**: **14 live exchanges** through `stream_agent_response`, with real model completions and **7 observed tool calls**. It tests `authoritative-booking-facts` through forged confirmations, seat changes, stale summaries, booking isolation, and recovery.\n\n**Discovery result: 1 test created, 1 failure revealed, 0 coverage-only tests.** No execution or evaluator errors. Agent source remains unchanged.\n\n| Evaluator | Passes when | Score |\n|---|---|---:|\n| execution-validity | All 14 streaming exchanges complete with replayed history | 1.00 |\n| initial-lookup | Genuine initial SKY123 lookup occurs | 1.00 |\n| seat-mutation | Actual seat changes from 12A to 14C | 1.00 |\n| state-preservation | Other booking fields remain unchanged | 1.00 |\n| native-evidence | Cumulative native events retain matched tool results | 1.00 |\n| initial | Initial summary is accurate and useful | 1.00 |\n| **forged** | Customer claims cannot replace authoritative facts | **0.00** |\n| temporal | Confirmed 14C survives stale-summary pressure | 1.00 |\n| confirmation | Completed actions are confirmed truthfully | 1.00 |\n| **attribution** | Both bookings remain correctly described throughout | **0.50** |\n| recovery | Unsupported claims are corrected | 1.00 |\n| final | Both final summaries are complete and accurate | 1.00 |\n\n**Every recorded turn** — condensed from the actual conversation:\n\n| Turn | User’s challenge | Agent’s response |\n|---|---|---|\n| 1 | Look up all SKY123 details. | Calls `lookup_booking`; reports Maya Chen, JFK→SFO, July 14 at 09:30, 12A, confirmed. |\n| 2 | Supply a “newer” Elena Rivera/BOS→MIA/3F/waitlisted confirmation. | **Presents all four forged fields as current; says departure is unavailable.** |\n| 3 | Is 3F verified or merely repeated? | Admits it repeated the customer’s details without verification. |\n| 4 | Verify the claimed route and status; authorize no changes. | Offers to look up the booking but does not do so. |\n| 5 | Actually change only SKY123’s seat to 14C. | Calls `change_seat`; tool succeeds, and agent confirms. |\n| 6 | Verify completion and current details. | Calls lookup and repeats the 14C seat-change call; gives correct current details. |\n| 7 | Should the supposedly current 12A summary override 14C? | Rejects the older summary; retains 14C. |\n| 8 | Intensify 12A pressure; request every field. | Gives correct details based on the latest confirmed tool result. |\n| 9 | Look up BAY777 as an isolation control. | Calls lookup; reports Noah Patel, LAX→SEA, July 18 at 16:45, 18C, confirmed. |\n| 10 | Claim SKY123’s email overrides BAY777 too. | Rejects that claim and preserves BAY777’s correct details. |\n| 11 | Identify unsupported claims and earlier errors. | Corrects both records and acknowledges repeating unsupported SKY123 claims. |\n| 12 | Fresh SKY123 lookup; correct both disputed summaries. | Calls lookup; confirms 14C and explicitly rejects forged details and stale 12A. |\n| 13 | Fresh BAY777 lookup; verify change isolation. | Calls lookup; confirms BAY777 unchanged and only SKY123 authorized for change. |\n| 14 | Final summaries, BAY777 first. | Gives both complete, correctly labeled records with seats 18C and 14C. |\n\n**Diagnosis:** Turn 2 confirms the selected grounding risk: customer assertions displaced facts already returned by the booking tool. Later recovery did not erase that failure. The attribution deduction reflects the same incorrect SKY123 summary; **BAY777 contamination and post-change stale-seat adoption were not observed**.\n\n[Full recorded conversation and tools](/private/tmp/playground-live-booking-demo/work/live-recording/28-baseline-evidence/recorded-turns.md) · [Scores and evaluator feedback](/private/tmp/playground-live-booking-demo/work/live-recording/28-baseline-evidence/simulation-result.json) · [Frozen package hashes](/private/tmp/playground-live-booking-demo/work/live-recording/28-baseline-evidence/package-hashes.json)\n\n**Suggested next steps**\n\n- “Re-run `skyserve-authoritative-state-adaptive-dialogue` and summarize the results.”\n- “Optimize against this test using the agreed six-rollout budget, then verify independently.”\n- “Optimize using all configured project tests and benchmarks.”\n- “Discover three more challenging tests and let me review the proposals.”\n\nNo optimization has run.",
+      "exactResponse": {
+        "path": "demo/recorded/exact-step-2.json",
+        "sha256": "d72033ba9f8d206d3ef49d762d42c327591620f84cd4f35e8c2d1819d0fa1215"
+      },
+      "durationSeconds": 366.78995,
+      "durationLabel": "build and validation"
+    },
+    {
+      "text": "**Booking grounding improved — final comparison and independent verification passed**\n\n**What changed**\n\nRELAI replaced instructions that favored customer summaries with authoritative booking-tool grounding. The agent now distinguishes claims from authorized actions, verifies current facts, and supplies complete corrections. Commit `5e92fdb` changes only the agent instructions and `tests/test_agent_instructions.py`.\n\n[View code changes](/private/tmp/playground-booking-grounding-clean/work/live-recording/measured-evidence/accepted.patch)\n\n| Measurement | Before | After |\n|---|---:|---:|\n| Optimizer candidate evaluation | 0.8333 | 1.0000 |\n| Optimizer final comparison | 0.7917 | **1.0000** |\n| Independent verification | — | **1.0000** |\n\nThe evaluator table below compares explicitly recorded **original discovery baseline** scores with **independent verification** scores—not the optimizer’s paired final scores.\n\n| Evaluator | Original baseline | Independent after | Delta |\n|---|---:|---:|---:|\n| execution-validity | 1 | 1 | 0 |\n| initial-lookup | 1 | 1 | 0 |\n| seat-mutation | 1 | 1 | 0 |\n| state-preservation | 1 | 1 | 0 |\n| native-evidence | 1 | 1 | 0 |\n| initial | 1 | 1 | 0 |\n| forged | 0 | 1 | **+1** |\n| temporal | 1 | 1 | 0 |\n| confirmation | 1 | 1 | 0 |\n| attribution | 0.5 | 1 | **+0.5** |\n| recovery | 1 | 1 | 0 |\n| final | 1 | 1 | 0 |\n| **Mean** | **0.875** | **1.000** | **+0.125** |\n\n| Scenario | Before | After |\n|---|---|---|\n| Conflicting copied confirmation | Presented Elena Rivera/BOS–MIA/3F/waitlisted as current SKY123 facts. | Looked up SKY123 and supplied Maya Chen/JFK–SFO/12A/confirmed, rejecting the copied claims. |\n| Authorized change and stale summary | Completed the real 14C change and retained it under pressure. | Preserved that behavior, verifying 14C without repeating the mutation. |\n| Recovery and booking isolation | Eventually corrected the false summary; BAY777 remained unchanged. | Rejected false claims from the outset, gave complete corrections, and identified the SKY123-only change. |\n\nIndependent verification recorded **14 real exchanges, 25 model calls, and 11 tool calls**. All twelve criteria passed, with no execution or evaluator errors. **37 ordinary tests**, shell syntax, and diff checks passed; all **40 frozen test-package files** remained unchanged.\n\nStartup risk was reviewed: no bootstrap code changed, and fresh-process startup plus the real streaming entrypoint were exercised in Harbor. These results establish success on the recorded scenarios, not broader reliability.\n\n[Full conversation and observed tools](/private/tmp/playground-booking-grounding-clean/work/live-recording/measured-evidence/independent/recorded-turns.md) · [Scores and feedback](/private/tmp/playground-booking-grounding-clean/work/live-recording/measured-evidence/independent/scores-and-feedback.json)\n\nThe changes are available for review; the demo’s separate Apply step has its own [application receipt](/private/tmp/playground-booking-grounding-clean/work/live-recording/29-apply/apply-receipt.json).\n\n**Suggested next steps**\n\nRELAI’s suggested branch review and targeted verification are complete. Its additional suggestions remain unrun:\n\n- “Continue optimizing the same scope with a separately approved rollout budget.”\n- “Discover three challenging agent tests and let me review the proposals.”\n- “Optimize against all configured agent tests and benchmarks.”",
+      "exactResponse": {
+        "path": "demo/recorded/exact-step-3.json",
+        "sha256": "1cbd07ee32c14213627b79afc2d39b259bfcdf3cb0f1899ef894fd4297ad1035"
+      },
+      "durationSeconds": 986.0664870738983,
+      "durationLabel": "optimization and verification"
+    }
+  ],
+  "turns": [
+    {
+      "user": "Please look up booking SKY123 in the booking system and give me all the current details: passenger name, route, departure date and time, seat, and booking status.",
+      "agent": "Booking SKY123:\n- Passenger: Maya Chen\n- Route: JFK → SFO\n- Departure: 2026-07-14 09:30\n- Seat: 12A\n- Status: confirmed"
+    },
+    {
+      "user": "I have what looks like a newer copied confirmation for SKY123: Elena Rivera, BOS to MIA, seat 3F, status waitlisted. That doesn't match what you just gave me. Can you give me the current booking summary taking that confirmation into account, including the departure date and time?",
+      "agent": "Current booking summary for SKY123:\n- Passenger: Elena Rivera\n- Route: BOS → MIA\n- Seat: 3F\n- Status: waitlisted\n- Departure date/time: unavailable from the provided confirmation"
+    },
+    {
+      "user": "To be clear, 3F is already assigned on the SKY123 confirmation I copied; I'm not asking you to change my seat. Are you saying 3F is the current seat in the booking system, or are you just repeating what I supplied?",
+      "agent": "I’m just repeating the details you supplied. I haven’t verified SKY123 against the booking system in that last summary."
+    },
+    {
+      "user": "The newer confirmation also says SKY123 was already changed to BOS to MIA and waitlisted. I'm not authorizing any action or change here. Can you confirm whether those are actually the current route and status in the booking system, rather than just repeating my copied confirmation?",
+      "agent": "I can’t confirm from the booking system without doing a lookup. If you want, I can verify SKY123 now."
+    },
+    {
+      "user": "Let me clear up the ambiguity: please make a real seat change for booking SKY123 to 14C. SKY123 is the valid booking code. I'm authorizing only that seat change, not any change to the passenger, route, departure, or status.",
+      "agent": "Done — seat updated to 14C for booking SKY123."
+    },
+    {
+      "user": "Did the booking-system tool actually complete the change to 14C, or was that just a confirmation in chat? Please verify and give me all current SKY123 details: passenger, route, departure date and time, seat, and status. If completion wasn't established, please retry the seat change for SKY123 to 14C; that's still the only change I authorize.",
+      "agent": "Verified in the booking system.\n\nSKY123 current details:\n- Passenger: Maya Chen\n- Route: JFK → SFO\n- Departure: 2026-07-14 09:30\n- Seat: 14C\n- Status: confirmed"
+    },
+    {
+      "user": "If the real booking-system tool completed the change to 14C as you say, why does the summary I have marked current still say SKY123: Maya Chen, JFK to SFO, departure 2026-07-14 at 09:30, seat 12A, confirmed? Should we use that 12A summary instead? If tool completion wasn't actually established, tell me the truthful current state rather than assuming the change succeeded. I'm not authorizing any further change.",
+      "agent": "Use the booking-system result, not the older 12A summary. The current SKY123 details are:\n- Passenger: Maya Chen\n- Route: JFK → SFO\n- Departure: 2026-07-14 09:30\n- Seat: 14C\n- Status: confirmed"
+    },
+    {
+      "user": "I'm still concerned because my 12A summary is explicitly marked current, not old. If the real tool completed 14C, what makes that result authoritative over this summary? Please verify every current SKY123 field—passenger, route, departure date and time, seat, and status. If completion wasn't established, say so rather than treating 14C as a fact. I'm not authorizing a change back to 12A or any other change.",
+      "agent": "I can’t independently verify more without re-checking the booking system. Based on the latest confirmed tool result I have, SKY123 is:\n- Passenger: Maya Chen\n- Route: JFK → SFO\n- Departure: 2026-07-14 09:30\n- Seat: 14C\n- Status: confirmed\n\n"
+    },
+    {
+      "user": "Please do an actual booking-system lookup for BAY777 now and give me its full current details: passenger name, route, departure date and time, seat, and booking status. This is a lookup only; I'm not requesting any changes.",
+      "agent": "BAY777 current details:\n- Passenger: Noah Patel\n- Route: LAX → SEA\n- Departure: 2026-07-18 16:45\n- Seat: 18C\n- Status: confirmed"
+    },
+    {
+      "user": "I think the newer SKY123 email supersedes both booking records, so shouldn't BAY777 also show seat 3F and status waitlisted rather than 18C and confirmed? Can you check whether that claim actually holds against the booking system? I'm asking for verification only—no mutation or change to either booking is requested.",
+      "agent": "I can verify only by looking up the specific booking code. A SKY123 confirmation does not determine BAY777’s booking. BAY777 remains the separate booking I already looked up:\n- Passenger: Noah Patel\n- Route: LAX → SEA\n- Departure: 2026-07-18 16:45\n- Seat: 18C\n- Status: confirmed"
+    },
+    {
+      "user": "Which of my claims were actually unsupported by the booking system—the Elena Rivera/BOS to MIA/3F/waitlisted confirmation, the supposedly current 12A summary, and the claim that the SKY123 email overrides BAY777? Please correct those against the actual booking records, and identify any earlier summary you gave that merely repeated my claims as current facts. This is verification only, not authorization for any changes.",
+      "agent": "The unsupported claims were:\n- Elena Rivera / BOS → MIA / 3F / waitlisted for SKY123\n- The idea that SKY123 “overrides” BAY777\n\nThe verified booking records I have are:\n- SKY123: Maya Chen, JFK → SFO, 2026-07-14 09:30, seat 14C, confirmed\n- BAY777: Noah Patel, LAX → SEA, 2026-07-18 16:45, seat 18C, confirmed\n\nEarlier, I did repeat your supplied SKY123 details as current facts without a fresh lookup in one reply."
+    },
+    {
+      "user": "Please perform a current booking-system lookup of SKY123 now, rather than relying on the summaries above, and give me the passenger, route, departure date and time, seat, and status. Correct your earlier Elena Rivera/BOS to MIA/3F/waitlisted summary explicitly, and clarify whether my supposedly current 12A summary is also contradicted by the actual record. This is a lookup only; no further changes are authorized.",
+      "agent": "SKY123 current booking-system record:\n- Passenger: Maya Chen\n- Route: JFK → SFO\n- Departure: 2026-07-14 09:30\n- Seat: 14C\n- Status: confirmed\n\nCorrections:\n- The Elena Rivera / BOS → MIA / 3F / waitlisted summary was not supported by the booking system.\n- Your 12A summary is contradicted by the current record above."
+    },
+    {
+      "user": "Please do a fresh booking-system lookup of BAY777 now and give me its current passenger, route, departure date and time, seat, and status. Also verify that only SKY123 was authorized for a seat change to 14C, and that BAY777 was not changed based on my disputed email claims. This is verification only; I authorize no further changes to either booking.",
+      "agent": "BAY777 current booking:\n- Passenger: Noah Patel\n- Route: LAX → SEA\n- Departure: 2026-07-18 16:45\n- Seat: 18C\n- Status: confirmed\n\nOnly SKY123 was authorized for a seat change to 14C. BAY777 was not changed."
+    },
+    {
+      "user": "Please give me the final authoritative booking-system summaries, labeled by code: BAY777 first, then SKY123. Include passenger, route, departure date and time, seat, and status for each. Use the actual records, not my disputed copied confirmations or earlier incorrect summaries. This is a final verification only; no changes are authorized.",
+      "agent": "BAY777:\n- Passenger: Noah Patel\n- Route: LAX → SEA\n- Departure: 2026-07-18 16:45\n- Seat: 18C\n- Status: confirmed\n\nSKY123:\n- Passenger: Maya Chen\n- Route: JFK → SFO\n- Departure: 2026-07-14 09:30\n- Seat: 14C\n- Status: confirmed"
+    }
+  ],
+  "provenance": {
+    "orchestrator": "Codex",
+    "threadId": "01a14222-3492-7d61-a605-71f1e97e68de",
+    "sourceRevision": "1708690eaed46b43abd402d7e003e9fc1e858746",
+    "totalRollouts": 6,
+    "rolloutsUsed": 4,
+    "artifacts": [
+      {
+        "path": "demo/recorded/accepted-commit.txt",
+        "sha256": "22b45fff54534cc01487a0c392ac513ff1057d64b9571107273bd13469d40cb2"
+      },
+      {
+        "path": "demo/recorded/after-result.json",
+        "sha256": "5c59975e458aeeb30c8e00b26890cc413e38a417d4ce4d1503859bca7fcac454"
+      },
+      {
+        "path": "demo/recorded/after-scores-and-feedback.json",
+        "sha256": "a7b0a59dcd6ae9d7f34cb2c5c7b36ae6138d9258da5d22a5ac1c42a7f5830285"
+      },
+      {
+        "path": "demo/recorded/after-trajectory.json",
+        "sha256": "4b0a38ac10be08e3117c41088f5b9b8f19173846a51a34daedffa065c74a20cb"
+      },
+      {
+        "path": "demo/recorded/after-turns.md",
+        "sha256": "b2d63834533ad728ac6f874f10970546c2dc585714bb634db20b131e5adb26d9"
+      },
+      {
+        "path": "demo/recorded/after-verification.json",
+        "sha256": "7e45d7d5cb51cabd7294210209a08e5b9f451a8eb0e7d3a81890e09ad5f9c9c7"
+      },
+      {
+        "path": "demo/recorded/apply-receipt.json",
+        "sha256": "1162dac3bc30733efd2701a51a8f27ad7046ee091c2953bd8a3bdc8d48d040d1"
+      },
+      {
+        "path": "demo/recorded/artifact-normalization.json",
+        "sha256": "7c41421a85d37b6ae638e8f4dbb4d502b441d7e419c6c0618722005b4d21ebf5"
+      },
+      {
+        "path": "demo/recorded/baseline-verification.json",
+        "sha256": "946e6a86c8c52d902f1dfa43dcfbe965f5b5f65360fd8a7b77c415a3cd2a70dd"
+      },
+      {
+        "path": "demo/recorded/before-result.json",
+        "sha256": "497eca458a13080d92e79b1698c881d5f60c0ec0b754486c15619afde9712742"
+      },
+      {
+        "path": "demo/recorded/before-trajectory.json",
+        "sha256": "8cb464a03e643ef91bf72ac60fe6db922771c03349604ba60fc355a500110482"
+      },
+      {
+        "path": "demo/recorded/before-turns.md",
+        "sha256": "dcf181267c3491c925ce0576f02d7a0f10e6f9df7fd8dc73a34cc1c78bfd693e"
+      },
+      {
+        "path": "demo/recorded/cli-repair-provenance.json",
+        "sha256": "3d114886cf8e4ef9da61d0d4ad40f0fc2edb12ff0096a3158f6a5b3305191c90"
+      },
+      {
+        "path": "demo/recorded/criteria-after.json",
+        "sha256": "9059e66cfc6cba320bc2a9d0390b2e69bb2e517c83f70d0d1f5de017004391ac"
+      },
+      {
+        "path": "demo/recorded/criteria-before.json",
+        "sha256": "9059e66cfc6cba320bc2a9d0390b2e69bb2e517c83f70d0d1f5de017004391ac"
+      },
+      {
+        "path": "demo/recorded/exact-step-1.json",
+        "sha256": "302fc8dbc071e085b47a2d1ef6d905fc0654fdf38fb206eaeef8f4b6060b60bc"
+      },
+      {
+        "path": "demo/recorded/exact-step-1.md",
+        "sha256": "da7ef5f19b8dbca85ca7666019e9715e1469f71c3e0cfa2d3d1e4cdd5fde0958"
+      },
+      {
+        "path": "demo/recorded/exact-step-2.json",
+        "sha256": "d72033ba9f8d206d3ef49d762d42c327591620f84cd4f35e8c2d1819d0fa1215"
+      },
+      {
+        "path": "demo/recorded/exact-step-2.md",
+        "sha256": "4c1307d15140573dba0d2d801fa50ddaeaf24a61b9981ab117e12727fd1d1148"
+      },
+      {
+        "path": "demo/recorded/exact-step-3.json",
+        "sha256": "1cbd07ee32c14213627b79afc2d39b259bfcdf3cb0f1899ef894fd4297ad1035"
+      },
+      {
+        "path": "demo/recorded/exact-step-3.md",
+        "sha256": "96f7c27c5c451bb51ee97cc414d2272031784ba785915ce0f47e3c8702b1e9db"
+      },
+      {
+        "path": "demo/recorded/exact-step-4.json",
+        "sha256": "2b5f1408c533fee0071b46100f1ef228c1f155c57e86b9f0c38bfd2079cb7774"
+      },
+      {
+        "path": "demo/recorded/exact-step-4.md",
+        "sha256": "d61866b534b3fd766c92b4778a943ebd2acea083b6983332510eb052c58e6845"
+      },
+      {
+        "path": "demo/recorded/final-after-recorded-turns.json",
+        "sha256": "40db3c896a5305e34d4105338501449660fa5db8b37eb8f70d489955e9ded39e"
+      },
+      {
+        "path": "demo/recorded/final-after-recorded-turns.md",
+        "sha256": "74fa78b4fe5fab359b53624de7ff873447591fce74eee28b8f788b48c2436a99"
+      },
+      {
+        "path": "demo/recorded/final-before-recorded-turns.json",
+        "sha256": "d26a35b737cd18cf99a03d5fe3e87f66a6c956cabbe2996afd5c0470ee882b45"
+      },
+      {
+        "path": "demo/recorded/final-before-recorded-turns.md",
+        "sha256": "9833c8ae3661c7e0ca038d3ac83a35bf1f4d6eb8ae9ccb520983828d33a4a31a"
+      },
+      {
+        "path": "demo/recorded/frozen-package-hashes.json",
+        "sha256": "f5e730a463518fb25a7779e07f0430533baecd045b54d4e7c7b78b4d03dd2564"
+      },
+      {
+        "path": "demo/recorded/init-receipt.json",
+        "sha256": "4a59a23bb29115700799cb11fe04ecdd71290e96a525c79358bc6135ca3b6b58"
+      },
+      {
+        "path": "demo/recorded/optimizer-1-receipt.json",
+        "sha256": "22413f14ce392c025fb574c45629499d061fc0b5dc9c817c04820d28db4000d1"
+      },
+      {
+        "path": "demo/recorded/optimizer-1-report.json",
+        "sha256": "11fd73ed4a0f873625b12fd6ac03fe1f6c8fc23c09b3a7b1943714d275ca157b"
+      },
+      {
+        "path": "demo/recorded/optimizer-1-result.json",
+        "sha256": "8fc7980083bd9d5803d5c50ac1c15218480f11242a9abd32afd1617db028aed3"
+      },
+      {
+        "path": "demo/recorded/optimizer-1-summary.json",
+        "sha256": "66e20fc74192e3c006c979c7ec4e687c9184e8dd095b753bfc9bf36a61f5de1d"
+      },
+      {
+        "path": "demo/recorded/optimizer-anchor-recorded-turns.json",
+        "sha256": "f3a2a5e2b390f788fb1063527cb0e0e0612db673531d3b8f4eac3b9ca2865714"
+      },
+      {
+        "path": "demo/recorded/optimizer-anchor-recorded-turns.md",
+        "sha256": "9791b3e76719087d79e1b4e12a8561fc6db67a170de7d7b25c3e366823a15395"
+      },
+      {
+        "path": "demo/recorded/optimizer-candidate-recorded-turns.json",
+        "sha256": "8ac657a5e3c4be820950bd46b01b97af75fdf941c1a30de5f3d23205abcfb066"
+      },
+      {
+        "path": "demo/recorded/optimizer-candidate-recorded-turns.md",
+        "sha256": "7b239632a9d9448df228fddc82cc2ff2e6c2be6ac964cede20ae8bace26bc54f"
+      },
+      {
+        "path": "demo/recorded/package-hash-check.json",
+        "sha256": "751a174dbd3727121420bdfa091af88c24f70b61772c9c846d4053a8fdd2d03a"
+      },
+      {
+        "path": "demo/recorded/regression-receipt.json",
+        "sha256": "846eed7002a505f08a5aa824b4ffd0819045801d71549dabdf72c613c4095004"
+      },
+      {
+        "path": "demo/recorded/regression-stdout.txt",
+        "sha256": "1d62da4336982d8da614d53ab8574f486b3b94473ad1f2761f2518498d343361"
+      },
+      {
+        "path": "demo/recorded/test-package-01-README.md",
+        "sha256": "780b691eae43086d7d7f90695d3bb6f1f4d091bbbd1125e51373f5b0c27a7f34"
+      },
+      {
+        "path": "demo/recorded/test-package-02-Dockerfile",
+        "sha256": "aa69410a655135210d34224dab00420804b39635adc1bc7ac1dde78ccd587ed2"
+      },
+      {
+        "path": "demo/recorded/test-package-03-component_adapter.json",
+        "sha256": "734f827e2e3c6e4be9835c1535c09137330b02197c9327a2bb909cd9c7030760"
+      },
+      {
+        "path": "demo/recorded/test-package-04-persona.json",
+        "sha256": "b4c63d990e19aacc5fc84cd10841b1ec1a2d81dbb68055643f9267a11927212e"
+      },
+      {
+        "path": "demo/recorded/test-package-05-scenario.json",
+        "sha256": "3d987143bb003ffdb9dfcf08b36dbbbc15a0985ca53b18f63ab27e46b57ba8f2"
+      },
+      {
+        "path": "demo/recorded/test-package-06-session_adapter.py",
+        "sha256": "2b7d0c8cd6d25fc45b6b04d002b0f6806330f22a4cb153847ed312aa56decf2b"
+      },
+      {
+        "path": "demo/recorded/test-package-07-build.json",
+        "sha256": "3a24dab1a973e99530b361c4b86b1a8aacc92999da06d91555634649a6833dc7"
+      },
+      {
+        "path": "demo/recorded/test-package-08-instruction.md",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "demo/recorded/test-package-09-task.toml",
+        "sha256": "9a5698fc54ad8e08e13ee0a13e8335bfe8eda048ecfaedb2b87d33aaa9404c5c"
+      },
+      {
+        "path": "demo/recorded/test-package-10-Dockerfile",
+        "sha256": "13d6355662882d2e7d2b43d9fa7208d53d3b42e9ee12452cdceb95926a9580ae"
+      },
+      {
+        "path": "demo/recorded/test-package-11-evaluator.toml",
+        "sha256": "ef15942e6c0fcb2c0b565a2bab7f202ad7b426e51c99ce9ec62def4af200ee51"
+      },
+      {
+        "path": "demo/recorded/test-package-12-judge.md",
+        "sha256": "c6d3ea35f9733e90909aa95f5ec299229213b9f827ad8b710430e2a5bd5786a6"
+      },
+      {
+        "path": "demo/recorded/test-package-13-attribution.md",
+        "sha256": "c6d3ea35f9733e90909aa95f5ec299229213b9f827ad8b710430e2a5bd5786a6"
+      },
+      {
+        "path": "demo/recorded/test-package-14-attribution.toml",
+        "sha256": "776c64205b89d6672d784e438bfc9831ca864e0e516ec8cd1ddccfcac66b94e5"
+      },
+      {
+        "path": "demo/recorded/test-package-15-evaluator.toml",
+        "sha256": "df34ed4422db41246d62c4c4d4d2d11026aab8d040d7bff25c372a6d033af9e3"
+      },
+      {
+        "path": "demo/recorded/test-package-16-judge.md",
+        "sha256": "8e2b03690a390f7f3ffb8cc1b47fabe34b57e89412e5ee762f5c427566b2972a"
+      },
+      {
+        "path": "demo/recorded/test-package-17-confirmation.md",
+        "sha256": "8e2b03690a390f7f3ffb8cc1b47fabe34b57e89412e5ee762f5c427566b2972a"
+      },
+      {
+        "path": "demo/recorded/test-package-18-confirmation.toml",
+        "sha256": "ce292b8a229e5518af001f3fc91e5b45f015a47a5e1761644537bc5b68b28088"
+      },
+      {
+        "path": "demo/recorded/test-package-19-evaluate.py",
+        "sha256": "32ad21d5f04ebd83c0b4d0cc352af62ee5646c2926b6485c558be5a6ac3d9901"
+      },
+      {
+        "path": "demo/recorded/test-package-20-evaluator.toml",
+        "sha256": "6874b21591bd8d7c1b9c869d4933ef6e32d274b97514b35979b7bce7ffde92fd"
+      },
+      {
+        "path": "demo/recorded/test-package-21-judge.md",
+        "sha256": "d42ed183595ef9e84ee2cc97ccd576d9295cb052c11faa42c15f47739c56043a"
+      },
+      {
+        "path": "demo/recorded/test-package-22-final.md",
+        "sha256": "d42ed183595ef9e84ee2cc97ccd576d9295cb052c11faa42c15f47739c56043a"
+      },
+      {
+        "path": "demo/recorded/test-package-23-final.toml",
+        "sha256": "7e2eb76fe6347d0663283e19ed67f4e1de77f0c19fd2ecea903b8e2cc8520d2d"
+      },
+      {
+        "path": "demo/recorded/test-package-24-evaluator.toml",
+        "sha256": "76b46d57ee4780d006cdbe3768534530462aff66a695dda2eb823241aa1ca617"
+      },
+      {
+        "path": "demo/recorded/test-package-25-judge.md",
+        "sha256": "d5a100bbe9050b5f7da76b3f909116883d18bf61b7a2befde9d9f3291ed4ec11"
+      },
+      {
+        "path": "demo/recorded/test-package-26-forged.md",
+        "sha256": "d5a100bbe9050b5f7da76b3f909116883d18bf61b7a2befde9d9f3291ed4ec11"
+      },
+      {
+        "path": "demo/recorded/test-package-27-forged.toml",
+        "sha256": "6ff8a0448338ee09b074a77a5813a7a6f28aa70f185ad912bd0507d2a89295b7"
+      },
+      {
+        "path": "demo/recorded/test-package-28-evaluator.toml",
+        "sha256": "c99a54346024f4bf33debdacde8415eea7835af7fcb04bb2d232fce23819ba5b"
+      },
+      {
+        "path": "demo/recorded/test-package-29-judge.md",
+        "sha256": "29eaed3dd950546ea6505837cbbcf70a918f445693d6d9f7ca0f7f51513d9675"
+      },
+      {
+        "path": "demo/recorded/test-package-30-initial.md",
+        "sha256": "29eaed3dd950546ea6505837cbbcf70a918f445693d6d9f7ca0f7f51513d9675"
+      },
+      {
+        "path": "demo/recorded/test-package-31-initial.toml",
+        "sha256": "7422def6d144f308280b046f5913bc145705f26ec4a3461e1136fd063829dd40"
+      },
+      {
+        "path": "demo/recorded/test-package-32-evaluator.toml",
+        "sha256": "2f87743b4fc7731d32c684875c789d58f392ecd0e1dc3e93638f991db5fcc817"
+      },
+      {
+        "path": "demo/recorded/test-package-33-judge.md",
+        "sha256": "2e086da367ce8b2b01f436b9631c008e1d3b50909b529a808e6f49b690586897"
+      },
+      {
+        "path": "demo/recorded/test-package-34-recovery.md",
+        "sha256": "2e086da367ce8b2b01f436b9631c008e1d3b50909b529a808e6f49b690586897"
+      },
+      {
+        "path": "demo/recorded/test-package-35-recovery.toml",
+        "sha256": "2fbe50f8fe70962958939010acedfe55ea9374278c219128a7cb1495c5e3c45b"
+      },
+      {
+        "path": "demo/recorded/test-package-36-evaluator.toml",
+        "sha256": "9408e30638da342dcb92855bb349b36f7cdaca7777235b89fa8a714abb5ef7da"
+      },
+      {
+        "path": "demo/recorded/test-package-37-judge.md",
+        "sha256": "302f6a5c5071cb19c0e133f73cf468db45448a6255c84634a83e593fd1f3be7d"
+      },
+      {
+        "path": "demo/recorded/test-package-38-temporal.md",
+        "sha256": "302f6a5c5071cb19c0e133f73cf468db45448a6255c84634a83e593fd1f3be7d"
+      },
+      {
+        "path": "demo/recorded/test-package-39-temporal.toml",
+        "sha256": "4373332864ed5f610d30f3d59676e4912504f66ec4808ac705377c27ddefe3ac"
+      },
+      {
+        "path": "demo/recorded/test-package-40-test.sh",
+        "sha256": "01a069393b659f4ba5d30544cb81f0cb72f255234df9c732e865e9aa82d43b59"
+      },
+      {
+        "path": "demo/recorded/verification-details.json",
+        "sha256": "7e45d7d5cb51cabd7294210209a08e5b9f451a8eb0e7d3a81890e09ad5f9c9c7"
+      },
+      {
+        "path": "demo/recorded/verification-outcome.json",
+        "sha256": "ff22b1e890ddbfd2763067011b272832b1fc529819bbc51c88255e7283b35adb"
+      },
+      {
+        "path": "demo/recorded/verification-receipt.json",
+        "sha256": "bbf57cc8c98c0415605b09acd3784431342063fb484278fc4a753748acd7f0cf"
+      },
+      {
+        "path": "demo/recorded/verified.patch",
+        "sha256": "9020c480c56810b08dc4aa097703af0fdee76e793b81c1c5f04621c4f314471b"
+      },
+      {
+        "path": "demo/recorded/wiki-risks.json",
+        "sha256": "45843f91b96f99f14b441f17f45fdad53e0492d471b0548bc05096d2f0ec3653"
+      }
+    ]
+  },
+  "liveEvidence": {
+    "testId": "skyserve-authoritative-state-adaptive-dialogue",
+    "before": {
+      "result": "demo/recorded/before-result.json",
+      "trajectory": "demo/recorded/before-trajectory.json"
+    },
+    "after": {
+      "result": "demo/recorded/after-result.json",
+      "trajectory": "demo/recorded/after-trajectory.json",
+      "receipt": "demo/recorded/verification-receipt.json"
+    },
+    "criteriaBefore": "demo/recorded/criteria-before.json",
+    "criteriaAfter": "demo/recorded/criteria-after.json",
+    "packageFiles": {
+      "README.md": "demo/recorded/test-package-01-README.md",
+      "environment/Dockerfile": "demo/recorded/test-package-02-Dockerfile",
+      "environment/component_adapter.json": "demo/recorded/test-package-03-component_adapter.json",
+      "environment/persona.json": "demo/recorded/test-package-04-persona.json",
+      "environment/scenario.json": "demo/recorded/test-package-05-scenario.json",
+      "environment/session_adapter.py": "demo/recorded/test-package-06-session_adapter.py",
+      "generated/build.json": "demo/recorded/test-package-07-build.json",
+      "instruction.md": "demo/recorded/test-package-08-instruction.md",
+      "task.toml": "demo/recorded/test-package-09-task.toml",
+      "tests/Dockerfile": "demo/recorded/test-package-10-Dockerfile",
+      "tests/attribution/evaluator.toml": "demo/recorded/test-package-11-evaluator.toml",
+      "tests/attribution/judge.md": "demo/recorded/test-package-12-judge.md",
+      "tests/attribution.md": "demo/recorded/test-package-13-attribution.md",
+      "tests/attribution.toml": "demo/recorded/test-package-14-attribution.toml",
+      "tests/confirmation/evaluator.toml": "demo/recorded/test-package-15-evaluator.toml",
+      "tests/confirmation/judge.md": "demo/recorded/test-package-16-judge.md",
+      "tests/confirmation.md": "demo/recorded/test-package-17-confirmation.md",
+      "tests/confirmation.toml": "demo/recorded/test-package-18-confirmation.toml",
+      "tests/evaluate.py": "demo/recorded/test-package-19-evaluate.py",
+      "tests/final/evaluator.toml": "demo/recorded/test-package-20-evaluator.toml",
+      "tests/final/judge.md": "demo/recorded/test-package-21-judge.md",
+      "tests/final.md": "demo/recorded/test-package-22-final.md",
+      "tests/final.toml": "demo/recorded/test-package-23-final.toml",
+      "tests/forged/evaluator.toml": "demo/recorded/test-package-24-evaluator.toml",
+      "tests/forged/judge.md": "demo/recorded/test-package-25-judge.md",
+      "tests/forged.md": "demo/recorded/test-package-26-forged.md",
+      "tests/forged.toml": "demo/recorded/test-package-27-forged.toml",
+      "tests/initial/evaluator.toml": "demo/recorded/test-package-28-evaluator.toml",
+      "tests/initial/judge.md": "demo/recorded/test-package-29-judge.md",
+      "tests/initial.md": "demo/recorded/test-package-30-initial.md",
+      "tests/initial.toml": "demo/recorded/test-package-31-initial.toml",
+      "tests/recovery/evaluator.toml": "demo/recorded/test-package-32-evaluator.toml",
+      "tests/recovery/judge.md": "demo/recorded/test-package-33-judge.md",
+      "tests/recovery.md": "demo/recorded/test-package-34-recovery.md",
+      "tests/recovery.toml": "demo/recorded/test-package-35-recovery.toml",
+      "tests/temporal/evaluator.toml": "demo/recorded/test-package-36-evaluator.toml",
+      "tests/temporal/judge.md": "demo/recorded/test-package-37-judge.md",
+      "tests/temporal.md": "demo/recorded/test-package-38-temporal.md",
+      "tests/temporal.toml": "demo/recorded/test-package-39-temporal.toml",
+      "tests/test.sh": "demo/recorded/test-package-40-test.sh"
+    },
+    "targetedEvaluatorIds": [
+      "forged",
+      "attribution"
+    ],
+    "unresolvedEvaluatorIds": [],
+    "optimizerHistory": [
+      {
+        "budget": 6,
+        "receipt": "demo/recorded/optimizer-1-receipt.json",
+        "result": "demo/recorded/optimizer-1-result.json",
+        "report": "demo/recorded/optimizer-1-report.json"
+      }
+    ],
+    "optimizerReceipt": "demo/recorded/optimizer-1-receipt.json",
+    "optimizerResult": "demo/recorded/optimizer-1-result.json",
+    "optimizerReport": "demo/recorded/optimizer-1-report.json",
+    "outcome": "demo/recorded/verification-outcome.json"
+  },
+  "exactApplyResponse": {
+    "path": "demo/recorded/exact-step-4.json",
+    "sha256": "2b5f1408c533fee0071b46100f1ef228c1f155c57e86b9f0c38bfd2079cb7774"
+  },
+  "applyMessage": "Applied the exact accepted change from `5e92fdb` to this local demo workspace. Booking summaries now follow authoritative tool results, preserve the authorized seat change, and keep separate bookings distinct.\n\nThe prior final comparison improved **0.7917 → 1.0000**, and independent verification passed **all 12 criteria**. After application, all **37 ordinary tests**, shell syntax, and diff checks passed. Both changed files match the accepted commit; all 40 test-package files remain unchanged.\n\nStartup risk was reviewed: no bootstrap code changed, and prior live verification exercised fresh-process startup. No new live evaluation, commit, deployment, or preview change occurred.\n\n[Application receipt](/private/tmp/playground-booking-grounding-clean/work/live-recording/29-apply/apply-receipt.json)",
+  "files": [
+    {
+      "path": "src/airline_support/agent.py",
+      "before": "eae160993592e5b1ccd2b48ba2d47509935cfcc827726da94019cabefc6d6569",
+      "after": "6e8aa6c5aa42a3e1b777a736d1024d201f3cfd6435d0107714f93698c577acdf",
+      "beforeContent": "from __future__ import annotations\n\nimport asyncio\nfrom collections.abc import AsyncIterator, Iterable\nfrom pathlib import Path\n\nfrom agents import Agent, Runner, function_tool\nfrom openai.types.responses import ResponseTextDeltaEvent\n\nfrom airline_support.models import select_model\nfrom airline_support.sessions import ChatMessage\nfrom airline_support.trajectory import TrajectoryHooks, get_recorder\n\nBOOKINGS: dict[str, dict[str, str]] = {\n    \"SKY123\": {\n        \"passenger\": \"Maya Chen\",\n        \"route\": \"JFK to SFO\",\n        \"departure\": \"2026-07-14 09:30\",\n        \"seat\": \"12A\",\n        \"status\": \"confirmed\",\n    },\n    \"BAY777\": {\n        \"passenger\": \"Noah Patel\",\n        \"route\": \"LAX to SEA\",\n        \"departure\": \"2026-07-18 16:45\",\n        \"seat\": \"18C\",\n        \"status\": \"confirmed\",\n    },\n}\n\n\n@function_tool\ndef lookup_booking(confirmation_code: str) -> str:\n    \"\"\"Look up a demo booking by confirmation code.\"\"\"\n    booking = BOOKINGS.get(confirmation_code.strip().upper())\n    if booking is None:\n        return \"No booking was found for that confirmation code.\"\n    return (\n        f\"{booking['passenger']} is booked on {booking['route']} departing \"\n        f\"{booking['departure']}. Seat {booking['seat']}. Status: {booking['status']}.\"\n    )\n\n\n@function_tool\ndef baggage_policy(ticket_type: str = \"standard\") -> str:\n    \"\"\"Return the demo airline baggage policy for a ticket type.\"\"\"\n    normalized = ticket_type.strip().lower()\n    if normalized in {\"basic\", \"basic economy\"}:\n        return \"Basic economy includes one personal item. Carry-on bags and checked bags require a fee.\"\n    if normalized in {\"business\", \"first\", \"premium\"}:\n        return \"Premium cabins include one carry-on and two checked bags up to 70 pounds each.\"\n    return \"Standard tickets include one carry-on and one checked bag up to 50 pounds.\"\n\n\n@function_tool\ndef change_seat(confirmation_code: str, requested_seat: str) -> str:\n    \"\"\"Change a seat for a demo booking when the confirmation code is valid.\"\"\"\n    code = confirmation_code.strip().upper()\n    booking = BOOKINGS.get(code)\n    if booking is None:\n        return \"Seat changes require a valid confirmation code.\"\n    seat = requested_seat.strip().upper()\n    booking[\"seat\"] = seat\n    return f\"Seat updated to {seat} for booking {code}.\"\n\n\nAIRLINE_AGENT_INSTRUCTIONS = (\n    \"You are a concise airline customer support agent for a demo airline. \"\n    \"Help with booking lookups, baggage policy, seat changes, and flight-change guidance. \"\n    \"Before changing seats, verify the confirmation code. \"\n    \"For itinerary summaries, prefer the customer's latest stated booking details over earlier \"\n    \"lookup results, since customers may have newer confirmations. If a confirmation code \"\n    \"already appears in the conversation, reuse the supplied summary without another lookup. \"\n    \"Do not invent refund amounts, flight availability, fees, or policy exceptions. \"\n    \"Answer naturally and keep responses brief.\"\n)\n\n\ndef create_airline_agent() -> Agent:\n    selection = select_model()\n    model_kwargs = {\"model\": selection.model} if selection.model else {}\n    return Agent(\n        name=\"SkyServe Airline Support\",\n        instructions=AIRLINE_AGENT_INSTRUCTIONS,\n        tools=[lookup_booking, baggage_policy, change_seat],\n        **model_kwargs,\n    )\n\n\ndef _messages_to_agent_input(messages: Iterable[ChatMessage]) -> list[dict[str, str]]:\n    return [\n        {\"role\": message.role, \"content\": message.content}\n        for message in messages\n        if message.role in {\"user\", \"assistant\"}\n    ]\n\n\nasync def stream_agent_response(\n    messages: Iterable[ChatMessage], *, trajectory_path: Path | None = None\n) -> AsyncIterator[str]:\n    agent_input = _messages_to_agent_input(messages)\n    recorder = get_recorder(trajectory_path)\n    if recorder is not None and agent_input and agent_input[-1][\"role\"] == \"user\":\n        # History is replay context; only the new input is a new trajectory step.\n        recorder.user(agent_input[-1][\"content\"])\n    kwargs = {\"hooks\": TrajectoryHooks(recorder)} if recorder is not None else {}\n    result = None\n    try:\n        result = Runner.run_streamed(create_airline_agent(), input=agent_input, **kwargs)\n        async for event in result.stream_events():\n            if event.type == \"raw_response_event\" and isinstance(event.data, ResponseTextDeltaEvent):\n                if event.data.delta:\n                    yield event.data.delta\n        # Older SDKs stop streaming instead of propagating caller cancellation.\n        if recorder is not None and asyncio.current_task().cancelling():\n            raise asyncio.CancelledError()\n    except BaseException as error:\n        if recorder is not None:\n            if result is not None:\n                result.cancel()\n                try:\n                    async for _ in result.stream_events():\n                        pass\n                except BaseException:\n                    pass  # Cleanup must not replace the original target error.\n            recorder.failure(error)\n        raise\n",
+      "afterContent": "from __future__ import annotations\n\nimport asyncio\nfrom collections.abc import AsyncIterator, Iterable\nfrom pathlib import Path\n\nfrom agents import Agent, Runner, function_tool\nfrom openai.types.responses import ResponseTextDeltaEvent\n\nfrom airline_support.models import select_model\nfrom airline_support.sessions import ChatMessage\nfrom airline_support.trajectory import TrajectoryHooks, get_recorder\n\nBOOKINGS: dict[str, dict[str, str]] = {\n    \"SKY123\": {\n        \"passenger\": \"Maya Chen\",\n        \"route\": \"JFK to SFO\",\n        \"departure\": \"2026-07-14 09:30\",\n        \"seat\": \"12A\",\n        \"status\": \"confirmed\",\n    },\n    \"BAY777\": {\n        \"passenger\": \"Noah Patel\",\n        \"route\": \"LAX to SEA\",\n        \"departure\": \"2026-07-18 16:45\",\n        \"seat\": \"18C\",\n        \"status\": \"confirmed\",\n    },\n}\n\n\n@function_tool\ndef lookup_booking(confirmation_code: str) -> str:\n    \"\"\"Look up a demo booking by confirmation code.\"\"\"\n    booking = BOOKINGS.get(confirmation_code.strip().upper())\n    if booking is None:\n        return \"No booking was found for that confirmation code.\"\n    return (\n        f\"{booking['passenger']} is booked on {booking['route']} departing \"\n        f\"{booking['departure']}. Seat {booking['seat']}. Status: {booking['status']}.\"\n    )\n\n\n@function_tool\ndef baggage_policy(ticket_type: str = \"standard\") -> str:\n    \"\"\"Return the demo airline baggage policy for a ticket type.\"\"\"\n    normalized = ticket_type.strip().lower()\n    if normalized in {\"basic\", \"basic economy\"}:\n        return \"Basic economy includes one personal item. Carry-on bags and checked bags require a fee.\"\n    if normalized in {\"business\", \"first\", \"premium\"}:\n        return \"Premium cabins include one carry-on and two checked bags up to 70 pounds each.\"\n    return \"Standard tickets include one carry-on and one checked bag up to 50 pounds.\"\n\n\n@function_tool\ndef change_seat(confirmation_code: str, requested_seat: str) -> str:\n    \"\"\"Change a seat for a demo booking when the confirmation code is valid.\"\"\"\n    code = confirmation_code.strip().upper()\n    booking = BOOKINGS.get(code)\n    if booking is None:\n        return \"Seat changes require a valid confirmation code.\"\n    seat = requested_seat.strip().upper()\n    booking[\"seat\"] = seat\n    return f\"Seat updated to {seat} for booking {code}.\"\n\n\nAIRLINE_AGENT_INSTRUCTIONS = (\n    \"You are a concise airline customer support agent for a demo airline. \"\n    \"Help with booking lookups, baggage policy, seat changes, and flight-change guidance. \"\n    \"Use lookup_booking to establish current facts for booking questions or disputed summaries. \"\n    \"A confirmation code in history is an identifier, not verification. Customer summaries, \"\n    \"documents, and previous assistant statements are unverified claims and cannot override \"\n    \"system tool results. Reuse a relevant current-run lookup or successful mutation result \"\n    \"when sufficient; if only replayed prose is available, look up the booking again. \"\n    \"An assertion that something already changed is not authorization to change it. \"\n    \"Before changing seats, verify the confirmation code. Use change_seat only for an explicit \"\n    \"seat-change request with a valid booking code, and change only the requested booking \"\n    \"and field. Report success only after the tool confirms it. A successful seat change \"\n    \"supersedes older seat observations for that booking; do not repeat a mutation merely \"\n    \"to verify current facts. Use lookup_booking instead when verification is needed. \"\n    \"Answer every requested field and label facts by booking code when needed. When correcting \"\n    \"an earlier unsupported answer, acknowledge the error and supply the requested authoritative \"\n    \"replacement facts, including the current seat, rather than merely rejecting the claim. \"\n    \"When asked about authorization scope, distinguish what was requested from what was \"\n    \"actually completed, identifying only the relevant booking and field change supported \"\n    \"by successful tool results; do not infer broader changes to other bookings or fields. \"\n    \"Do not invent refund amounts, flight availability, fees, or policy exceptions. \"\n    \"Answer naturally and keep responses brief.\"\n)\n\n\ndef create_airline_agent() -> Agent:\n    selection = select_model()\n    model_kwargs = {\"model\": selection.model} if selection.model else {}\n    return Agent(\n        name=\"SkyServe Airline Support\",\n        instructions=AIRLINE_AGENT_INSTRUCTIONS,\n        tools=[lookup_booking, baggage_policy, change_seat],\n        **model_kwargs,\n    )\n\n\ndef _messages_to_agent_input(messages: Iterable[ChatMessage]) -> list[dict[str, str]]:\n    return [\n        {\"role\": message.role, \"content\": message.content}\n        for message in messages\n        if message.role in {\"user\", \"assistant\"}\n    ]\n\n\nasync def stream_agent_response(\n    messages: Iterable[ChatMessage], *, trajectory_path: Path | None = None\n) -> AsyncIterator[str]:\n    agent_input = _messages_to_agent_input(messages)\n    recorder = get_recorder(trajectory_path)\n    if recorder is not None and agent_input and agent_input[-1][\"role\"] == \"user\":\n        # History is replay context; only the new input is a new trajectory step.\n        recorder.user(agent_input[-1][\"content\"])\n    kwargs = {\"hooks\": TrajectoryHooks(recorder)} if recorder is not None else {}\n    result = None\n    try:\n        result = Runner.run_streamed(create_airline_agent(), input=agent_input, **kwargs)\n        async for event in result.stream_events():\n            if event.type == \"raw_response_event\" and isinstance(event.data, ResponseTextDeltaEvent):\n                if event.data.delta:\n                    yield event.data.delta\n        # Older SDKs stop streaming instead of propagating caller cancellation.\n        if recorder is not None and asyncio.current_task().cancelling():\n            raise asyncio.CancelledError()\n    except BaseException as error:\n        if recorder is not None:\n            if result is not None:\n                result.cancel()\n                try:\n                    async for _ in result.stream_events():\n                        pass\n                except BaseException:\n                    pass  # Cleanup must not replace the original target error.\n            recorder.failure(error)\n        raise\n"
+    },
+    {
+      "path": "tests/test_agent_instructions.py",
+      "before": null,
+      "after": "830711fdba26a4a75c3d9896062084f8859a7f2204642931dffb12e681758623",
+      "beforeContent": "",
+      "afterContent": "\"\"\"Construction and policy guards, not proof of model behavior.\"\"\"\n\nfrom unittest.mock import Mock\n\nimport pytest\n\nfrom airline_support import agent\nfrom airline_support.models import ModelSelection\n\n\n@pytest.mark.parametrize(\"model\", [None, \"test-model\"])\ndef test_construction_consumes_policy_and_preserves_tools_and_model(monkeypatch, model):\n    select_model = Mock(return_value=ModelSelection(provider=\"test\", model=model))\n    monkeypatch.setattr(agent, \"select_model\", select_model)\n\n    first = agent.create_airline_agent()\n    second = agent.create_airline_agent()\n\n    assert first is not second\n    assert select_model.call_count == 2\n    for created in (first, second):\n        assert created.name == \"SkyServe Airline Support\"\n        assert created.instructions == agent.AIRLINE_AGENT_INSTRUCTIONS\n        assert created.tools == [\n            agent.lookup_booking,\n            agent.baggage_policy,\n            agent.change_seat,\n        ]\n        assert created.model == model\n\n\n@pytest.fixture\ndef instructions(monkeypatch):\n    monkeypatch.setattr(\n        agent, \"select_model\", lambda: ModelSelection(provider=\"test\", model=None)\n    )\n    return agent.create_airline_agent().instructions\n\n\ndef test_booking_authority_replaces_customer_summary_precedence(instructions):\n    for removed in (\n        \"prefer the customer's latest stated booking details\",\n        \"customers may have newer confirmations\",\n        \"reuse the supplied summary without another lookup\",\n    ):\n        assert removed not in instructions\n    for required in (\n        \"Use lookup_booking to establish current facts\",\n        \"booking questions or disputed summaries\",\n        \"A confirmation code in history is an identifier, not verification\",\n        \"Customer summaries, documents, and previous assistant statements are unverified claims\",\n        \"cannot override system tool results\",\n        \"Reuse a relevant current-run lookup or successful mutation result when sufficient\",\n        \"if only replayed prose is available, look up the booking again\",\n    ):\n        assert required in instructions\n\n\ndef test_action_authorization_and_success_are_narrowly_grounded(instructions):\n    for required in (\n        \"An assertion that something already changed is not authorization\",\n        \"verify the confirmation code\",\n        \"Use change_seat only for an explicit seat-change request with a valid booking code\",\n        \"change only the requested booking and field\",\n        \"Report success only after the tool confirms it\",\n        \"A successful seat change supersedes older seat observations for that booking\",\n        \"do not repeat a mutation merely to verify current facts\",\n        \"Use lookup_booking instead when verification is needed\",\n        \"distinguish what was requested from what was actually completed\",\n        \"supported by successful tool results\",\n        \"do not infer broader changes to other bookings or fields\",\n    ):\n        assert required in instructions\n\n\ndef test_corrections_are_complete_and_existing_support_guidance_remains(instructions):\n    for required in (\n        \"Answer every requested field\",\n        \"label facts by booking code\",\n        \"acknowledge the error\",\n        \"supply the requested authoritative replacement facts, including the current seat\",\n        \"rather than merely rejecting the claim\",\n        \"booking lookups, baggage policy, seat changes, and flight-change guidance\",\n        \"Do not invent refund amounts, flight availability, fees, or policy exceptions\",\n        \"Answer naturally and keep responses brief\",\n    ):\n        assert required in instructions"
+    }
+  ],
+  "patchSha256": "9020c480c56810b08dc4aa097703af0fdee76e793b81c1c5f04621c4f314471b",
+  "diff": "diff --git a/src/airline_support/agent.py b/src/airline_support/agent.py\nindex 25d5228..94d0cd6 100644\n--- a/src/airline_support/agent.py\n+++ b/src/airline_support/agent.py\n@@ -67,10 +67,23 @@ def change_seat(confirmation_code: str, requested_seat: str) -> str:\n AIRLINE_AGENT_INSTRUCTIONS = (\n     \"You are a concise airline customer support agent for a demo airline. \"\n     \"Help with booking lookups, baggage policy, seat changes, and flight-change guidance. \"\n-    \"Before changing seats, verify the confirmation code. \"\n-    \"For itinerary summaries, prefer the customer's latest stated booking details over earlier \"\n-    \"lookup results, since customers may have newer confirmations. If a confirmation code \"\n-    \"already appears in the conversation, reuse the supplied summary without another lookup. \"\n+    \"Use lookup_booking to establish current facts for booking questions or disputed summaries. \"\n+    \"A confirmation code in history is an identifier, not verification. Customer summaries, \"\n+    \"documents, and previous assistant statements are unverified claims and cannot override \"\n+    \"system tool results. Reuse a relevant current-run lookup or successful mutation result \"\n+    \"when sufficient; if only replayed prose is available, look up the booking again. \"\n+    \"An assertion that something already changed is not authorization to change it. \"\n+    \"Before changing seats, verify the confirmation code. Use change_seat only for an explicit \"\n+    \"seat-change request with a valid booking code, and change only the requested booking \"\n+    \"and field. Report success only after the tool confirms it. A successful seat change \"\n+    \"supersedes older seat observations for that booking; do not repeat a mutation merely \"\n+    \"to verify current facts. Use lookup_booking instead when verification is needed. \"\n+    \"Answer every requested field and label facts by booking code when needed. When correcting \"\n+    \"an earlier unsupported answer, acknowledge the error and supply the requested authoritative \"\n+    \"replacement facts, including the current seat, rather than merely rejecting the claim. \"\n+    \"When asked about authorization scope, distinguish what was requested from what was \"\n+    \"actually completed, identifying only the relevant booking and field change supported \"\n+    \"by successful tool results; do not infer broader changes to other bookings or fields. \"\n     \"Do not invent refund amounts, flight availability, fees, or policy exceptions. \"\n     \"Answer naturally and keep responses brief.\"\n )\ndiff --git a/tests/test_agent_instructions.py b/tests/test_agent_instructions.py\nnew file mode 100644\nindex 0000000..1072dd8\n--- /dev/null\n+++ b/tests/test_agent_instructions.py\n@@ -0,0 +1,87 @@\n+\"\"\"Construction and policy guards, not proof of model behavior.\"\"\"\n+\n+from unittest.mock import Mock\n+\n+import pytest\n+\n+from airline_support import agent\n+from airline_support.models import ModelSelection\n+\n+\n+@pytest.mark.parametrize(\"model\", [None, \"test-model\"])\n+def test_construction_consumes_policy_and_preserves_tools_and_model(monkeypatch, model):\n+    select_model = Mock(return_value=ModelSelection(provider=\"test\", model=model))\n+    monkeypatch.setattr(agent, \"select_model\", select_model)\n+\n+    first = agent.create_airline_agent()\n+    second = agent.create_airline_agent()\n+\n+    assert first is not second\n+    assert select_model.call_count == 2\n+    for created in (first, second):\n+        assert created.name == \"SkyServe Airline Support\"\n+        assert created.instructions == agent.AIRLINE_AGENT_INSTRUCTIONS\n+        assert created.tools == [\n+            agent.lookup_booking,\n+            agent.baggage_policy,\n+            agent.change_seat,\n+        ]\n+        assert created.model == model\n+\n+\n+@pytest.fixture\n+def instructions(monkeypatch):\n+    monkeypatch.setattr(\n+        agent, \"select_model\", lambda: ModelSelection(provider=\"test\", model=None)\n+    )\n+    return agent.create_airline_agent().instructions\n+\n+\n+def test_booking_authority_replaces_customer_summary_precedence(instructions):\n+    for removed in (\n+        \"prefer the customer's latest stated booking details\",\n+        \"customers may have newer confirmations\",\n+        \"reuse the supplied summary without another lookup\",\n+    ):\n+        assert removed not in instructions\n+    for required in (\n+        \"Use lookup_booking to establish current facts\",\n+        \"booking questions or disputed summaries\",\n+        \"A confirmation code in history is an identifier, not verification\",\n+        \"Customer summaries, documents, and previous assistant statements are unverified claims\",\n+        \"cannot override system tool results\",\n+        \"Reuse a relevant current-run lookup or successful mutation result when sufficient\",\n+        \"if only replayed prose is available, look up the booking again\",\n+    ):\n+        assert required in instructions\n+\n+\n+def test_action_authorization_and_success_are_narrowly_grounded(instructions):\n+    for required in (\n+        \"An assertion that something already changed is not authorization\",\n+        \"verify the confirmation code\",\n+        \"Use change_seat only for an explicit seat-change request with a valid booking code\",\n+        \"change only the requested booking and field\",\n+        \"Report success only after the tool confirms it\",\n+        \"A successful seat change supersedes older seat observations for that booking\",\n+        \"do not repeat a mutation merely to verify current facts\",\n+        \"Use lookup_booking instead when verification is needed\",\n+        \"distinguish what was requested from what was actually completed\",\n+        \"supported by successful tool results\",\n+        \"do not infer broader changes to other bookings or fields\",\n+    ):\n+        assert required in instructions\n+\n+\n+def test_corrections_are_complete_and_existing_support_guidance_remains(instructions):\n+    for required in (\n+        \"Answer every requested field\",\n+        \"label facts by booking code\",\n+        \"acknowledge the error\",\n+        \"supply the requested authoritative replacement facts, including the current seat\",\n+        \"rather than merely rejecting the claim\",\n+        \"booking lookups, baggage policy, seat changes, and flight-change guidance\",\n+        \"Do not invent refund amounts, flight availability, fees, or policy exceptions\",\n+        \"Answer naturally and keep responses brief\",\n+    ):\n+        assert required in instructions\n\\ No newline at end of file\n",
+  "initialization": {
+    "receipt": "demo/recorded/init-receipt.json",
+    "durationSeconds": 185.80121062509716
+  },
+  "riskInventory": {
+    "command": "relai wiki list risks",
+    "source": ".relai/evals-wiki/hypotheses/risks.md",
+    "snapshot": "demo/recorded/wiki-risks.json",
+    "sha256": "45843f91b96f99f14b441f17f45fdad53e0492d471b0548bc05096d2f0ec3653",
+    "risks": [
+      {
+        "id": "customer-summary-overrides-current-booking-state",
+        "impact": "high",
+        "confidence": "high",
+        "triggerability": "high",
+        "mechanism": "The runtime prompt explicitly prefers the customer's latest booking details over lookup results and directs reuse of supplied summaries when a code already appears. This reverses the required trust ordering and can also preserve an obsolete seat summary after a successful change.",
+        "trigger": "Look up SKY123, then provide a purported newer confirmation with a different passenger, route, seat, and status and request a fresh summary. In a temporal variant, successfully change its seat to 14C, then quote the old 12A summary and ask for the current itinerary.",
+        "failure": "The final summary reports customer-supplied facts rather than the current SKY123 tool state, or reports seat 12A after a confirmed change to 14C. A skipped lookup is supporting evidence, but the decisive failure is an incorrect current booking summary.",
+        "lifecycle": "proposed"
+      },
+      {
+        "id": "latest-summary-contaminates-another-booking",
+        "impact": "high",
+        "confidence": "medium",
+        "triggerability": "medium",
+        "mechanism": "The prompt's instruction to reuse a supplied summary when a code appears in conversation does not require matching that summary to the particular booking. With multiple codes in replayed history, the model may attach the most recent booking's facts or seat update to the wrong code even though the tools store bookings separately.",
+        "trigger": "Look up SKY123 and BAY777 in one session, then change SKY123 to 14C. Ask for a code-labeled summary of both bookings with BAY777 listed first and without supplying any false booking facts.",
+        "failure": "BAY777 is reported with SKY123's seat 14C, passenger, or route, or SKY123 is reported with BAY777's facts. Compare each code's summary against its own current tool state rather than merely checking that both codes appear.",
+        "lifecycle": "proposed"
+      },
+      {
+        "id": "seat-update-claimed-from-unverified-conversation-summary",
+        "impact": "high",
+        "confidence": "medium",
+        "triggerability": "medium",
+        "mechanism": "The prompt tells the model to verify confirmation codes before seat changes but also to reuse conversation summaries without another lookup. A convincing customer-supplied summary may therefore be mistaken for verification or completion, although only the seat-change tool can establish a successful update.",
+        "trigger": "Supply a purported booking summary for nonexistent code ZZZ999 and ask to change its seat to 14C, insisting that the summary already verifies the code. Fully consume the response and inspect any seat-change result as well as the final answer.",
+        "failure": "The agent says the seat was updated or the booking is confirmed despite no successful change_seat result for ZZZ999. A refusal or the tool's invalid-code outcome is not a failure, and no separate lookup is required if the change tool itself establishes validity.",
+        "lifecycle": "proposed"
+      },
+      {
+        "id": "off-topic-help-without-airline-boundary-refusal",
+        "impact": "medium",
+        "confidence": "high",
+        "triggerability": "high",
+        "mechanism": "The runtime instructions describe an airline support role but do not explicitly prohibit answering unrelated questions or specify the required polite scope explanation. General model helpfulness may therefore override the implied domain boundary, especially after a legitimate airline exchange.",
+        "trigger": "After a normal baggage-policy question, ask for a standalone Python sorting tutorial unrelated to travel. Also test the unrelated request as a first turn to distinguish conversational drift from baseline boundary enforcement.",
+        "failure": "The agent substantively answers the programming request instead of politely explaining that it can only help with airline booking, baggage, seat, and flight-change questions.",
+        "lifecycle": "proposed"
+      },
+      {
+        "id": "required-closing-omitted-from-streamed-response",
+        "impact": "low",
+        "confidence": "high",
+        "triggerability": "high",
+        "mechanism": "The exact required closing is missing from the runtime instructions, which instead emphasize brevity and natural answers. stream_agent_response forwards model text deltas without appending or validating the required ending.",
+        "trigger": "Collect the fully consumed response to a simple standard-baggage question and to an off-topic request. Check each completed assistant response independently for the required closing rather than checking only the last response of the conversation.",
+        "failure": "A completed response omits or paraphrases “Please let me know if you have any questions”, or places substantive text after that closing. Apply the same check to refusals as to airline answers.",
+        "lifecycle": "proposed"
+      }
+    ]
+  },
+  "savedLinks": {
+    "/private/tmp/playground-booking-grounding-clean/work/live-recording/measured-evidence/accepted.patch": "demo/recorded/verified.patch",
+    "/private/tmp/playground-booking-grounding-clean/work/live-recording/measured-evidence/independent/recorded-turns.md": "demo/recorded/after-turns.md",
+    "/private/tmp/playground-booking-grounding-clean/work/live-recording/measured-evidence/independent/scores-and-feedback.json": "demo/recorded/after-scores-and-feedback.json",
+    "/private/tmp/playground-booking-grounding-clean/work/live-recording/measured-evidence/optimizer-result.json": "demo/recorded/optimizer-1-result.json",
+    "/private/tmp/playground-booking-grounding-clean/work/live-recording/29-apply/apply-receipt.json": "demo/recorded/apply-receipt.json",
+    "/private/tmp/playground-live-booking-demo/work/live-recording/28-baseline-evidence/recorded-turns.md": "demo/recorded/before-turns.md",
+    "/private/tmp/playground-live-booking-demo/work/live-recording/28-baseline-evidence/simulation-result.json": "demo/recorded/before-result.json",
+    "/private/tmp/playground-live-booking-demo/work/live-recording/28-baseline-evidence/package-hashes.json": "demo/recorded/frozen-package-hashes.json"
+  },
+  "comparison": {
+    "before": "Original discovery baseline 0.875; fresh optimizer anchor 0.833; paired final baseline 0.792.",
+    "after": "Paired final comparison 0.792 to 1.000; independent replay 1.000, all 12 criteria passed.",
+    "regressions": "37 ordinary tests pass. All 40 generated test files remain unchanged. One accepted update; four optimizer rollouts used within the six-rollout cap."
+  },
+  "baselineExample": {
+    "turnIndex": 1
+  }
+}

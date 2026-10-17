@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "title": "Ground support decisions in authoritative lookups"
+    }
+  ],
+  "title": "Ground airline support in authoritative state",
+  "summary": "Updated the active airline-support policy to prioritize authoritative lookups over customer summaries, reducing reliance on potentially stale or incomplete information.\n\n- Clarified action boundaries and required complete corrections covering current seats and authorization scope.\n- Added regression tests for policy consumption and unchanged tool/model wiring. Tests and simulations were not run, so behavioral improvement remains unverified.",
+  "inconsistency": "The change summary states that tests and simulations were not run, but the supplied environment outcomes report a score improvement. The source of that outcome is not explained."
+}

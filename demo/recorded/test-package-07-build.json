@@ -1,0 +1,28 @@
+{
+  "schema_version": 2,
+  "setup_commands": [],
+  "assets": [
+    {
+      "source": "component_adapter.json",
+      "destination": "/app/component_adapter.json"
+    },
+    {
+      "source": "persona.json",
+      "destination": "/app/persona.json"
+    },
+    {
+      "source": "scenario.json",
+      "destination": "/app/scenario.json"
+    },
+    {
+      "source": "session_adapter.py",
+      "destination": "/app/session_adapter.py"
+    }
+  ],
+  "verifier_command": "python3 /tests/evaluate.py",
+  "trajectory_example": null,
+  "rendered_sha256": {
+    "environment/Dockerfile": "aa69410a655135210d34224dab00420804b39635adc1bc7ac1dde78ccd587ed2",
+    "tests/test.sh": "01a069393b659f4ba5d30544cb81f0cb72f255234df9c732e865e9aa82d43b59"
+  }
+}

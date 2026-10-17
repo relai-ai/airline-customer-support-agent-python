@@ -1,0 +1,13 @@
+{
+  "argv": [
+    "relai",
+    "init",
+    "--agent-interaction",
+    "--timeout",
+    "25m"
+  ],
+  "exitCode": 0,
+  "durationSeconds": 185.80121062509716,
+  "startedAt": "2026-10-16T00:35:24.257047+00:00",
+  "sourceReceipt": "RELAI command receipt 05-init"
+}
