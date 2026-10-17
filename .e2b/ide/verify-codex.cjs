@@ -6,6 +6,7 @@ const { commandNetworkConfig, configValue } = require('/opt/playground/extension
 const child = spawn('codex', ['app-server', '--listen', 'stdio://',
   '-c', 'sandbox_mode="workspace-write"',
   '-c', 'features.default_mode_request_user_input=true',
+  '-c', 'developer_instructions=' + JSON.stringify(require('/opt/playground/extensions/relai.relai-playground-0.1.0/hosted-runtime').developerInstructions),
   ...Object.entries(commandNetworkConfig({ RELAI_API_BASE: 'https://gateway.example.test/' }))
     .flatMap(([key, value]) => ['-c', key + '=' + configValue(value)])], {
   cwd: '/home/user/airline',
@@ -52,7 +53,9 @@ async function verify() {
     const { config } = await rpc('config/read', {});
     if (config.features?.default_mode_request_user_input !== true)
       throw Error('Native questions are disabled in Codex app-server');
-    console.log('Native user questions enabled');
+    if (config.developer_instructions !== require('/opt/playground/extensions/relai.relai-playground-0.1.0/hosted-runtime').developerInstructions)
+      throw Error('Hosted execution guidance is missing');
+    console.log('Native user questions and hosted execution guidance enabled');
     if (config.sandbox_workspace_write?.network_access !== true ||
         config.features?.network_proxy?.enabled !== true ||
         config.features?.network_proxy?.domains?.['gateway.example.test'] !== 'allow')

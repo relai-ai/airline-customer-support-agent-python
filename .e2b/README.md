@@ -64,3 +64,22 @@ reload/Stop/approval handling, and session isolation before deployment.
 
 Build a distinct E2B alias and pin its verified source revision and template ID.
 Existing visitors retain their sessions; new launches receive the new template.
+
+## Hosted workflow lifetime
+
+The image wraps typed RELAI workflows and `relai runs wait` with a 24-hour CLI
+wait. This is a blocking wait, not a workflow timeout or a budget increase: the
+real CLI returns immediately on completion or a native review checkpoint. The
+underlying binary, signal handling, protocol output and exit status are preserved.
+Codex must give the command a one-hour tool timeout and poll its execution session;
+Stop and the sandbox/session lifetime still bound execution. Short CLI waits could
+otherwise return before detached work finishes and lose it when the command PID
+namespace closes. Inspection, help, malformed arguments, and cancellation commands
+retain the real CLI's normal behavior. No sandbox or network approval is bypassed.
+
+Model-request deadlines are ordered around the backend's 300-second inference
+budget: the session service allows 360 seconds, the Codex provider 390 seconds,
+and the inner Docker relay 400 seconds. Stop still aborts requests. The Codex
+provider preserves upstream HTTP status and quota reasons rather than calling
+every rejection a generic 502. Docker commands use a writable temporary config
+directory rather than requiring an out-of-sandbox home-directory write.

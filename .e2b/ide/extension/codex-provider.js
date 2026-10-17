@@ -104,6 +104,8 @@ async function startProvider(env, request = fetch) {
     res.on("close", () => {
       if (!res.writableEnded) abort.abort();
     });
+    let failureStatus = 502;
+    let failureCode = "codex_session_gateway_error";
     try {
       let raw = "";
       for await (const chunk of req) {
@@ -128,18 +130,18 @@ async function startProvider(env, request = fetch) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ ...payload, stream: false, store: false }),
-          signal: AbortSignal.any([abort.signal, AbortSignal.timeout(120000)]),
+          signal: AbortSignal.any([abort.signal, AbortSignal.timeout(390000)]),
           redirect: "error",
         },
       );
       const response = await upstream.json();
-      if (!upstream.ok)
-        throw Error(
-          response.error?.message ||
-            "The scoped RELAI model gateway returned HTTP " +
-              upstream.status +
-              ".",
-        );
+      if (!upstream.ok) {
+        failureStatus = upstream.status;
+        failureCode = response.error?.code || response.code || failureCode;
+        throw Error(response.error?.message ||
+          (typeof response.error === "string" ? response.error : response.detail) ||
+          "The scoped RELAI model gateway returned HTTP " + upstream.status + ".");
+      }
       if (!Array.isArray(response.output))
         throw Error(
           "The scoped model gateway returned an invalid Responses result.",
@@ -151,12 +153,12 @@ async function startProvider(env, request = fetch) {
       }
     } catch (error) {
       if (!res.headersSent) {
-        res.writeHead(502, { "Content-Type": "application/json" });
+        res.writeHead(error.name === "TimeoutError" ? 504 : failureStatus, { "Content-Type": "application/json" });
         res.end(
           JSON.stringify({
             error: {
               message: error.message,
-              type: "codex_session_gateway_error",
+              type: failureCode,
             },
           }),
         );

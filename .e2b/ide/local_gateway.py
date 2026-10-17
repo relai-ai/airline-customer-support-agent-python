@@ -73,7 +73,7 @@ def serve(base):
                 headers = {k: v for k, v in self.headers.items()
                            if k.lower() not in ('host', 'connection', 'transfer-encoding')}
                 headers['Host'] = f'host.docker.internal:{port}'
-                upstream = http.client.HTTPConnection(host, port, timeout=125)
+                upstream = http.client.HTTPConnection(host, port, timeout=400)
                 upstream.request(self.command, self.path, self.rfile.read(length), headers)
                 result = upstream.getresponse()
                 body = result.read()

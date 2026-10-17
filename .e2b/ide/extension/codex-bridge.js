@@ -57,6 +57,7 @@ class CodexBridge {
     if (this.ready) return this.ready;
     this.ready = (async () => {
       await this.restore();
+      await fs.mkdir("/tmp/playground-docker-config", { recursive: true, mode: 0o700 });
       const networkConfig = commandNetworkConfig(this.env);
       this.provider = await startProvider(this.env);
       const config = {
@@ -70,6 +71,7 @@ class CodexBridge {
         "model_providers.relai_playground.supports_websockets": false,
         model_reasoning_effort:
           this.env.RELAI_SESSION_REASONING_EFFORT || "medium",
+        developer_instructions: require("./hosted-runtime").developerInstructions,
         approval_policy: "on-request",
         sandbox_mode: "workspace-write",
         web_search: "disabled",
@@ -90,6 +92,7 @@ class CodexBridge {
         // Optional crash telemetry must not trigger command escalation outside
         // the session gateway allowlist.
         RELAI_DISABLE_TELEMETRY: "1",
+        DOCKER_CONFIG: "/tmp/playground-docker-config",
       };
       this.child = spawn("codex", args, {
         cwd: this.root,
