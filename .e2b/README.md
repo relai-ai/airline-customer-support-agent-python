@@ -32,7 +32,8 @@ Rebuild and verify a new template revision, then release it through the normal
 template rollout; existing sandboxes keep their current image and configuration.
 
 Codex command execution keeps the workspace-write filesystem sandbox and enables
-its enforced network proxy for only the provisioned session gateway hostname.
+its enforced network proxy for the provisioned session gateway hostname and the
+session-local RELAI worker on loopback.
 This lets RELAI discovery contact its model service without granting arbitrary
 outbound access. Upstream proxy inheritance is disabled. Local verification may
 use a loopback HTTP gateway; hosted gateways require HTTPS.
@@ -54,6 +55,7 @@ python3 -m unittest discover -s .e2b/ide -p 'test_*.py'
 node .e2b/ide/extension/validate-recording.js .
 docker build -f .e2b/Dockerfile -t relai-python-playground:local .
 docker run --rm --privileged --entrypoint node relai-python-playground:local /opt/playground/extensions/relai.relai-playground-0.1.0/verify-command-network.cjs
+docker run --rm --privileged --entrypoint node relai-python-playground:local /opt/playground/extensions/relai.relai-playground-0.1.0/verify-relai-worker.cjs
 ```
 
 The final image requires a verified manifest, authentic trajectories and receipt
@@ -75,7 +77,35 @@ Codex must give the command a one-hour tool timeout and poll its execution sessi
 Stop and the sandbox/session lifetime still bound execution. Short CLI waits could
 otherwise return before detached work finishes and lose it when the command PID
 namespace closes. Inspection, help, malformed arguments, and cancellation commands
-retain the real CLI's normal behavior. No sandbox or network approval is bypassed.
+retain the real CLI's normal behavior.
+
+## Session-local RELAI worker
+
+Linux Codex's managed network sandbox denies creating Unix sockets, including
+`/var/run/docker.sock`. Unix-socket allowlist entries do not make Docker usable
+in the pinned runtime. The web-dialog bridge therefore starts an authenticated
+HTTP worker on `127.0.0.1` outside that inner command sandbox, inside the same
+disposable E2B guest. The inner filesystem sandbox remains enabled; it receives
+no Docker socket. The provider's one-hour kill timeout and session-model budget
+are unchanged.
+
+The hosted `relai` wrapper forwards typed CLI workflows and `runs wait` to the
+worker. It invokes only the fixed real RELAI executable with an argument array,
+not a shell or arbitrary executable. CLI output, review protocol, checkpoint
+handling and exit status remain real. The worker accepts one invocation at a
+time, never retries ambiguous starts, rejects unauthenticated/browser-origin
+requests, and kills the workflow's PID namespace on disconnect, runtime shutdown
+or its one-hour ceiling, including detached RELAI background workers. A per-runtime random bearer credential protects the
+loopback endpoint. No provider or E2B management key is supplied to the worker.
+
+RELAI workflow code now has the E2B guest's Docker authority: the isolation
+boundary for validation is the disposable guest, not Codex's inner sandbox.
+This is an intentional trusted execution boundary and requires a reviewed
+template rollout. Ordinary Codex commands still cannot connect to Docker.
+The model-free worker smoke boots the exact dialog bridge, then uses a fake CLI
+to build and execute a verifier image from local files through a real sandboxed
+client. It establishes Docker transport and runtime startup, not the success of
+a live RELAI model workflow.
 
 Model-request deadlines are ordered around the backend's 300-second inference
 budget: the session service allows 360 seconds, the Codex provider 390 seconds,

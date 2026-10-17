@@ -4,6 +4,7 @@ const { commandNetworkConfig, configValue } = require("./codex-network");
 const fs = require("node:fs/promises");
 const readline = require("node:readline");
 const { startProvider } = require("./codex-provider");
+const { startRelaiWorker } = require("./relai-worker");
 class CodexBridge {
   constructor(env, root, changed, askUser) {
     this.env = env;
@@ -58,7 +59,8 @@ class CodexBridge {
     this.ready = (async () => {
       await this.restore();
       await fs.mkdir("/tmp/playground-docker-config", { recursive: true, mode: 0o700 });
-      const networkConfig = commandNetworkConfig(this.env);
+      this.worker = await startRelaiWorker(this.env);
+      const networkConfig = commandNetworkConfig(this.env, this.worker.url);
       this.provider = await startProvider(this.env);
       const config = {
         model_provider: "relai_playground",
@@ -93,18 +95,25 @@ class CodexBridge {
         // the session gateway allowlist.
         RELAI_DISABLE_TELEMETRY: "1",
         DOCKER_CONFIG: "/tmp/playground-docker-config",
+        RELAI_WORKER_URL: this.worker.url,
+        RELAI_WORKER_TOKEN: this.worker.token,
       };
       this.child = spawn("codex", args, {
         cwd: this.root,
         env: childEnv,
         stdio: ["pipe", "pipe", "pipe"],
       });
+      const child = this.child;
+      const worker = this.worker;
+      const provider = this.provider;
       this.child.stderr.on("data", () => {});
       this.child.on("error", (error) => this.fail(error.message));
       this.child.on("exit", () => {
+        worker.close();
+        provider.close();
+        if (this.child !== child) return;
         this.clearUserInputs();
         this.ready = null;
-        this.provider?.close();
         if (this.state.pendingTurn)
           this.fail("Codex stopped before completing this request.");
         for (const pending of this.requests.values()) {
@@ -364,6 +373,7 @@ class CodexBridge {
     this.clearUserInputs();
     this.child?.kill("SIGTERM");
     this.provider?.close();
+    this.worker?.close();
   }
   clearUserInputs() {
     for (const controller of this.userInputs.values()) controller.abort();

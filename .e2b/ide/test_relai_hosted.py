@@ -1,8 +1,22 @@
 import unittest
-from relai_hosted import attached_argv
+from relai_hosted import attached_argv, worker_workflow, run_worker
 
 
 class HostedRelaiTests(unittest.TestCase):
+    def test_only_typed_workflows_and_waits_use_the_worker(self):
+        self.assertTrue(worker_workflow(['test', 'create', '--agent-interaction']))
+        self.assertTrue(worker_workflow(['runs', 'wait', 'run-7']))
+        for command in (['--version'], ['runs', 'list'], ['runs', 'cancel', 'run-7'],
+                        ['test', 'discover', '--help', '--agent-interaction']):
+            self.assertFalse(worker_workflow(command))
+
+    def test_worker_credentials_cannot_be_sent_to_other_destinations(self):
+        for address in ('https://outside.example/', 'http://localhost:1/',
+                        'http://127.0.0.1:1/other', 'http://user@127.0.0.1:1/',
+                        'http://127.0.0.1:1/?redirect=outside'):
+            with self.subTest(address=address), self.assertRaises(ValueError):
+                run_worker(['test', 'create', '--agent-interaction'], address, 'fake')
+
     def test_workflow_cannot_return_early_and_abandon_its_background_run(self):
         for wait in ([], ['--wait', '20s'], ['--wait=0s'], ['--wait', '20m']):
             with self.subTest(wait=wait):

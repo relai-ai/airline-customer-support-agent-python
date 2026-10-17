@@ -22,3 +22,11 @@ test("gateway configuration refuses unsafe URLs and permits local verification",
   assert.deepEqual(commandNetworkConfig({ RELAI_API_BASE: "http://127.0.0.1:8894/" })
     ["features.network_proxy"].domains, { "127.0.0.1": "allow" });
 });
+
+test('worker access is confined to its loopback HTTP host; unrelated destinations remain absent', () => {
+  const env = { RELAI_API_BASE: 'https://platform.relai.ai/runtime/' };
+  const config = commandNetworkConfig(env, 'http://127.0.0.1:12345');
+  assert.deepEqual(config['features.network_proxy'].domains, { 'platform.relai.ai': 'allow', '127.0.0.1': 'allow' });
+  for (const url of ['http://0.0.0.0:12345', 'https://example.com/', 'http://127.0.0.1:12345/path', 'http://user@127.0.0.1:12345'])
+    assert.throws(() => commandNetworkConfig(env, url));
+});
