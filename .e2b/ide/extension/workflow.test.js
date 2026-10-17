@@ -247,6 +247,18 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   assert.equal(elements.get("run-notice").className, "live");
   assert.equal(elements.get("mode").textContent, "Live Mode");
   assert.equal(elements.get("run-notice").textContent, "You’re now in Live Mode. The guided walkthrough is complete. Your next message starts a real Codex run in this workspace.");
+  const beforeSuggestions = sent.length;
+  for (const [label, expected] of [
+    ["Create a test for your scenario", /create a multi-turn test/],
+    ["Investigate another risk", /highest-impact risk/],
+    ["Run another optimization", /scope and rollout budget first/],
+    ["Optimize for cost", /Compare cost and quality before and after/],
+  ]) {
+    flatten(elements.get("history")).find(n => n.textContent === label).click();
+    assert.match(elements.get("prompt").value, expected);
+    assert.equal(elements.get("prompt").readOnly, false);
+    assert.equal(sent.length, beforeSuggestions, "Suggestions must wait for the user's send");
+  }
   elements.get("prompt").value = "My own question";
   elements.get("prompt").oninput();
   assert.equal(elements.get("send")["aria-label"], "Start live run");
