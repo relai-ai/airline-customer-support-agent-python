@@ -7,7 +7,9 @@ permissions:
   contents: read
 jobs:
   recorded-python-playground:
-    runs-on: ubuntu-latest
+    # The real bubblewrap smoke requires unprivileged network namespaces;
+    # Ubuntu 24.04's runner AppArmor policy denies loopback setup inside Docker.
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v4
