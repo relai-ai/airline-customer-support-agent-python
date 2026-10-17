@@ -1,4 +1,5 @@
 const { spawn } = require("node:child_process");
+const { randomUUID } = require("node:crypto");
 const { commandNetworkConfig, configValue } = require("./codex-network");
 const fs = require("node:fs/promises");
 const readline = require("node:readline");
@@ -19,6 +20,7 @@ class CodexBridge {
     };
     this.requests = new Map();
     this.approvals = new Map();
+    this.approvalScope = randomUUID();
     this.sequence = 0;
     this.file = "/home/user/.playground/codex-thread.json";
   }
@@ -222,7 +224,9 @@ class CodexBridge {
       return;
     }
     if (event.id !== undefined && event.method?.includes("requestApproval")) {
-      const id = "codex-approval-" + event.id;
+      // App-server request IDs restart at zero; saved chat receipts must never
+      // resolve or hide approvals from a later runtime instance.
+      const id = "codex-approval-" + this.approvalScope + "-" + event.id;
       this.approvals.set(id, event.id);
       this.state.messages.push({
         role: "assistant",

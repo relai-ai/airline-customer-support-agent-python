@@ -62,11 +62,12 @@ test("approval decline and file-change receipts are real app-server events", asy
     method: "item/commandExecution/requestApproval",
     params: { command: "go test ./..." },
   });
-  await bridge.approve("codex-approval-7", false);
+  const approvalId = bridge.snapshot().messages.at(-1).tool_calls[0].id;
+  await bridge.approve(approvalId, false);
   assert.deepEqual(replies[0], { id: 7, result: { decision: "decline" } });
   assert.equal(bridge.snapshot().messages.at(-1).result.status, "denied");
   await assert.rejects(
-    bridge.approve("codex-approval-7", true),
+    bridge.approve(approvalId, true),
     /no longer pending/,
   );
   bridge.receive({
@@ -76,6 +77,28 @@ test("approval decline and file-change receipts are real app-server events", asy
     },
   });
   assert.deepEqual(bridge.snapshot().changedFiles, ["airline/tools.go"]);
+});
+
+test("restored approval receipts cannot hide a new runtime's reused RPC id", async () => {
+  const { bridge: original } = fixture();
+  original.child = { stdin: { write() {} } };
+  original.receive({ id: 1, method: "item/commandExecution/requestApproval",
+    params: { command: "relai runs list" } });
+  const oldId = original.snapshot().messages.at(-1).tool_calls[0].id;
+  await original.approve(oldId, true);
+
+  const { bridge: restarted } = fixture();
+  restarted.state.messages = original.snapshot().messages;
+  const replies = [];
+  restarted.child = { stdin: { write: line => replies.push(JSON.parse(line)) } };
+  restarted.receive({ id: 1, method: "item/commandExecution/requestApproval",
+    params: { command: "docker info" } });
+  const currentId = restarted.snapshot().messages.at(-1).tool_calls[0].id;
+  assert.notEqual(currentId, oldId);
+  assert.equal(restarted.snapshot().messages.some(m => m.result?.call_id === currentId), false);
+  await assert.rejects(restarted.approve(oldId, true), /no longer pending/);
+  await restarted.approve(currentId, false);
+  assert.deepEqual(replies, [{ id: 1, result: { decision: "decline" } }]);
 });
 
 function questionFixture(handler) {
