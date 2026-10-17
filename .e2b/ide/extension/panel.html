@@ -276,6 +276,15 @@
         line-height: 1.45;
         margin: 0 0 10px;
       }
+      #run-notice.live {
+        color: var(--vscode-foreground);
+        background: var(--vscode-textBlockQuote-background);
+        border-left: 3px solid var(--vscode-focusBorder);
+        border-radius: 4px;
+        padding: 12px 14px;
+        font-size: 13px;
+        line-height: 1.5;
+      }
       .prompt-box {
         border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
         border-radius: 16px;
@@ -468,7 +477,7 @@
           <span class="assistant-label">Codex + RELAI</span
           ><span id="mode" class="badge" hidden>Loading…</span>
         </div>
-        <p id="run-notice"></p>
+        <p id="run-notice" role="status" aria-live="polite"></p>
         <p id="status" role="status"></p>
         <div class="prompt-box">
           <textarea
@@ -889,12 +898,14 @@
       function composer() {
         const preset = recording?.prompts[progress] || "";
         const recorded = Boolean(recording) && progress < 4;
+        const live = Boolean(recording) && !recorded;
+        el("run-notice").className = live ? "live" : "";
         el("prompt").readOnly = !recording || recorded || Boolean(questionRequest);
         if (recorded && !replayPending) el("prompt").value = preset;
         el("run-notice").textContent = recorded
           ? "The first 4 steps use precomputed results. Afterward, sending a message starts a live Codex run."
           : recording
-            ? "Live mode: sending a message starts a new Codex run."
+            ? "You’re now in Live Mode. The guided walkthrough is complete. Your next message starts a real Codex run in this workspace."
             : "Loading guided demo…";
         const awaitingVerification =
           recorded &&
@@ -908,7 +919,7 @@
               "Precomputed relai optimize",
               recording.verificationStatus === "mixed" ? "Apply candidate changes · mixed results" : "Apply optimized changes",
             ][progress]
-          : "Live workspace";
+          : "Live Mode";
         el("mode").hidden = recorded;
         const actionLabel = replayPending
           ? "Loading recorded result"
