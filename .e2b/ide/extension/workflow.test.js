@@ -245,7 +245,9 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   assert.equal(elements.get("prompt").readOnly, true, "Apply must complete before live input unlocks");
   handlers.message({ data: { type: "recorded", recordedProgress: 4 } });
   assert.equal(elements.get("prompt").readOnly, false);
-  assert.match(elements.get("run-notice").textContent, /sending a message starts a new Codex run/);
+  assert.equal(elements.get("run-notice").className, "live");
+  assert.equal(elements.get("mode").textContent, "Live Mode");
+  assert.equal(elements.get("run-notice").textContent, "You’re now in Live Mode. The guided walkthrough is complete. Your next message starts a real Codex run in this workspace.");
   elements.get("prompt").value = "My own question";
   elements.get("prompt").oninput();
   assert.equal(elements.get("send")["aria-label"], "Start live run");
