@@ -1,4 +1,5 @@
 const { spawn } = require("node:child_process");
+const { commandNetworkConfig, configValue } = require("./codex-network");
 const fs = require("node:fs/promises");
 const readline = require("node:readline");
 const { startProvider } = require("./codex-provider");
@@ -54,6 +55,7 @@ class CodexBridge {
     if (this.ready) return this.ready;
     this.ready = (async () => {
       await this.restore();
+      const networkConfig = commandNetworkConfig(this.env);
       this.provider = await startProvider(this.env);
       const config = {
         model_provider: "relai_playground",
@@ -70,10 +72,11 @@ class CodexBridge {
         sandbox_mode: "workspace-write",
         web_search: "disabled",
         "features.default_mode_request_user_input": true,
+        ...networkConfig,
       };
       const args = ["app-server", "--listen", "stdio://"];
       for (const [k, v] of Object.entries(config))
-        args.push("-c", k + "=" + JSON.stringify(v));
+        args.push("-c", k + "=" + configValue(v));
       // Never inherit host/provider keys. The guest has only scoped playground access.
       const childEnv = {
         PATH: process.env.PATH,

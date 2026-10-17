@@ -31,6 +31,12 @@ and runtime shutdown dismiss pending questions. Credentials must use the termina
 Rebuild and verify a new template revision, then release it through the normal
 template rollout; existing sandboxes keep their current image and configuration.
 
+Codex command execution keeps the workspace-write filesystem sandbox and enables
+its enforced network proxy for only the provisioned session gateway hostname.
+This lets RELAI discovery contact its model service without granting arbitrary
+outbound access. Upstream proxy inheritance is disabled. Local verification may
+use a loopback HTTP gateway; hosted gateways require HTTPS.
+
 The companion dashboard service must set `PLAYGROUND_ASSISTANT_ENGINE=codex`
 and issue a pinned native Responses model profile with scoped session access.
 Deploy backend native Responses support before enabling this template. Python
@@ -47,6 +53,7 @@ node --test .e2b/ide/extension/*.test.js
 python3 -m unittest discover -s .e2b/ide -p 'test_*.py'
 node .e2b/ide/extension/validate-recording.js .
 docker build -f .e2b/Dockerfile -t relai-python-playground:local .
+docker run --rm --privileged --entrypoint node relai-python-playground:local /opt/playground/extensions/relai.relai-playground-0.1.0/verify-command-network.cjs
 ```
 
 The final image requires a verified manifest, authentic trajectories and receipt

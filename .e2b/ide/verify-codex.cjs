@@ -1,9 +1,13 @@
 // Verify actual app-server startup and installed skills without starting a model turn.
 const { spawn } = require('node:child_process');
 const readline = require('node:readline');
+const { commandNetworkConfig, configValue } = require('/opt/playground/extensions/relai.relai-playground-0.1.0/codex-network');
 
 const child = spawn('codex', ['app-server', '--listen', 'stdio://',
-  '-c', 'features.default_mode_request_user_input=true'], {
+  '-c', 'sandbox_mode="workspace-write"',
+  '-c', 'features.default_mode_request_user_input=true',
+  ...Object.entries(commandNetworkConfig({ RELAI_API_BASE: 'https://gateway.example.test/' }))
+    .flatMap(([key, value]) => ['-c', key + '=' + configValue(value)])], {
   cwd: '/home/user/airline',
   stdio: ['pipe', 'pipe', 'pipe'],
 });
@@ -49,6 +53,11 @@ async function verify() {
     if (config.features?.default_mode_request_user_input !== true)
       throw Error('Native questions are disabled in Codex app-server');
     console.log('Native user questions enabled');
+    if (config.sandbox_workspace_write?.network_access !== true ||
+        config.features?.network_proxy?.enabled !== true ||
+        config.features?.network_proxy?.domains?.['gateway.example.test'] !== 'allow')
+      throw Error('Command gateway network policy is not configured');
+    console.log('Command gateway network policy configured');
     const result = await rpc('skills/list', {
       cwds: ['/home/user/airline'], forceReload: true,
     });

@@ -24,6 +24,10 @@ jobs:
       - run: python3 -m unittest discover -s .e2b/ide -p 'test_*.py'
       - name: Validate actual saved evidence and original source
         run: node .e2b/ide/extension/validate-recording.js .
+      - name: Build and boot the pinned Codex runtime without model calls
+        run: docker build -f .e2b/Dockerfile -t relai-playground-ci .
+      - name: Verify command gateway access and blocked unrelated traffic
+        run: docker run --rm --privileged --entrypoint node relai-playground-ci /opt/playground/extensions/relai.relai-playground-0.1.0/verify-command-network.cjs
       - name: Apply the verified recording in this disposable checkout
         run: node -e 'const r=require("./.e2b/ide/extension/recorded"); (async()=>console.log(await r.applyRecording(process.cwd(),await r.loadRecording(process.cwd()))))().catch(e=>{console.error(e.message);process.exitCode=1})'
       - name: Candidate Python regression checks
