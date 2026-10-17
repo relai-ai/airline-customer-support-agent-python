@@ -85,6 +85,9 @@ class CodexBridge {
         LANG: "C.UTF-8",
         RELAI_CODEX_TOKEN: this.provider.token,
         ...this.env,
+        // Optional crash telemetry must not trigger command escalation outside
+        // the session gateway allowlist.
+        RELAI_DISABLE_TELEMETRY: "1",
       };
       this.child = spawn("codex", args, {
         cwd: this.root,
