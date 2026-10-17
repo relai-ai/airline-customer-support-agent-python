@@ -1,12 +1,17 @@
 const { spawn } = require("node:child_process");
+const { randomUUID } = require("node:crypto");
+const { commandNetworkConfig, configValue } = require("./codex-network");
 const fs = require("node:fs/promises");
 const readline = require("node:readline");
 const { startProvider } = require("./codex-provider");
+const { startRelaiWorker } = require("./relai-worker");
 class CodexBridge {
-  constructor(env, root, changed) {
+  constructor(env, root, changed, askUser) {
     this.env = env;
     this.root = root;
     this.changed = changed;
+    this.askUser = askUser;
+    this.userInputs = new Map();
     this.state = {
       messages: [],
       jobs: [],
@@ -16,7 +21,9 @@ class CodexBridge {
     };
     this.requests = new Map();
     this.approvals = new Map();
+    this.approvalScope = randomUUID();
     this.sequence = 0;
+    this.saving = Promise.resolve();
     this.file = "/home/user/.playground/codex-thread.json";
   }
   async restore() {
@@ -52,6 +59,9 @@ class CodexBridge {
     if (this.ready) return this.ready;
     this.ready = (async () => {
       await this.restore();
+      await fs.mkdir("/tmp/playground-docker-config", { recursive: true, mode: 0o700 });
+      this.worker = await startRelaiWorker(this.env);
+      const networkConfig = commandNetworkConfig(this.env, this.worker.url);
       this.provider = await startProvider(this.env);
       const config = {
         model_provider: "relai_playground",
@@ -64,13 +74,16 @@ class CodexBridge {
         "model_providers.relai_playground.supports_websockets": false,
         model_reasoning_effort:
           this.env.RELAI_SESSION_REASONING_EFFORT || "medium",
+        developer_instructions: require("./hosted-runtime").developerInstructions,
         approval_policy: "on-request",
         sandbox_mode: "workspace-write",
         web_search: "disabled",
+        "features.default_mode_request_user_input": true,
+        ...networkConfig,
       };
       const args = ["app-server", "--listen", "stdio://"];
       for (const [k, v] of Object.entries(config))
-        args.push("-c", k + "=" + JSON.stringify(v));
+        args.push("-c", k + "=" + configValue(v));
       // Never inherit host/provider keys. The guest has only scoped playground access.
       const childEnv = {
         PATH: process.env.PATH,
@@ -79,17 +92,29 @@ class CodexBridge {
         LANG: "C.UTF-8",
         RELAI_CODEX_TOKEN: this.provider.token,
         ...this.env,
+        // Optional crash telemetry must not trigger command escalation outside
+        // the session gateway allowlist.
+        RELAI_DISABLE_TELEMETRY: "1",
+        DOCKER_CONFIG: "/tmp/playground-docker-config",
+        RELAI_WORKER_URL: this.worker.url,
+        RELAI_WORKER_TOKEN: this.worker.token,
       };
       this.child = spawn("codex", args, {
         cwd: this.root,
         env: childEnv,
         stdio: ["pipe", "pipe", "pipe"],
       });
+      const child = this.child;
+      const worker = this.worker;
+      const provider = this.provider;
       this.child.stderr.on("data", () => {});
       this.child.on("error", (error) => this.fail(error.message));
       this.child.on("exit", () => {
+        worker.close();
+        provider.close();
+        if (this.child !== child) return;
+        this.clearUserInputs();
         this.ready = null;
-        this.provider?.close();
         if (this.state.pendingTurn)
           this.fail("Codex stopped before completing this request.");
         for (const pending of this.requests.values()) {
@@ -108,6 +133,7 @@ class CodexBridge {
           }
         });
       await this.rpc("initialize", {
+        capabilities: { experimentalApi: true },
         clientInfo: {
           name: "relai_playground",
           title: "Codex + RELAI",
@@ -129,15 +155,23 @@ class CodexBridge {
     return this.ready;
   }
   async save() {
-    await fs.writeFile(
-      this.file,
-      JSON.stringify({
-        thread: this.thread,
-        messages: this.state.messages,
-        changedFiles: this.state.changedFiles,
-      }),
-      { mode: 0o600 },
-    );
+    const saved = JSON.stringify({
+      thread: this.thread,
+      messages: this.state.messages,
+      changedFiles: this.state.changedFiles,
+    });
+    // Serialize snapshots and atomically replace history: a late older write
+    // must not erase a newer selection, and interruption must not truncate it.
+    this.saving = this.saving.catch(() => {}).then(async () => {
+      const temporary = this.file + "." + randomUUID() + ".tmp";
+      try {
+        await fs.writeFile(temporary, saved, { mode: 0o600 });
+        await fs.rename(temporary, this.file);
+      } finally {
+        await fs.unlink(temporary).catch(error => { if (error.code !== "ENOENT") throw error; });
+      }
+    });
+    return this.saving;
   }
   async send(prompt) {
     await this.restore();
@@ -155,6 +189,7 @@ class CodexBridge {
         : "";
     try {
       await this.start();
+      this.provider?.clearFailure?.();
       if (this.cancelRequested) {
         this.fail("Codex stopped before starting this request.");
         await this.save();
@@ -185,8 +220,59 @@ class CodexBridge {
       return;
     }
     const p = event.params || {};
+    if (event.method === "serverRequest/resolved") {
+      this.userInputs.get(p.requestId)?.abort();
+      this.userInputs.delete(p.requestId);
+      return;
+    }
+    if (event.id !== undefined && event.method === "item/tool/requestUserInput" && this.askUser) {
+      const controller = new AbortController();
+      this.userInputs.set(event.id, controller);
+      void Promise.resolve().then(() => this.askUser(p.questions, controller.signal))
+        .then(async (answers) => {
+          if (controller.signal.aborted) return;
+          // Keep the exact selected label independently of the model's later
+          // translation into a RELAI response. A failed turn must not erase
+          // which choice the user actually made or turn a skip into decline.
+          const selections = (p.questions || []).flatMap(question => {
+            const selected = answers[question.id]?.answers;
+            if (!Array.isArray(selected)) return [];
+            return [{ questionId: question.id, header: question.header || "Review", answers: selected }];
+          });
+          this.state.messages.push({
+            role: "assistant",
+            content: selections.map(s => "Review selection — " + s.header + ": " +
+              (s.answers.length ? s.answers.join("; ") : "Skipped (no answer)")).join("\n"),
+            reviewSelection: { id: this.approvalScope + ":" + event.id, selections },
+          });
+          try { await this.save(); }
+          catch {
+            this.child.stdin.write(JSON.stringify({ id: event.id, error: {
+              code: -32603, message: "Could not save the review selection. No answer was submitted.",
+            } }) + "\n");
+            this.fail("The review selection could not be saved. No answer was submitted; retry this review.");
+            return;
+          }
+          if (controller.signal.aborted) return;
+          this.publish();
+          this.child.stdin.write(JSON.stringify({ id: event.id, result: { answers } }) + "\n");
+        }, () => {
+          if (controller.signal.aborted) return;
+          this.child.stdin.write(JSON.stringify({
+            id: event.id,
+            error: { code: -32603, message: "Could not present the user question. No answer was submitted." },
+          }) + "\n");
+        }).catch(() => {
+          if (!controller.signal.aborted) this.fail("Codex could not receive the user answer.");
+        }).finally(() => {
+          if (this.userInputs.get(event.id) === controller) this.userInputs.delete(event.id);
+        });
+      return;
+    }
     if (event.id !== undefined && event.method?.includes("requestApproval")) {
-      const id = "codex-approval-" + event.id;
+      // App-server request IDs restart at zero; saved chat receipts must never
+      // resolve or hide approvals from a later runtime instance.
+      const id = "codex-approval-" + this.approvalScope + "-" + event.id;
       this.approvals.set(id, event.id);
       this.state.messages.push({
         role: "assistant",
@@ -248,15 +334,21 @@ class CodexBridge {
       this.publish();
     }
     if (event.method === "turn/completed") {
+      this.clearUserInputs();
       this.state.pendingTurn = false;
       this.turn = null;
-      if (p.turn.status === "failed")
+      if (p.turn.status === "failed") {
+        const failure = this.provider?.takeFailure?.();
         this.state.messages.push({
           role: "assistant",
           content:
             "Codex could not complete this request: " +
-            (p.turn.error?.message || "runtime error"),
+            (failure?.message || p.turn.error?.message || "runtime error") +
+            (failure?.code === "playground_budget_exceeded"
+              ? " Your workspace and recorded review selections are preserved. A new call must fit the remaining session budget."
+              : ""),
         });
+      }
       if (p.turn.status === "interrupted")
         this.state.messages.push({
           role: "assistant",
@@ -303,6 +395,7 @@ class CodexBridge {
   }
   async stop() {
     this.cancelRequested = true;
+    this.clearUserInputs();
     if (this.turn)
       await this.rpc("turn/interrupt", {
         threadId: this.thread,
@@ -310,13 +403,20 @@ class CodexBridge {
       });
   }
   fail(message) {
+    this.clearUserInputs();
     this.state.pendingTurn = false;
     this.state.messages.push({ role: "assistant", content: message });
     this.publish();
   }
   close() {
+    this.clearUserInputs();
     this.child?.kill("SIGTERM");
     this.provider?.close();
+    this.worker?.close();
+  }
+  clearUserInputs() {
+    for (const controller of this.userInputs.values()) controller.abort();
+    this.userInputs.clear();
   }
 }
 module.exports = { CodexBridge };

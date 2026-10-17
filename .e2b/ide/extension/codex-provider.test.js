@@ -116,7 +116,7 @@ test("backend denial is a readable error and never a completed result", async ()
       headers: { Authorization: "Bearer " + provider.token },
       body: JSON.stringify({ input: "hello", stream: true }),
     });
-    assert.equal(result.status, 502);
+    assert.equal(result.status, 429);
     assert.equal(
       (await result.json()).error.message,
       "Session budget exhausted.",
@@ -124,4 +124,19 @@ test("backend denial is a readable error and never a completed result", async ()
   } finally {
     provider.close();
   }
+});
+
+
+test("hard session budget rejection stops rate-limit retries and retains its actionable reason", async () => {
+  const provider = await startProvider({ RELAI_SESSION_MODEL: "openai/test", RELAI_API_BASE: "https://gateway.example/", RELAI_TEAM_API_KEY: "test-only" },
+    async () => Response.json({ error: { code: "playground_budget_exceeded", message: "Session model budget exhausted" } }, { status: 429 }));
+  try {
+    const response = await fetch(provider.url + "/responses", { method: "POST", headers: { Authorization: "Bearer " + provider.token }, body: '{"input":"hello"}' });
+    assert.equal(response.status, 400);
+    const body = await response.json();
+    assert.equal(body.error.type, "playground_budget_exceeded");
+    assert.equal(body.error.message, "Session model budget exhausted");
+    assert.equal(provider.takeFailure().code, "playground_budget_exceeded");
+    assert.equal(provider.takeFailure(), undefined);
+  } finally { provider.close(); }
 });
