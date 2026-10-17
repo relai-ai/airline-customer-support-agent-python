@@ -79,6 +79,7 @@ function emitResponse(res, response) {
 }
 async function startProvider(env, request = fetch) {
   const token = crypto.randomBytes(32).toString("hex");
+  let lastFailure;
   const model = env.RELAI_SESSION_MODEL?.split("/").at(-1);
   if (!model || !env.RELAI_API_BASE || !env.RELAI_TEAM_API_KEY)
     throw Error("Codex session model configuration is missing.");
@@ -138,6 +139,11 @@ async function startProvider(env, request = fetch) {
       if (!upstream.ok) {
         failureStatus = upstream.status;
         failureCode = response.error?.code || response.code || failureCode;
+        // A hard session bound cannot be repaired by Codex's rate-limit
+        // retries. Keep genuine provider throttling retryable, but make a
+        // budget/context rejection a terminal local request error.
+        if (upstream.status === 429 && failureCode === "playground_budget_exceeded")
+          failureStatus = 400;
         throw Error(response.error?.message ||
           (typeof response.error === "string" ? response.error : response.detail) ||
           "The scoped RELAI model gateway returned HTTP " + upstream.status + ".");
@@ -146,12 +152,14 @@ async function startProvider(env, request = fetch) {
         throw Error(
           "The scoped model gateway returned an invalid Responses result.",
         );
+      lastFailure = undefined;
       if (payload.stream) emitResponse(res, response);
       else {
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify(response));
       }
     } catch (error) {
+      lastFailure = { code: failureCode, message: error.message };
       if (!res.headersSent) {
         res.writeHead(error.name === "TimeoutError" ? 504 : failureStatus, { "Content-Type": "application/json" });
         res.end(
@@ -159,6 +167,7 @@ async function startProvider(env, request = fetch) {
             error: {
               message: error.message,
               type: failureCode,
+              code: failureCode,
             },
           }),
         );
@@ -169,6 +178,8 @@ async function startProvider(env, request = fetch) {
   return {
     url: "http://127.0.0.1:" + server.address().port + "/v1",
     token,
+    takeFailure() { const failure = lastFailure; lastFailure = undefined; return failure; },
+    clearFailure() { lastFailure = undefined; },
     close: () => server.close(),
   };
 }

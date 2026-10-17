@@ -113,6 +113,29 @@ function questionFixture(handler) {
   return { bridge, replies, event };
 }
 const flush = () => new Promise((resolve) => setImmediate(resolve));
+test("concurrent saves retain the latest receipt and restore it atomically", async () => {
+  const fs = require("node:fs/promises");
+  const os = require("node:os");
+  const path = require("node:path");
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "codex-receipt-"));
+  try {
+    const bridge = new CodexBridge({}, directory, () => {});
+    bridge.file = path.join(directory, "history.json");
+    bridge.state.messages = [{ content: "older" }];
+    const older = bridge.save();
+    bridge.state.messages.push({ content: "Review selection — Review: Approve", reviewSelection: { selections: [{ answers: ["Approve"] }] } });
+    const newer = bridge.save();
+    await Promise.all([older, newer]);
+    const restored = new CodexBridge({}, directory, () => {});
+    restored.file = bridge.file;
+    await restored.restore();
+    assert.deepEqual(restored.state.messages.at(-1).reviewSelection.selections[0].answers, ["Approve"]);
+    assert.deepEqual(await fs.readdir(directory), ["history.json"]);
+    assert.equal((await fs.stat(bridge.file)).mode & 0o777, 0o600);
+  } finally {
+    await fs.rm(directory, { recursive: true, force: true });
+  }
+});
 test("user input stays pending until an actual answer and returns on the original RPC id", async () => {
   let answer;
   const { bridge, replies, event } = questionFixture(() => new Promise((resolve) => { answer = resolve; }));
@@ -123,7 +146,38 @@ test("user input stays pending until an actual answer and returns on the origina
   await flush();
   assert.deepEqual(replies, [{ id: 41, result: { answers: { review: { answers: ["build"] } } } }]);
   assert.equal(bridge.userInputs.size, 0);
-  assert.equal(JSON.stringify(bridge.state).includes("build"), false);
+  assert.equal(bridge.state.messages.at(-1).reviewSelection.selections[0].answers[0], "build");
+  assert.match(bridge.state.messages.at(-1).content, /Review selection.*build/);
+});
+
+test("opposite review choices survive a failed turn without inversion or implicit decline", async () => {
+  for (const selected of ["Approve scoped criteria", "Do not approve"]) {
+    const { bridge, replies, event } = questionFixture(async () => ({ review: { answers: [selected] } }));
+    bridge.receive(event);
+    await flush();
+    bridge.receive({ method: "turn/completed", params: { turn: { status: "failed", error: { message: "HTTP 429" } } } });
+    assert.deepEqual(replies[0].result.answers.review.answers, [selected]);
+    assert.deepEqual(bridge.state.messages.find(m => m.reviewSelection).reviewSelection.selections[0].answers, [selected]);
+    assert.equal(replies.length, 1);
+  }
+});
+
+test("an unsaved selection is not sent to Codex as approval or decline", async () => {
+  const { bridge, replies, event } = questionFixture(async () => ({ review: { answers: ["Approve"] } }));
+  bridge.save = async () => { throw Error("disk full"); };
+  bridge.receive(event);
+  await flush();
+  assert.equal(replies[0].error.code, -32603);
+  assert.equal(replies[0].result, undefined);
+  assert.match(bridge.state.messages.at(-1).content, /No answer was submitted/);
+});
+
+test("budget rejection displays the gateway reason instead of a generic retry-limit error", () => {
+  const { bridge } = fixture();
+  bridge.provider = { takeFailure: () => ({ code: "playground_budget_exceeded", message: "Insufficient remaining budget." }) };
+  bridge.receive({ method: "turn/completed", params: { turn: { status: "failed", error: { message: "exceeded retry limit" } } } });
+  assert.match(bridge.state.messages.at(-1).content, /Insufficient remaining budget/);
+  assert.match(bridge.state.messages.at(-1).content, /review selections are preserved/);
 });
 test("server resolution and turn completion cancel stale prompts without sending their later answers", async () => {
   for (const ending of [

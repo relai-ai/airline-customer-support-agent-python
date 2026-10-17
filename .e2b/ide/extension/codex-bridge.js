@@ -23,6 +23,7 @@ class CodexBridge {
     this.approvals = new Map();
     this.approvalScope = randomUUID();
     this.sequence = 0;
+    this.saving = Promise.resolve();
     this.file = "/home/user/.playground/codex-thread.json";
   }
   async restore() {
@@ -154,15 +155,23 @@ class CodexBridge {
     return this.ready;
   }
   async save() {
-    await fs.writeFile(
-      this.file,
-      JSON.stringify({
-        thread: this.thread,
-        messages: this.state.messages,
-        changedFiles: this.state.changedFiles,
-      }),
-      { mode: 0o600 },
-    );
+    const saved = JSON.stringify({
+      thread: this.thread,
+      messages: this.state.messages,
+      changedFiles: this.state.changedFiles,
+    });
+    // Serialize snapshots and atomically replace history: a late older write
+    // must not erase a newer selection, and interruption must not truncate it.
+    this.saving = this.saving.catch(() => {}).then(async () => {
+      const temporary = this.file + "." + randomUUID() + ".tmp";
+      try {
+        await fs.writeFile(temporary, saved, { mode: 0o600 });
+        await fs.rename(temporary, this.file);
+      } finally {
+        await fs.unlink(temporary).catch(error => { if (error.code !== "ENOENT") throw error; });
+      }
+    });
+    return this.saving;
   }
   async send(prompt) {
     await this.restore();
@@ -180,6 +189,7 @@ class CodexBridge {
         : "";
     try {
       await this.start();
+      this.provider?.clearFailure?.();
       if (this.cancelRequested) {
         this.fail("Codex stopped before starting this request.");
         await this.save();
@@ -219,8 +229,32 @@ class CodexBridge {
       const controller = new AbortController();
       this.userInputs.set(event.id, controller);
       void Promise.resolve().then(() => this.askUser(p.questions, controller.signal))
-        .then((answers) => {
+        .then(async (answers) => {
           if (controller.signal.aborted) return;
+          // Keep the exact selected label independently of the model's later
+          // translation into a RELAI response. A failed turn must not erase
+          // which choice the user actually made or turn a skip into decline.
+          const selections = (p.questions || []).flatMap(question => {
+            const selected = answers[question.id]?.answers;
+            if (!Array.isArray(selected)) return [];
+            return [{ questionId: question.id, header: question.header || "Review", answers: selected }];
+          });
+          this.state.messages.push({
+            role: "assistant",
+            content: selections.map(s => "Review selection — " + s.header + ": " +
+              (s.answers.length ? s.answers.join("; ") : "Skipped (no answer)")).join("\n"),
+            reviewSelection: { id: this.approvalScope + ":" + event.id, selections },
+          });
+          try { await this.save(); }
+          catch {
+            this.child.stdin.write(JSON.stringify({ id: event.id, error: {
+              code: -32603, message: "Could not save the review selection. No answer was submitted.",
+            } }) + "\n");
+            this.fail("The review selection could not be saved. No answer was submitted; retry this review.");
+            return;
+          }
+          if (controller.signal.aborted) return;
+          this.publish();
           this.child.stdin.write(JSON.stringify({ id: event.id, result: { answers } }) + "\n");
         }, () => {
           if (controller.signal.aborted) return;
@@ -303,13 +337,18 @@ class CodexBridge {
       this.clearUserInputs();
       this.state.pendingTurn = false;
       this.turn = null;
-      if (p.turn.status === "failed")
+      if (p.turn.status === "failed") {
+        const failure = this.provider?.takeFailure?.();
         this.state.messages.push({
           role: "assistant",
           content:
             "Codex could not complete this request: " +
-            (p.turn.error?.message || "runtime error"),
+            (failure?.message || p.turn.error?.message || "runtime error") +
+            (failure?.code === "playground_budget_exceeded"
+              ? " Your workspace and recorded review selections are preserved. A new call must fit the remaining session budget."
+              : ""),
         });
+      }
       if (p.turn.status === "interrupted")
         this.state.messages.push({
           role: "assistant",

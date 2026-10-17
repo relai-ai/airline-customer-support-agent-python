@@ -110,6 +110,17 @@ a live RELAI model workflow.
 Model-request deadlines are ordered around the backend's 300-second inference
 budget: the session service allows 360 seconds, the Codex provider 390 seconds,
 and the inner Docker relay 400 seconds. Stop still aborts requests. The Codex
-provider preserves upstream HTTP status and quota reasons rather than calling
-every rejection a generic 502. Docker commands use a writable temporary config
+provider preserves upstream reasons rather than calling every rejection a
+generic 502. Genuine rate limits remain HTTP 429; a hard session-budget rejection
+becomes a non-retryable local HTTP 400 so Codex does not obscure it behind a
+retry-limit error. Exact native review selections are shown and atomically saved
+before forwarding them to Codex, including explicit skips; failed turns retain
+those receipts without manufacturing a decline. Docker commands use a writable temporary config
 directory rather than requiring an out-of-sandbox home-directory write.
+
+The CLI build installed in a candidate must include the container-log ownership
+handoff (upstream commit `7502c5ef`) and current-working-tree adapter review.
+Installing the current extension over an older base template does not update
+that binary. Verify the CLI source revision as well as its version before live
+validation. These fixes preserve native trajectories and existing user edits;
+they do not require a broad socket chmod or a source-baseline commit.

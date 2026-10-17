@@ -278,6 +278,15 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   assert.equal(sent.at(-1).id, "runtime-question");
   assert.equal(sent.at(-1).kind, "choice");
   assert.equal(sent.at(-1).value, "build");
+  for (const selected of ["Approve scoped criteria", "Do not approve"]) {
+    handlers.message({ data: { type: "question", question: {
+      id: "scope-" + selected, header: "Scope Review", question: "Approve scoped criteria?", index: 1, total: 1,
+      options: [{ label: "Approve scoped criteria", description: "Approve" }, { label: "Do not approve", description: "Decline" }],
+    } } });
+    flatten(elements.get("question-card")).find(n => n.textContent === selected).click();
+    assert.equal(sent.at(-1).id, "scope-" + selected);
+    assert.equal(sent.at(-1).value, selected);
+  }
   handlers.message({ data: { type: "question", question: null } });
   assert.equal(elements.get("question-card").hidden, true);
   handlers.message({ data: { type: "state", investigation: { messages: [], jobs: [] } } });
