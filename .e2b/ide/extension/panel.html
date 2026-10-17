@@ -882,7 +882,7 @@
         el("prompt").readOnly = !recording || recorded;
         if (recorded && !replayPending) el("prompt").value = preset;
         el("run-notice").textContent = recorded
-          ? "The first 4 steps use precomputed results. Step 4 applies the saved code changes to your workspace. Afterward, sending a message starts a live Codex run."
+          ? "The first 4 steps use precomputed results. Afterward, sending a message starts a live Codex run."
           : recording
             ? "Live mode: sending a message starts a new Codex run."
             : "Loading guided demo…";

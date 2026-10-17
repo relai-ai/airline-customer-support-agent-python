@@ -179,7 +179,7 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   assert.equal(elements.get("prompt").value, prompts[0]);
   assert.equal(elements.get("prompt").readOnly, true);
   assert.match(elements.get("run-notice").textContent, /The first 4 steps use precomputed results/);
-  assert.match(elements.get("run-notice").textContent, /Step 4 applies the saved code changes to your workspace/);
+  assert.equal(elements.get("run-notice").textContent, "The first 4 steps use precomputed results. Afterward, sending a message starts a live Codex run.");
   elements.get("prompt").value = "Attempt to bypass the guided demo";
   elements.get("prompt").oninput();
   assert.equal(elements.get("prompt").value, prompts[0]);
