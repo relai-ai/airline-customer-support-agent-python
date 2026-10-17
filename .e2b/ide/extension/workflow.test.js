@@ -178,8 +178,7 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   assert.equal(elements.get("next-steps").children.length, 0);
   assert.equal(elements.get("prompt").value, prompts[0]);
   assert.equal(elements.get("prompt").readOnly, true);
-  assert.match(elements.get("run-notice").textContent, /Guided demo: saved results/);
-  assert.match(elements.get("run-notice").textContent, /changes applied in step 4/);
+  assert.equal(elements.get("run-notice").textContent, "The first 4 steps use precomputed results. Afterward, sending a message starts a live Codex run.");
   elements.get("prompt").value = "Attempt to bypass the guided demo";
   elements.get("prompt").oninput();
   assert.equal(elements.get("prompt").value, prompts[0]);
@@ -260,6 +259,26 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   assert.equal(flatten(elements.get("history")).filter((n) => n.tag === "span" && n.textContent === "My own question").length, 1);
   assert.equal(elements.get("send")["aria-label"], "Stop");
   assert.equal(elements.get("send")["data-busy"], "true");
+  handlers.message({ data: { type: "question", question: {
+    id: "runtime-question", header: "Test review", question: "Build this proposal?", index: 1, total: 1,
+    options: [{ label: "build", description: "Only this proposal" }], isOther: true,
+  } } });
+  assert.equal(elements.get("question-card").hidden, false);
+  assert.ok(flatten(elements.get("history")).some(n => n.textContent.includes("Waiting for your review")));
+  assert.equal(flatten(elements.get("history")).some(n => n.className === "spinner"), false);
+  const input = flatten(elements.get("question-card")).find(n => n.tag === "textarea");
+  input.value = "Keep the control turn"; input.oninput();
+  handlers.message({ data: { type: "state", investigation: { pendingTurn: true, messages: [] } } });
+  assert.equal(input.value, "Keep the control turn", "Polling must preserve unsent answers");
+  const choice = flatten(elements.get("question-card")).find(n => n.textContent === "build");
+  choice.click();
+  assert.equal(sent.at(-1).action, "answer-question");
+  assert.equal(sent.at(-1).id, "runtime-question");
+  assert.equal(sent.at(-1).kind, "choice");
+  assert.equal(sent.at(-1).value, "build");
+  handlers.message({ data: { type: "question", question: null } });
+  assert.equal(elements.get("question-card").hidden, true);
+  handlers.message({ data: { type: "state", investigation: { messages: [], jobs: [] } } });
   elements.get("prompt").value = "My next draft";
   elements.get("prompt").oninput();
   handlers.message({ data: { type: "error", message: "Runtime unavailable" } });

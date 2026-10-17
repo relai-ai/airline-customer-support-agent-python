@@ -1,60 +1,42 @@
-const test = require("node:test");
-const assert = require("node:assert/strict");
-const { askUser } = require("./native-questions");
-
-function fixture({ pick, input } = {}) {
-  const calls = [], tokens = [];
-  class CancellationTokenSource {
-    constructor() { this.token = { isCancellationRequested: false }; tokens.push(this); }
-    cancel() { this.token.isCancellationRequested = true; }
-    dispose() { this.disposed = true; }
-  }
-  const vscode = { CancellationTokenSource, window: {
-    showQuickPick: async (items, options, token) => {
-      calls.push({ items, options, token });
-      return pick?.(items);
-    },
-    showInputBox: async (options, token) => {
-      calls.push({ options, token });
-      return input?.();
-    },
-  } };
-  return { vscode, calls, tokens };
-}
-const question = { id: "retry", header: "Retry", question: "Retry the saved discovery?",
-  options: [ { label: "retry", description: "Continue from saved progress" },
-    { label: "cancel", description: "Keep it paused" } ], isOther: true };
-
-test("native choice returns the exact selected label under the original question id", async () => {
-  const { vscode, calls, tokens } = fixture({ pick: (items) => items[1] });
-  const result = await askUser(vscode, [question], new AbortController().signal);
-  assert.deepEqual(result.retry, { answers: ["cancel"] });
-  assert.equal(calls[0].options.placeHolder, question.question);
-  assert.equal(calls[0].items[0].description, question.options[0].description);
-  assert.equal(tokens[0].disposed, true);
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const { InlineQuestions } = require('./native-questions');
+const question = { id: 'review', header: 'Test review', question: 'Build this test?',
+  options: [{ label: 'build', description: 'Build this proposal only' }, { label: 'skip' }], isOther: true };
+function fixture() { const events = []; const ui = new InlineQuestions(q => events.push(q)); return {ui,events}; }
+test('inline choices preserve protocol IDs and exact selected labels without auto approval', async () => {
+  const {ui,events}=fixture(); const run=ui.ask([question],new AbortController().signal);
+  const view=ui.snapshot(); assert.equal(view.question,question.question);
+  assert.equal(view.options[0].description,question.options[0].description);
+  assert.throws(()=>ui.answer(view.id,'choice','not an option'),/Choose/);
+  assert.equal(ui.snapshot().id,view.id);
+  ui.answer(view.id,'choice','build');
+  assert.deepEqual((await run).review,{answers:['build']}); assert.equal(events.at(-1),null);
+  assert.throws(()=>ui.answer(view.id,'choice','build'),/no longer/);
 });
-test("custom feedback and text questions preserve actual user text", async () => {
-  const { vscode } = fixture({ pick: (items) => items.at(-1), input: () => "Revise the criteria first" });
-  const result = await askUser(vscode, [question, { id: "criteria", question: "What should change?" }], new AbortController().signal);
-  assert.deepEqual(result.retry, { answers: ["Revise the criteria first"] });
-  assert.deepEqual(result.criteria, { answers: ["Revise the criteria first"] });
+test('multi-question feedback preserves actual text and rejects stale answers after advancing', async () => {
+  const {ui}=fixture(); const run=ui.ask([question,{id:'criteria',question:'What should change?'}],new AbortController().signal);
+  const first=ui.snapshot().id; ui.answer(first,'text','Revise the criteria');
+  await Promise.resolve(); const second=ui.snapshot(); assert.equal(second.index,2);
+  assert.throws(()=>ui.answer(first,'choice','build'),/no longer/);
+  ui.answer(second.id,'text','Keep the valid booking control'); const result=await run;
+  assert.deepEqual(result.review,{answers:['Revise the criteria']});
+  assert.deepEqual(result.criteria,{answers:['Keep the valid booking control']});
 });
-test("Escape skips the question without selecting or approving a default", async () => {
-  const { vscode, calls } = fixture();
-  const result = await askUser(vscode, [question, { id: "later", question: "Continue?" }], new AbortController().signal);
-  assert.deepEqual(result.retry, { answers: [] });
-  assert.equal(Object.hasOwn(result, "later"), false);
-  assert.equal(calls.length, 1);
+test('skip sends no default and ends the question sequence', async()=>{
+  const {ui}=fixture(); const run=ui.ask([question,{id:'later',question:'Later?'}],new AbortController().signal);
+  ui.answer(ui.snapshot().id,'skip'); const result=await run;
+  assert.deepEqual(result.review,{answers:[]}); assert.equal(Object.hasOwn(result,'later'),false);
 });
-test("aborting the turn dismisses the native prompt and submits no answer", async () => {
-  const controller = new AbortController();
-  const { vscode, tokens } = fixture({ pick: () => { controller.abort(); } });
-  const result = await askUser(vscode, [question], controller.signal);
-  assert.equal(tokens[0].token.isCancellationRequested, true);
-  assert.deepEqual(Object.keys(result), []);
+test('aborting clears the card and does not submit an answer',async()=>{
+  const {ui}=fixture(); const controller=new AbortController(); const run=ui.ask([question],controller.signal);
+  controller.abort(); assert.equal(ui.snapshot(),null); assert.deepEqual(Object.keys(await run),[]);
 });
-test("credential questions are refused before showing a prompt", async () => {
-  const { vscode, calls } = fixture();
-  await assert.rejects(askUser(vscode, [{ ...question, isSecret: true }], new AbortController().signal), /terminal/);
-  assert.equal(calls.length, 0);
+test('secrets are refused, close unblocks and new runtime IDs cannot approve old questions',async()=>{
+  const {ui}=fixture(); await assert.rejects(ui.ask([{...question,isSecret:true}],new AbortController().signal),/terminal/);
+  const run=ui.ask([question],new AbortController().signal); const old=ui.snapshot().id;
+  ui.close(); await run;
+  const next=ui.ask([question],new AbortController().signal);
+  assert.notEqual(ui.snapshot().id,old); assert.throws(()=>ui.answer(old,'choice','build'),/no longer/);
+  ui.close(); await next;
 });

@@ -405,6 +405,14 @@
         padding-right: 8px;
       }
       .simulation-controls { flex-shrink: 0; }
+      #question-card { border: 1px solid var(--vscode-focusBorder, #548bf5); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+      #question-card[hidden] { display: none; }
+      #question-card textarea { width: 100%; min-height: 70px; }
+      #question-card h3 { margin-top: 0; }
+      .question-option { display: block; width: 100%; text-align: left; margin: 10px 0; border: 1px solid var(--vscode-panel-border, #d5d9e0); background: var(--vscode-editor-background, #fff); color: var(--vscode-foreground, #222); }
+      .question-option small { display: block; margin-top: 4px; font-weight: normal; }
+      .question-option:hover, .question-option:focus-visible { outline: 2px solid var(--vscode-focusBorder, #548bf5); }
+      .question-actions { display: flex; gap: 16px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
       .simulation-text > small {
         display: block;
         margin: 20px 0 8px;
@@ -451,6 +459,7 @@
         class="conversation"
         aria-label="Codex conversation"
       ></section>
+      <section id="question-card" class="conversation" aria-label="Codex review" hidden></section>
     </main>
     <section class="composer">
       <div class="composer-inner">
@@ -520,6 +529,7 @@
       WORKFLOW_HELPERS;
       const vscode = acquireVsCodeApi(),
         el = (id) => document.getElementById(id);
+      let questionRequest = null;
       let recording,
         progress = 0,
         live = false,
@@ -879,10 +889,10 @@
       function composer() {
         const preset = recording?.prompts[progress] || "";
         const recorded = Boolean(recording) && progress < 4;
-        el("prompt").readOnly = !recording || recorded;
+        el("prompt").readOnly = !recording || recorded || Boolean(questionRequest);
         if (recorded && !replayPending) el("prompt").value = preset;
         el("run-notice").textContent = recorded
-          ? "Guided demo: saved results, with changes applied in step 4. Live runs begin afterward."
+          ? "The first 4 steps use precomputed results. Afterward, sending a message starts a live Codex run."
           : recording
             ? "Live mode: sending a message starts a new Codex run."
             : "Loading guided demo…";
@@ -948,7 +958,8 @@
             failed.append(node("small", "Sending could not be confirmed."));
             root.append(failed);
           }
-          if (busy) root.append(working(replayPending ? "Loading recorded result…" : "Codex + RELAI is working…"));
+          if (questionRequest) root.append(node("p", "Waiting for your review — choose an option below."));
+          else if (busy) root.append(working(replayPending ? "Loading recorded result…" : "Codex + RELAI is working…"));
         }
         if (!i) {
           busy = Boolean(sent || replayPending);
@@ -1084,8 +1095,53 @@
       el("terminal").onclick = () => post("terminal");
       for (const b of document.querySelectorAll("[data-folder]"))
         b.onclick = () => post("folder", { folder: b.dataset.folder });
+      function renderQuestion(question) {
+        questionRequest = question;
+        const card = el("question-card");
+        card.replaceChildren();
+        card.hidden = !question;
+        if (!question) return;
+        card.append(node("h3", question.header + " · " + question.index + "/" + question.total));
+        card.append(node("p", question.question));
+        const submit = (kind, value) => {
+          for (const control of card.querySelectorAll("button, textarea")) control.disabled = true;
+          post("answer-question", { id: question.id, kind, value });
+        };
+        for (const option of question.options || []) {
+          const choice = button(option.label, () => submit("choice", option.label));
+          choice.className = "question-option";
+          if (option.description) choice.append(node("small", option.description));
+          card.append(choice);
+        }
+        const actions = node("div", "");
+        actions.className = "question-actions";
+        if (!question.options?.length || question.isOther) {
+          const input = document.createElement("textarea");
+          input.setAttribute("aria-label", "Your answer");
+          input.maxLength = 12000;
+          input.placeholder = question.options?.length ? "Write a different answer…" : "Your answer…";
+          const send = button("Submit answer", () => {
+            if (input.value.trim()) submit("text", input.value);
+          });
+          send.disabled = true;
+          input.oninput = () => { send.disabled = !input.value.trim(); };
+          card.append(input);
+          actions.append(send);
+        }
+        const skip = button("Skip question", () => submit("skip"));
+        skip.className = "link";
+        actions.append(skip);
+        card.append(actions);
+        card.scrollIntoView?.({ block: "nearest" });
+      }
       window.addEventListener("message", ({ data: d }) => {
+        if (d.type === "question") {
+          renderQuestion(d.question);
+          renderLive(state);
+          return;
+        }
         if (d.type === "error") {
+          if (questionRequest) renderQuestion(questionRequest);
           failedSend = sent || replayPending;
           if (failedSend && !el("prompt").value) el("prompt").value = failedSend;
           sent = null;
