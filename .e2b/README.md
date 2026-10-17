@@ -22,6 +22,15 @@ then initializes a real app-server and verifies RELAI skill discovery. These
 startup checks make no model calls; a model-backed staging turn is a separate
 verification requiring the caller's authorization.
 
+Image setup enables `default_mode_request_user_input` for the template user.
+The IDE also passes `features.default_mode_request_user_input=true` when starting
+Codex, opts into the experimental app-server protocol, and presents native
+choice/text questions through the IDE. Answers return on the original request
+ID; dismissing a question skips it and never approves work. Stop, turn completion,
+and runtime shutdown dismiss pending questions. Credentials must use the terminal.
+Rebuild and verify a new template revision, then release it through the normal
+template rollout; existing sandboxes keep their current image and configuration.
+
 The companion dashboard service must set `PLAYGROUND_ASSISTANT_ENGINE=codex`
 and issue a pinned native Responses model profile with scoped session access.
 Deploy backend native Responses support before enabling this template. Python

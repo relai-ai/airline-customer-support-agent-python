@@ -3,10 +3,12 @@ const fs = require("node:fs/promises");
 const readline = require("node:readline");
 const { startProvider } = require("./codex-provider");
 class CodexBridge {
-  constructor(env, root, changed) {
+  constructor(env, root, changed, askUser) {
     this.env = env;
     this.root = root;
     this.changed = changed;
+    this.askUser = askUser;
+    this.userInputs = new Map();
     this.state = {
       messages: [],
       jobs: [],
@@ -67,6 +69,7 @@ class CodexBridge {
         approval_policy: "on-request",
         sandbox_mode: "workspace-write",
         web_search: "disabled",
+        "features.default_mode_request_user_input": true,
       };
       const args = ["app-server", "--listen", "stdio://"];
       for (const [k, v] of Object.entries(config))
@@ -88,6 +91,7 @@ class CodexBridge {
       this.child.stderr.on("data", () => {});
       this.child.on("error", (error) => this.fail(error.message));
       this.child.on("exit", () => {
+        this.clearUserInputs();
         this.ready = null;
         this.provider?.close();
         if (this.state.pendingTurn)
@@ -108,6 +112,7 @@ class CodexBridge {
           }
         });
       await this.rpc("initialize", {
+        capabilities: { experimentalApi: true },
         clientInfo: {
           name: "relai_playground",
           title: "Codex + RELAI",
@@ -185,6 +190,31 @@ class CodexBridge {
       return;
     }
     const p = event.params || {};
+    if (event.method === "serverRequest/resolved") {
+      this.userInputs.get(p.requestId)?.abort();
+      this.userInputs.delete(p.requestId);
+      return;
+    }
+    if (event.id !== undefined && event.method === "item/tool/requestUserInput" && this.askUser) {
+      const controller = new AbortController();
+      this.userInputs.set(event.id, controller);
+      void Promise.resolve().then(() => this.askUser(p.questions, controller.signal))
+        .then((answers) => {
+          if (controller.signal.aborted) return;
+          this.child.stdin.write(JSON.stringify({ id: event.id, result: { answers } }) + "\n");
+        }, () => {
+          if (controller.signal.aborted) return;
+          this.child.stdin.write(JSON.stringify({
+            id: event.id,
+            error: { code: -32603, message: "Could not present the user question. No answer was submitted." },
+          }) + "\n");
+        }).catch(() => {
+          if (!controller.signal.aborted) this.fail("Codex could not receive the user answer.");
+        }).finally(() => {
+          if (this.userInputs.get(event.id) === controller) this.userInputs.delete(event.id);
+        });
+      return;
+    }
     if (event.id !== undefined && event.method?.includes("requestApproval")) {
       const id = "codex-approval-" + event.id;
       this.approvals.set(id, event.id);
@@ -248,6 +278,7 @@ class CodexBridge {
       this.publish();
     }
     if (event.method === "turn/completed") {
+      this.clearUserInputs();
       this.state.pendingTurn = false;
       this.turn = null;
       if (p.turn.status === "failed")
@@ -303,6 +334,7 @@ class CodexBridge {
   }
   async stop() {
     this.cancelRequested = true;
+    this.clearUserInputs();
     if (this.turn)
       await this.rpc("turn/interrupt", {
         threadId: this.thread,
@@ -310,13 +342,19 @@ class CodexBridge {
       });
   }
   fail(message) {
+    this.clearUserInputs();
     this.state.pendingTurn = false;
     this.state.messages.push({ role: "assistant", content: message });
     this.publish();
   }
   close() {
+    this.clearUserInputs();
     this.child?.kill("SIGTERM");
     this.provider?.close();
+  }
+  clearUserInputs() {
+    for (const controller of this.userInputs.values()) controller.abort();
+    this.userInputs.clear();
   }
 }
 module.exports = { CodexBridge };

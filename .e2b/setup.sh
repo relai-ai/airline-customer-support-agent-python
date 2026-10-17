@@ -18,6 +18,8 @@ RELAI_INSTALL_COMPLETIONS=0 bash "$installer"
 relai plugins install --agent codex
 # Materialize and enable the plugin cache before the first app-server session.
 codex plugin add relai@relai-codex --json
+# Persist in the template user's config for terminal and IDE sessions alike.
+codex features enable default_mode_request_user_input
 
 # Make tools available to new interactive shells as well as this hook.
 path_line='export PATH="$HOME/.local/bin:$PATH"'

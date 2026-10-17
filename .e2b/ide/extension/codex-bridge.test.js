@@ -77,3 +77,63 @@ test("approval decline and file-change receipts are real app-server events", asy
   });
   assert.deepEqual(bridge.snapshot().changedFiles, ["airline/tools.go"]);
 });
+
+function questionFixture(handler) {
+  const bridge = new CodexBridge({}, "/tmp", () => {}, handler);
+  bridge.save = async () => {};
+  const replies = [];
+  bridge.child = { stdin: { write: (line) => replies.push(JSON.parse(line)) } };
+  const event = { id: 41, method: "item/tool/requestUserInput", params: {
+    threadId: "thread-1", turnId: "turn-1", itemId: "item-1", isBlocking: true,
+    questions: [{ id: "review", header: "Review", question: "Build the proposed test?" }],
+  } };
+  return { bridge, replies, event };
+}
+const flush = () => new Promise((resolve) => setImmediate(resolve));
+test("user input stays pending until an actual answer and returns on the original RPC id", async () => {
+  let answer;
+  const { bridge, replies, event } = questionFixture(() => new Promise((resolve) => { answer = resolve; }));
+  bridge.receive(event);
+  await flush();
+  assert.equal(replies.length, 0);
+  answer({ review: { answers: ["build"] } });
+  await flush();
+  assert.deepEqual(replies, [{ id: 41, result: { answers: { review: { answers: ["build"] } } } }]);
+  assert.equal(bridge.userInputs.size, 0);
+  assert.equal(JSON.stringify(bridge.state).includes("build"), false);
+});
+test("server resolution and turn completion cancel stale prompts without sending their later answers", async () => {
+  for (const ending of [
+    { method: "serverRequest/resolved", params: { threadId: "thread-1", requestId: 41 } },
+    { method: "turn/completed", params: { turn: { id: "turn-1", status: "completed" } } },
+  ]) {
+    let answer, signal;
+    const { bridge, replies, event } = questionFixture((_, s) => {
+      signal = s;
+      return new Promise((resolve) => { answer = resolve; });
+    });
+    bridge.receive(event);
+    await flush();
+    bridge.receive(ending);
+    assert.equal(signal.aborted, true);
+    answer({ review: { answers: ["build"] } });
+    await flush();
+    assert.equal(replies.length, 0);
+  }
+});
+test("Stop cancels a pending question even before the turn id arrives", async () => {
+  let signal;
+  const { bridge, event } = questionFixture((_, s) => { signal = s; return new Promise(() => {}); });
+  bridge.receive(event);
+  await flush();
+  await bridge.stop();
+  assert.equal(signal.aborted, true);
+});
+test("question UI failure returns a protocol error instead of granting approval", async () => {
+  const { bridge, replies, event } = questionFixture(async () => { throw Error("UI unavailable"); });
+  bridge.receive(event);
+  await flush();
+  assert.equal(replies[0].id, 41);
+  assert.equal(replies[0].error.code, -32603);
+  assert.equal(replies[0].result, undefined);
+});

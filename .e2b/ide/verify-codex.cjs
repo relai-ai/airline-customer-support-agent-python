@@ -2,7 +2,8 @@
 const { spawn } = require('node:child_process');
 const readline = require('node:readline');
 
-const child = spawn('codex', ['app-server', '--listen', 'stdio://'], {
+const child = spawn('codex', ['app-server', '--listen', 'stdio://',
+  '-c', 'features.default_mode_request_user_input=true'], {
   cwd: '/home/user/airline',
   stdio: ['pipe', 'pipe', 'pipe'],
 });
@@ -40,9 +41,14 @@ async function verify() {
   try {
     const initialized = await rpc('initialize', {
       clientInfo: { name: 'relai_setup_probe', version: '1.0' },
+      capabilities: { experimentalApi: true },
     });
     child.stdin.write(JSON.stringify({ method: 'initialized' }) + '\n');
     console.log('Real Codex app-server initialized:', initialized.userAgent);
+    const { config } = await rpc('config/read', {});
+    if (config.features?.default_mode_request_user_input !== true)
+      throw Error('Native questions are disabled in Codex app-server');
+    console.log('Native user questions enabled');
     const result = await rpc('skills/list', {
       cwds: ['/home/user/airline'], forceReload: true,
     });

@@ -5,6 +5,7 @@ const path = require("node:path");
 const recorded = require("./recorded");
 const { reviewHtml } = require("./review");
 const { CodexBridge } = require("./codex-bridge");
+const { askUser } = require("./native-questions");
 function activate(context) {
   let panel, terminal, reviewPanel;
   const reviewDocuments = new Map();
@@ -53,7 +54,8 @@ function activate(context) {
     if (env.PLAYGROUND_ASSISTANT_ENGINE !== "codex")
       throw Error("This Python playground requires the Codex runtime. Start a newly configured session.");
     const codex = new CodexBridge(env, root, (investigation) =>
-      current.webview.postMessage({ type: "state", investigation }));
+      current.webview.postMessage({ type: "state", investigation }),
+      (questions, signal) => askUser(vscode, questions, signal));
     if (codex) {
       context.subscriptions.push({ dispose: () => codex.close() });
       current.onDidDispose(() => codex.close());
