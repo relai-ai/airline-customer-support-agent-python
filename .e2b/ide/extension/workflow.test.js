@@ -254,7 +254,7 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
     ["Run another optimization", /scope and rollout budget first/],
     ["Optimize for cost", /Compare cost and quality before and after/],
   ]) {
-    flatten(elements.get("history")).find(n => n.textContent === label).click();
+    flatten(elements.get("next-steps")).find(n => n.textContent === label).click();
     assert.match(elements.get("prompt").value, expected);
     assert.equal(elements.get("prompt").readOnly, false);
     assert.equal(sent.length, beforeSuggestions, "Suggestions must wait for the user's send");
