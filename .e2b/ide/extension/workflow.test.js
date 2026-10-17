@@ -56,7 +56,7 @@ test("live output follows new lines and completed output retains its reading pos
   assert.equal(output.scrollTop, 120);
 });
 
-test("recorded and edited requests dispatch distinct actions, and apply is explicit", () => {
+test("guided prompts stay fixed until all saved steps finish, then live requests are explicit", () => {
   const fs = require("node:fs"),
     vm = require("node:vm"),
     path = require("node:path");
@@ -118,7 +118,7 @@ test("recorded and edited requests dispatch distinct actions, and apply is expli
       },
     },
     acquireVsCodeApi: () => ({
-      getState: () => ({ sessionId: "previous-session", live: true, draft: "Stale final prompt" }),
+      getState: () => ({ sessionId: "same-session", live: true, draft: "Edited saved prompt" }),
       setState: () => {},
       postMessage: (value) => sent.push(value),
     }),
@@ -172,11 +172,18 @@ test("recorded and edited requests dispatch distinct actions, and apply is expli
   const exactRiskReply = "## Risks\n| Risk | Priority |\n| --- | --- |\n| Redaction | 63 |\n\n## Evidence\n[Receipt](/saved/receipt.json)\n\nNo baseline or risk-validation test has run during this walkthrough.\n\n## Suggested next steps\n1. Build a targeted test.";
   recording.steps[0] = { text: exactRiskReply, durationSeconds: 1, exactResponse: { path: "saved.json" } };
   handlers.message({
-    data: { type: "loaded", recording, recordedProgress: 0 },
+    data: { type: "loaded", recording, recordedProgress: 0, sessionId: "same-session" },
   });
   assert.equal(elements.get("next-steps").hidden, true);
   assert.equal(elements.get("next-steps").children.length, 0);
   assert.equal(elements.get("prompt").value, prompts[0]);
+  assert.equal(elements.get("prompt").readOnly, true);
+  assert.match(elements.get("run-notice").textContent, /Guided demo: saved results/);
+  assert.match(elements.get("run-notice").textContent, /changes applied in step 4/);
+  elements.get("prompt").value = "Attempt to bypass the guided demo";
+  elements.get("prompt").oninput();
+  assert.equal(elements.get("prompt").value, prompts[0]);
+  elements.get("prompt").value = "Attempt a custom send without an input event";
   elements.get("send").click();
   assert.equal(sent.at(-1).action, "recorded");
   assert.equal(sent.at(-1).step, 0);
@@ -228,9 +235,20 @@ test("recorded and edited requests dispatch distinct actions, and apply is expli
   handlers.message({ data: { type: "loaded", recording, recordedProgress: 2 } });
   assert.ok(!flatten(elements.get("history")).some(n => n.textContent === "▸ Explore the simulation"));
   assert.ok(flatten(elements.get("history")).some(n => n.textContent === "Codex + RELAI precomputed results · validation: 1m 0.0s"));
+  assert.equal(elements.get("prompt").readOnly, true);
+  handlers.message({ data: { type: "recorded", recordedProgress: 3 } });
+  assert.equal(elements.get("prompt").readOnly, true);
+  assert.equal(elements.get("next-steps").hidden, true);
+  elements.get("send").click();
+  assert.equal(sent.at(-1).action, "recorded");
+  assert.equal(sent.at(-1).step, 3);
+  assert.equal(elements.get("prompt").readOnly, true, "Apply must complete before live input unlocks");
+  handlers.message({ data: { type: "recorded", recordedProgress: 4 } });
+  assert.equal(elements.get("prompt").readOnly, false);
+  assert.match(elements.get("run-notice").textContent, /sending a message starts a new Codex run/);
   elements.get("prompt").value = "My own question";
   elements.get("prompt").oninput();
-  assert.equal(elements.get("send")["aria-label"], "Send message");
+  assert.equal(elements.get("send")["aria-label"], "Start live run");
   const previousCount = sent.length;
   elements.get("prompt").onkeydown({ key: "Enter", shiftKey: true, preventDefault() {} });
   assert.equal(sent.length, previousCount);

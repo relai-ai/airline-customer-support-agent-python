@@ -270,6 +270,12 @@
       .composer-context .badge {
         margin: 0;
       }
+      #run-notice {
+        color: var(--vscode-descriptionForeground);
+        font-size: 12px;
+        line-height: 1.45;
+        margin: 0 0 10px;
+      }
       .prompt-box {
         border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
         border-radius: 16px;
@@ -453,11 +459,14 @@
           <span class="assistant-label">Codex + RELAI</span
           ><span id="mode" class="badge" hidden>Loading…</span>
         </div>
+        <p id="run-notice"></p>
         <p id="status" role="status"></p>
         <div class="prompt-box">
           <textarea
             id="prompt"
             maxlength="12000"
+            readonly
+            aria-describedby="run-notice"
             aria-label="Message Codex + RELAI"
             placeholder="Ask the code assistant…"
           ></textarea>
@@ -869,7 +878,14 @@
       }
       function composer() {
         const preset = recording?.prompts[progress] || "";
-        const recorded = !live && progress < 4;
+        const recorded = Boolean(recording) && progress < 4;
+        el("prompt").readOnly = !recording || recorded;
+        if (recorded && !replayPending) el("prompt").value = preset;
+        el("run-notice").textContent = recorded
+          ? "Guided demo: saved results, with changes applied in step 4. Live runs begin afterward."
+          : recording
+            ? "Live mode: sending a message starts a new Codex run."
+            : "Loading guided demo…";
         const awaitingVerification =
           recorded &&
           progress === 3 &&
@@ -894,7 +910,7 @@
               ? progress === 3
                 ? (recording.verificationStatus === "mixed" ? "Apply candidate changes" : "Apply verified changes")
                 : "Show precomputed result"
-              : "Send message";
+              : "Start live run";
         el("send").setAttribute("aria-label", actionLabel);
         el("send").setAttribute("title", actionLabel);
         el("send").setAttribute("data-busy", String(Boolean(busy)));
@@ -1041,11 +1057,12 @@
           post(job ? "cancel" : "stop", job ? { id: job.id } : {});
           return;
         }
-        const prompt = el("prompt").value.trim();
+        const guided = Boolean(recording) && progress < 4;
+        const prompt = guided ? recording.prompts[progress] : el("prompt").value.trim();
         if (!prompt) return;
         el("status").textContent = "";
-        if (!live && progress < 4 && prompt === recording.prompts[progress]) {
-          replayPending = el("prompt").value;
+        if (guided) {
+          replayPending = prompt;
           failedSend = null;
           el("prompt").value = "";
           save();
@@ -1085,7 +1102,7 @@
           progress = d.recordedProgress;
           sessionId = d.sessionId;
           const sameSession = saved.sessionId === sessionId;
-          live = progress >= 4 || (sameSession && Boolean(saved.live));
+          live = progress >= 4;
           const previousPresets = [
             ["What are the risks identified for this agent by RELAI?"],
             ["Use RELAI to create an agent test for the Python off-topic risk with at least 10 turns and a sophisticated adversarial user. Show me the readable simulation results.",
@@ -1094,7 +1111,7 @@
             ["These changes look great. Apply them.", "these changes look great; apply"],
           ];
           el("prompt").value =
-            sameSession && saved.draft && saved.draft !== d.recording.prompts[progress] && !previousPresets[progress]?.includes(saved.draft)
+            progress >= 4 && sameSession && saved.draft && saved.draft !== d.recording.prompts[progress] && !previousPresets[progress]?.includes(saved.draft)
               ? saved.draft
               : recording.prompts[progress] || "";
           lastSuggestion = recording.prompts[progress] || null;
