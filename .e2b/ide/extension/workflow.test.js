@@ -178,8 +178,8 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   assert.equal(elements.get("next-steps").children.length, 0);
   assert.equal(elements.get("prompt").value, prompts[0]);
   assert.equal(elements.get("prompt").readOnly, true);
-  assert.match(elements.get("run-notice").textContent, /Guided demo: saved results/);
-  assert.match(elements.get("run-notice").textContent, /changes applied in step 4/);
+  assert.match(elements.get("run-notice").textContent, /The first 4 steps use precomputed results/);
+  assert.match(elements.get("run-notice").textContent, /Step 4 applies the saved code changes to your workspace/);
   elements.get("prompt").value = "Attempt to bypass the guided demo";
   elements.get("prompt").oninput();
   assert.equal(elements.get("prompt").value, prompts[0]);
