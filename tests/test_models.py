@@ -6,6 +6,8 @@ from airline_support import models
 
 
 def clear_api_keys(monkeypatch):
+    # These cases exercise direct providers, independent of the hosted runtime.
+    monkeypatch.delenv("AIRLINE_MODEL_PROVIDER", raising=False)
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
 
