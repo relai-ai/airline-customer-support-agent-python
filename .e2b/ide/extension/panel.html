@@ -864,7 +864,7 @@
             node("h3", "What would you like to try next?"),
           );
           const suggestions = [
-            ["Create a test for your scenario", "Use RELAI to create a multi-turn test for this use scenario: [describe your scenario and the expected behavior]. Show me the proposed test before running it."],
+            ["Create a test for your scenario", "Use RELAI to propose one multi-turn test for this use scenario: [describe your scenario and the expected behavior]. Use proposal-only suggestion generation first. Show me the scenario and evaluation criteria, and wait for my explicit approval before accepting, building or running the test."],
             ["Investigate another risk", "Use RELAI to investigate the highest-impact risk that we have not tested yet. Propose a multi-turn test and show me the scenario and evaluation criteria before running it."],
             ["Run another optimization", "Use RELAI to optimize the agent against the current tests. Propose the scope and a 30-total-rollout budget first, then compare the before-and-after results and check for regressions."],
             ["Optimize for cost", "Use RELAI to reduce the agent’s model cost while preserving its behavior. Review the current optimization scope and propose any required changes, a 30-total-rollout budget, and quality checks before running it. Compare cost and quality before and after."],

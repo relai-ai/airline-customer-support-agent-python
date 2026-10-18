@@ -249,7 +249,7 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   assert.equal(elements.get("run-notice").textContent, "You’re now in Live Mode. The guided walkthrough is complete. Your next message starts a real Codex run in this workspace.");
   const beforeSuggestions = sent.length;
   for (const [label, expected] of [
-    ["Create a test for your scenario", /create a multi-turn test/],
+    ["Create a test for your scenario", /proposal-only suggestion generation first.*wait for my explicit approval before accepting, building or running/],
     ["Investigate another risk", /highest-impact risk/],
     ["Run another optimization", /scope and a 30-total-rollout budget first/],
     ["Optimize for cost", /Compare cost and quality before and after/],
