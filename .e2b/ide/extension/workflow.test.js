@@ -251,7 +251,7 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   for (const [label, expected] of [
     ["Create a test for your scenario", /create a multi-turn test/],
     ["Investigate another risk", /highest-impact risk/],
-    ["Run another optimization", /scope and rollout budget first/],
+    ["Run another optimization", /scope and a 30-total-rollout budget first/],
     ["Optimize for cost", /Compare cost and quality before and after/],
   ]) {
     flatten(elements.get("next-steps")).find(n => n.textContent === label).click();
