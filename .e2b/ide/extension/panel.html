@@ -418,13 +418,40 @@
         display: block;
         margin: 20px 0 8px;
       }
+      .tour-card {
+        flex-shrink: 0;
+        margin: 16px 24px 0;
+        padding: 16px 20px;
+        border: 1px solid var(--vscode-focusBorder, #375dd6);
+        border-radius: 10px;
+        background: var(--vscode-editorWidget-background, var(--vscode-editor-background));
+      }
+      [hidden] { display: none !important; }
+      .tour-card h2 { margin: 6px 0; }
+      .tour-card p { margin-bottom: 12px; }
+      .tour-actions { display: flex; gap: 12px; align-items: center; }
+      .tour-actions .link:last-child { margin-left: auto; }
+      .tour-target { outline: 2px solid var(--vscode-focusBorder, #375dd6); outline-offset: -2px; }
+      @media (max-width: 600px) { .composer { max-height: 50vh; overflow-y: auto; } .composer-context { flex-wrap: wrap; } .tour-actions { flex-wrap: wrap; } }
+      @media (max-height: 600px) { .tour-card { max-height: 35vh; overflow: auto; } }
     </style>
   </head>
   <body>
     <header>
       <h1>Codex + RELAI</h1>
-      <button class="link" id="terminal">Open terminal</button>
+      <button class="link" id="open-tour">Quick tour</button>
     </header>
+    <section id="quick-tour" class="tour-card" aria-label="Playground introduction" hidden>
+      <small id="tour-count"></small>
+      <h2 id="tour-title" tabindex="-1"></h2>
+      <p id="tour-description"></p>
+      <div class="tour-actions">
+        <button id="tour-next">Next</button>
+        <button id="tour-files" class="link">Show files ↗</button>
+        <button id="tour-back" class="link">Back</button>
+        <button id="tour-skip" class="link">Skip tour</button>
+      </div>
+    </section>
     <main class="content" id="content">
       <section class="intro">
         <div class="badge">Agent repository · RELAI initialized</div>
@@ -461,7 +488,7 @@
         aria-label="Codex conversation"
       ></section>
     </main>
-    <section class="composer">
+    <section class="composer" id="composer">
       <div class="composer-inner">
         <div id="next-steps" hidden></div>
         <div class="composer-context">
@@ -544,6 +571,43 @@
         attemptedResult = null;
       const saved = vscode.getState() || {};
       let sessionId;
+      let tourComplete = Boolean(saved.tourComplete);
+      let tourStep = Number.isInteger(saved.tourStep) && saved.tourStep >= 0 && saved.tourStep < 4 ? saved.tourStep : 0;
+      const tourCards = [
+        ["Your files, ready to explore", "The Explorer on the left contains this agent’s files. RELAI is initialized here: requirements and risks are in .relai/evals-wiki; tests are in .relai/harbor.", "content"],
+        ["Follow the coding agent’s output", "Codex + RELAI replies appear in the conversation below. You can read findings, inspect test results, and review proposed code changes here.", "history"],
+        ["Send prompts from here", "The prompt box at the bottom is where you send requests. During the guided tour, the prompts are prepared for you. In live mode, write your own request or choose a suggestion.", "composer"],
+        ["Guided first, then live", "The four guided steps show saved results, then apply the verified change to this workspace. The badge above the prompt counts down the steps. When it says Live mode, your messages start real Codex runs.", "composer"],
+      ];
+      function showTour(focus = false) {
+        el("quick-tour").hidden = tourComplete;
+        for (const id of ["content", "history", "composer"]) el(id).className = el(id).className.replace(/\s*tour-target/g, "");
+        if (tourComplete) return;
+        const [title, description, target] = tourCards[tourStep];
+        el("tour-count").textContent = "QUICK TOUR · " + (tourStep + 1) + " OF " + tourCards.length;
+        el("tour-title").textContent = title;
+        el("tour-description").textContent = description;
+        el("tour-next").textContent = tourStep === tourCards.length - 1 ? "Start exploring" : "Next";
+        el("tour-back").hidden = tourStep === 0;
+        el("tour-files").hidden = tourStep !== 0;
+        el(target).className += " tour-target";
+        if (focus) el("tour-title").focus();
+      }
+      function closeTour() {
+        tourComplete = true;
+        showTour();
+        save();
+        el("open-tour").focus();
+      }
+      el("open-tour").onclick = () => { tourComplete = false; tourStep = 0; showTour(true); save(); };
+      el("tour-next").onclick = () => {
+        if (tourStep === tourCards.length - 1) return closeTour();
+        tourStep++; showTour(true); save();
+      };
+      el("tour-back").onclick = () => { tourStep = Math.max(0, tourStep - 1); showTour(true); save(); };
+      el("tour-skip").onclick = closeTour;
+      el("tour-files").onclick = () => post("folder", { folder: "wiki" });
+      showTour();
       function post(action, fields = {}) {
         vscode.postMessage({ action, ...fields });
       }
@@ -559,7 +623,7 @@
         return n;
       }
       function save() {
-        vscode.setState({ draft: el("prompt").value, live, sessionId });
+        vscode.setState({ draft: el("prompt").value, live, sessionId, tourComplete, tourStep });
       }
       // Build text-only DOM nodes; model output never becomes executable HTML.
       function formatted(content) {
@@ -902,15 +966,11 @@
           progress === 3 &&
           el("prompt").value.trim() === preset &&
           recording.verificationStatus === "pending";
+        const remainingSteps = Math.max(0, 4 - progress);
         el("mode").textContent = recorded
-          ? [
-              "Precomputed relai init",
-              "Precomputed relai test create",
-              "Precomputed relai optimize",
-              recording.verificationStatus === "mixed" ? "Apply candidate changes · mixed results" : "Apply optimized changes",
-            ][progress]
-          : "Live Mode";
-        el("mode").hidden = recorded;
+          ? "Guided tour · " + remainingSteps + (remainingSteps === 1 ? " step" : " steps") + " to live mode"
+          : recording ? "Live mode · write your own prompt" : "Loading guided tour…";
+        el("mode").hidden = false;
         const actionLabel = replayPending
           ? "Loading recorded result"
           : busy
@@ -1092,7 +1152,6 @@
         el("content").scrollTop = el("content").scrollHeight;
         post("send", { prompt, runWorkflow: true });
       };
-      el("terminal").onclick = () => post("terminal");
       for (const b of document.querySelectorAll("[data-folder]"))
         b.onclick = () => post("folder", { folder: b.dataset.folder });
       window.addEventListener("message", ({ data: d }) => {

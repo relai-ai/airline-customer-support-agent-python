@@ -60,7 +60,7 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   const fs = require("node:fs"),
     vm = require("node:vm"),
     path = require("node:path");
-  const sent = [],
+  const sent = [], savedStates = [],
     handlers = {};
   class Element {
     constructor(tag = "div") {
@@ -73,6 +73,7 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
       this.scrollTop = 0;
       this.clientHeight = 100;
       this.dataset = {};
+      this.className = "";
     }
     append(...items) {
       this.children.push(...items);
@@ -119,7 +120,7 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
     },
     acquireVsCodeApi: () => ({
       getState: () => ({ sessionId: "same-session", live: true, draft: "Edited saved prompt" }),
-      setState: () => {},
+      setState: value => savedStates.push(value),
       postMessage: (value) => sent.push(value),
     }),
     setTimeout: () => 1,
@@ -129,6 +130,25 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
     html.match(/<script nonce="NONCE">([\s\S]*?)<\/script>/)[1],
     context,
   );
+  assert.equal(elements.get("quick-tour").hidden, false);
+  assert.match(elements.get("tour-count").textContent, /1 OF 4/);
+  elements.get("tour-next").click();
+  assert.match(elements.get("tour-title").textContent, /coding agent/);
+  elements.get("tour-back").click();
+  assert.match(elements.get("tour-count").textContent, /1 OF 4/);
+  elements.get("tour-next").click();
+  elements.get("tour-next").click();
+  elements.get("tour-next").click();
+  assert.match(elements.get("tour-count").textContent, /4 OF 4/);
+  assert.equal(elements.get("tour-next").textContent, "Start exploring");
+  elements.get("tour-next").click();
+  assert.equal(elements.get("quick-tour").hidden, true);
+  elements.get("open-tour").click();
+  assert.equal(elements.get("quick-tour").hidden, false);
+  elements.get("tour-skip").click();
+  assert.equal(elements.get("quick-tour").hidden, true);
+  assert.equal(savedStates.at(-1).tourComplete, true);
+  assert.ok(sent.every(message => message.action === "load"));
   const flatten = (n) => [n, ...n.children.flatMap(flatten)];
   const formatted = flatten(
     context.formatted(
@@ -174,6 +194,8 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   handlers.message({
     data: { type: "loaded", recording, recordedProgress: 0, sessionId: "same-session" },
   });
+  assert.equal(elements.get("mode").hidden, false);
+  assert.match(elements.get("mode").textContent, /Guided tour/);
   assert.equal(elements.get("next-steps").hidden, true);
   assert.equal(elements.get("next-steps").children.length, 0);
   assert.equal(elements.get("prompt").value, prompts[0]);
@@ -188,6 +210,7 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   assert.equal(sent.at(-1).action, "recorded");
   assert.equal(sent.at(-1).step, 0);
   handlers.message({ data: { type: "recorded", recordedProgress: 1 } });
+  assert.equal(elements.get("mode").textContent, "Guided tour · 3 steps to live mode");
   assert.equal(elements.get("next-steps").hidden, true);
   assert.equal(elements.get("next-steps").children.length, 0);
   assert.equal(elements.get("history").children[0].scrolledIntoView, "start");
@@ -237,6 +260,7 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   assert.ok(flatten(elements.get("history")).some(n => n.textContent === "Codex + RELAI precomputed results · validation: 1m 0.0s"));
   assert.equal(elements.get("prompt").readOnly, true);
   handlers.message({ data: { type: "recorded", recordedProgress: 3 } });
+  assert.equal(elements.get("mode").textContent, "Guided tour · 1 step to live mode");
   assert.equal(elements.get("prompt").readOnly, true);
   assert.equal(elements.get("next-steps").hidden, true);
   elements.get("send").click();
@@ -246,7 +270,7 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   handlers.message({ data: { type: "recorded", recordedProgress: 4 } });
   assert.equal(elements.get("prompt").readOnly, false);
   assert.equal(elements.get("run-notice").className, "live");
-  assert.equal(elements.get("mode").textContent, "Live Mode");
+  assert.equal(elements.get("mode").textContent, "Live mode · write your own prompt");
   assert.equal(elements.get("run-notice").textContent, "You’re now in Live Mode. The guided walkthrough is complete. Your next message starts a real Codex run in this workspace.");
   elements.get("prompt").value = "My own question";
   elements.get("prompt").oninput();

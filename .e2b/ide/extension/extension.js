@@ -6,7 +6,7 @@ const recorded = require("./recorded");
 const { reviewHtml } = require("./review");
 const { CodexBridge } = require("./codex-bridge");
 function activate(context) {
-  let panel, terminal, reviewPanel;
+  let panel, reviewPanel;
   const reviewDocuments = new Map();
   context.subscriptions.push(
     vscode.workspace.registerTextDocumentContentProvider(
@@ -18,11 +18,11 @@ function activate(context) {
       },
     ),
   );
-  context.subscriptions.push(
-    vscode.window.onDidCloseTerminal((closed) => {
-      if (closed === terminal) terminal = undefined;
-    }),
-  );
+  // Keep interactive terminals out of this guided workspace. Codex and RELAI
+  // execute commands through their existing subprocess bridge.
+  const disableTerminal = (terminal) => terminal.dispose();
+  context.subscriptions.push(vscode.window.onDidOpenTerminal(disableTerminal));
+  for (const terminal of vscode.window.terminals) disableTerminal(terminal);
   const open = async () => {
     if (panel) {
       panel.reveal();
@@ -165,13 +165,6 @@ function activate(context) {
           await vscode.commands.executeCommand(
             "workbench.action.closeAuxiliaryBar",
           );
-        } else if (msg.action === "terminal") {
-          if (!terminal)
-            terminal = vscode.window.createTerminal({
-              name: "RELAI · Terminal",
-              cwd: "/home/user/airline",
-            });
-          terminal.show();
         } else if (msg.action === "evidence") {
           await vscode.commands.executeCommand(
             "markdown.showPreview",
