@@ -145,16 +145,10 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   assert.match(elements.get("tour-count").textContent, /1 OF 4/);
   elements.get("tour-next").click();
   elements.get("tour-next").click();
+  assert.match(elements.get("tour-count").textContent, /3 OF 4/);
+  assert.equal(elements.get("tour-next").disabled, true);
   elements.get("tour-next").click();
-  assert.match(elements.get("tour-count").textContent, /4 OF 4/);
-  assert.equal(elements.get("tour-next").textContent, "Start exploring");
-  elements.get("tour-next").click();
-  assert.equal(elements.get("quick-tour").hidden, true);
-  elements.get("open-tour").click();
-  assert.equal(elements.get("quick-tour").hidden, false);
-  elements.get("tour-skip").click();
-  assert.equal(elements.get("quick-tour").hidden, true);
-  assert.equal(savedStates.at(-1).tourComplete, true);
+  assert.match(elements.get("tour-count").textContent, /3 OF 4/, "Cannot skip the three recorded results");
   assert.ok(sent.every(message => message.action === "load"));
   const flatten = (n) => [n, ...n.children.flatMap(flatten)];
   const formatted = flatten(
@@ -238,6 +232,10 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   assert.equal(elements.get("next-steps").children.length, 0);
   assert.equal(elements.get("prompt").value, "Use RELAI to fix the failures the test found.");
   assert.equal(elements.get("history").children[2].scrolledIntoView, "start");
+  assert.equal(elements.get("tour-next").disabled, true, "Two completed results must not unlock step 4");
+  assert.match(elements.get("tour-next").textContent, /2 of 3 results/);
+  elements.get("tour-next").click();
+  assert.match(elements.get("tour-count").textContent, /3 OF 4/);
   flatten(elements.get("history"))
     .find((n) => n.textContent === "▸ Explore the simulation")
     .click();
@@ -265,7 +263,25 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   assert.ok(!flatten(elements.get("history")).some(n => n.textContent === "▸ Explore the simulation"));
   assert.ok(flatten(elements.get("history")).some(n => n.textContent === "Recorded result · Codex + RELAI · validation: 1m 0.0s"));
   assert.equal(elements.get("prompt").readOnly, true);
+  elements.get("send").click();
+  assert.equal(sent.at(-1).step, 2);
+  assert.equal(elements.get("tour-next").disabled, true, "Sending is not the same as receiving the result");
+  handlers.message({ data: { type: "error", message: "Recorded result failed to load" } });
+  assert.equal(elements.get("tour-next").disabled, true, "A failed replay must not unlock step 4");
+  elements.get("send").click();
   handlers.message({ data: { type: "recorded", recordedProgress: 3 } });
+  assert.equal(elements.get("tour-next").disabled, false);
+  assert.equal(elements.get("tour-next").textContent, "Results ready · continue");
+  assert.match(elements.get("tour-count").textContent, /3 OF 4/, "Keep the results visible until the user continues");
+  elements.get("tour-next").click();
+  assert.match(elements.get("tour-count").textContent, /4 OF 4/);
+  elements.get("tour-next").click();
+  assert.equal(elements.get("quick-tour").hidden, true);
+  assert.equal(savedStates.at(-1).tourComplete, true);
+  elements.get("open-tour").click();
+  assert.equal(elements.get("quick-tour").hidden, false);
+  elements.get("tour-skip").click();
+  assert.equal(elements.get("quick-tour").hidden, true);
   assert.equal(elements.get("mode").textContent, "Recorded walkthrough · 1 step to live mode");
   assert.match(elements.get("run-notice").textContent, /Apply the recorded changes/);
   assert.equal(elements.get("prompt").readOnly, true);
