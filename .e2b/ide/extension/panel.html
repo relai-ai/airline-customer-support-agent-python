@@ -102,9 +102,6 @@
         max-width: 900px;
         margin: auto;
       }
-      .conversation-empty { max-width: 900px; margin: 20px auto; padding: 16px; border: 1px dashed var(--vscode-panel-border, #d8dce3); border-radius: 8px; }
-      .conversation-empty p { margin: 6px 0 0; color: var(--vscode-descriptionForeground); }
-      .tour-explore { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 12px 0; }
       .message {
         margin: 20px 0;
         padding: 12px 0;
@@ -457,7 +454,7 @@
         background: var(--vscode-editorWidget-background, var(--vscode-editor-background));
       }
       .tour-card::after { content: ""; position: absolute; width: 12px; height: 12px; background: inherit; border: inherit; transform: rotate(45deg); }
-      .tour-card[data-arrow="left"]::after { left: -7px; top: 28px; border-top: 0; border-right: 0; }
+      .tour-card[data-arrow="right"]::after { right: -7px; top: 28px; border-bottom: 0; border-left: 0; }
       .tour-card[data-arrow="down"]::after { bottom: -7px; left: 28px; border-top: 0; border-left: 0; }
       .tour-card[data-arrow="up"]::after { top: -7px; left: 28px; border-bottom: 0; border-right: 0; }
       .tour-marker { position: fixed; z-index: 101; width: 24px; height: 24px; border-radius: 50%; background: var(--vscode-button-background); color: var(--vscode-button-foreground); text-align: center; font-weight: 600; line-height: 24px; pointer-events: none; }
@@ -483,13 +480,8 @@
       <div class="tour-meta"><small id="tour-count"></small><small id="tour-location"></small></div>
       <h2 id="tour-title" tabindex="-1"></h2>
       <p id="tour-description"></p>
-      <div id="tour-explore" class="tour-explore">
-        <button id="tour-source" class="link">Explore agent source ↗</button>
-        <button id="tour-tests" class="link">Explore agent tests ↗</button>
-      </div>
       <div class="tour-actions">
         <button id="tour-next">Next</button>
-        <button id="tour-files" class="link">Explore Evals Wiki ↗</button>
         <button id="tour-back" class="link">Back</button>
         <button id="tour-skip" class="link">Skip tour</button>
       </div>
@@ -505,7 +497,7 @@
           agent.
         </p>
         <p class="muted">Click a card to open its folder in the Explorer.</p>
-        <div class="folders">
+        <div class="folders" id="explore-cards">
           <button class="folder-card" data-folder="source" aria-label="Open agent source folder in Explorer">
             <strong>Agent source</strong><code>src/airline_support/</code>
             <small>Agent instructions, booking state and Python tools.</small>
@@ -523,10 +515,6 @@
           Use Codex with RELAI to explore and improve this agent in a real coding
           workspace.
         </p>
-      </section>
-      <section id="conversation-empty" class="conversation-empty" aria-label="Coding agent output area" hidden>
-        <strong>Coding agent output appears here</strong>
-        <p>Send the first prepared prompt below to see the risks RELAI found. The next results will show the generated test and proposed fix.</p>
       </section>
       <section
         id="history"
@@ -622,24 +610,24 @@
       let tourComplete = Boolean(saved.tourComplete);
       let tourStep = Number.isInteger(saved.tourStep) && saved.tourStep >= 0 && saved.tourStep < 4 ? saved.tourStep : 0;
       const tourCards = [
-        ["Explore the files", "Use the shortcuts to open agent code, risks, or tests in the file tree on the left.", "← Explorer · left sidebar"],
-        ["Read the coding agent’s results", "Read replies, test results, and proposed changes in this conversation.", "Conversation · center pane"],
+        ["Explore the three cards", "Click a card to open the agent’s code, Evals Wiki, or tests in Explorer.", "Agent source · Evals Wiki · Agent tests"],
+        ["Compare the agent’s behavior", "The right panel compares the original agent’s response with the recorded fix for the same booking challenge.", "Try SkyServe · right panel →"],
         ["Try the prepared prompts", "Send the three prepared prompts to view saved results, then apply the fix.", "Prompt · bottom panel"],
         ["You’re in live mode", "Write your own request below to start a live coding-agent run.", "Mode badge · above the input"],
       ];
       function positionTour() {
         if (tourComplete || el("quick-tour").hidden) return;
         const card = el("quick-tour"), marker = el("tour-marker");
-        const target = tourStep === 0 ? null : tourStep === 1 ? (el("conversation-empty").hidden ? el("history") : el("conversation-empty")) : tourStep === 2 ? el("prompt") : el("mode");
+        const target = tourStep === 0 ? el("explore-cards") : tourStep === 1 ? el("sample-agent") : tourStep === 2 ? el("prompt") : el("mode");
         const rect = target?.getBoundingClientRect();
-        const anchorX = tourStep === 0 ? 12 : Math.max(12, Math.min(innerWidth - 36, rect.left + 12));
-        const anchorY = tourStep === 0 ? 120 : tourStep === 1 ? Math.max(90, rect.top + 16) : rect.top;
+        const anchorX = tourStep === 1 ? innerWidth - 28 : Math.max(12, Math.min(innerWidth - 36, rect.left + 12));
+        const anchorY = tourStep === 1 ? 120 : rect.top;
         marker.textContent = String(tourStep + 1);
         marker.style.left = anchorX + "px";
         marker.style.top = Math.max(8, Math.min(innerHeight - 32, anchorY)) + "px";
-        card.dataset.arrow = tourStep === 0 ? "left" : tourStep === 1 ? "up" : "down";
-        const left = tourStep === 0 ? 46 : anchorX - 16;
-        const top = tourStep === 0 ? anchorY - 16 : tourStep === 1 ? anchorY + 38 : anchorY - card.offsetHeight - 14;
+        card.dataset.arrow = tourStep === 1 ? "right" : "down";
+        const left = tourStep === 1 ? innerWidth - card.offsetWidth - 46 : anchorX - 16;
+        const top = tourStep === 1 ? anchorY - 16 : anchorY - card.offsetHeight - 14;
         card.style.left = Math.max(16, Math.min(innerWidth - card.offsetWidth - 16, left)) + "px";
         card.style.top = Math.max(12, Math.min(innerHeight - card.offsetHeight - 12, top)) + "px";
       }
@@ -663,9 +651,8 @@
           ? waitingForResults ? "Send the prepared prompt below" : "Continue"
           : tourStep === tourCards.length - 1 ? "Start exploring" : "Next";
         el("tour-back").hidden = tourStep === 0;
-        el("tour-files").hidden = tourStep !== 0;
-        el("tour-explore").hidden = tourStep !== 0;
-        if (focus && tourStep === 1) (el("conversation-empty").hidden ? el("history") : el("conversation-empty")).scrollIntoView({ block: "center" });
+        if (focus && tourStep === 0) el("explore-cards").scrollIntoView({ block: "center" });
+        if (focus && tourStep === 1 && recording) post("sample");
         positionTour();
         if (focus && !el("quick-tour").hidden) el("tour-title").focus();
       }
@@ -684,9 +671,6 @@
       };
       el("tour-back").onclick = () => { tourStep = Math.max(0, tourStep - 1); showTour(true); save(); };
       el("tour-skip").onclick = closeTour;
-      el("tour-files").onclick = () => post("folder", { folder: "wiki" });
-      el("tour-source").onclick = () => post("folder", { folder: "source" });
-      el("tour-tests").onclick = () => post("folder", { folder: "tests" });
       showTour();
       function post(action, fields = {}) {
         vscode.postMessage({ action, ...fields });
@@ -897,7 +881,6 @@
       function recordedHistory() {
         const root = el("history");
         root.replaceChildren();
-        el("conversation-empty").hidden = !recording || progress > 0 || Boolean(sent || replayPending || state?.messages?.length);
         el("next-steps").replaceChildren();
         el("next-steps").hidden = !recording || progress < 4;
         if (!recording) return;
