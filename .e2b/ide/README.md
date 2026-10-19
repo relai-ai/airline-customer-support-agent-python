@@ -23,3 +23,23 @@ https://github.com/relai-ai/relai-cli/pull/642. Running this task with an
 unpatched CLI 0.2.10 can fail validation before simulation. The saved replay
 requires no CLI execution; live RELAI runs require that repair and configured
 runtime credentials. No private CLI binary or credentials are shipped here.
+
+## Try SkyServe beside Codex
+
+The sample panel opens beside the coding conversation. Its default Recorded example
+shows the measured booking-grounding failure and independently verified reply,
+read from the hash-checked trajectories. It makes no new model calls.
+
+After Apply, Try live sends the same request to two independent real sample-agent
+conversations: the recorded original source and a snapshot of the current workspace.
+Each keeps separate history and booking state. New comparison takes a fresh source
+snapshot; source changes require a reset. Stop/disposal terminate the child process
+groups, and partial failures never commit a turn to either conversation. These live
+requests use the existing scoped session model gateway and budget; no provider keys
+are inherited. A comparison runs both agents and can produce different results from
+the recorded example.
+
+Local UI previews may set `PLAYGROUND_SAMPLE_LIVE_DISABLED=1` in their synthetic
+session environment. The panel then keeps recorded examples available and disables
+model requests. This flag is for local fixtures, not a replacement for gateway
+authorization or spending enforcement.

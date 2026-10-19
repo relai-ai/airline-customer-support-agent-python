@@ -6,8 +6,9 @@ const recorded = require("./recorded");
 const { reviewHtml } = require("./review");
 const { CodexBridge } = require("./codex-bridge");
 const { InlineQuestions } = require("./native-questions");
+const { SampleComparison } = require("./sample-agent");
 function activate(context) {
-  let panel, reviewPanel;
+  let panel, reviewPanel, samplePanel, sample;
   const reviewDocuments = new Map();
   context.subscriptions.push(
     vscode.workspace.registerTextDocumentContentProvider(
@@ -65,6 +66,27 @@ function activate(context) {
     }
     let recording,
       recordingBusy = false;
+    const openSample = async () => {
+      if (samplePanel) { samplePanel.reveal(vscode.ViewColumn.Beside, true); return; }
+      if (!recording) throw Error("Wait for the walkthrough to load.");
+      const side = vscode.window.createWebviewPanel("relaiSample", "Try SkyServe", { viewColumn: vscode.ViewColumn.Beside, preserveFocus: true },
+        { enableScripts: true, retainContextWhenHidden: true, localResourceRoots: [vscode.Uri.file(context.extensionPath)] });
+      samplePanel = side;
+      const comparison = new SampleComparison(root, env, recording, state => side.webview.postMessage({ type: "sample-state", state }));
+      sample = comparison;
+      side.onDidDispose(() => { if (samplePanel === side) { samplePanel = undefined; sample = undefined; } void comparison.close(); });
+      context.subscriptions.push(side);
+      side.webview.onDidReceiveMessage(async message => {
+        try {
+          if (message.action === "load") { if (!comparison.dir) await comparison.reset(); else comparison.publish(); }
+          else if (message.action === "reset") await comparison.reset();
+          else if (message.action === "send") await comparison.send(message.prompt);
+          else if (message.action === "stop") comparison.stop();
+        } catch (error) { side.webview.postMessage({ type: "sample-error", message: error.message }); }
+      });
+      const sampleNonce = crypto.randomBytes(24).toString("hex");
+      side.webview.html = (await fs.readFile(path.join(context.extensionPath, "sample-panel.html"), "utf8")).replaceAll("NONCE", sampleNonce);
+    };
     const reviewChange = async (name) => {
       const html = reviewHtml(recording, name);
       if (!reviewPanel) {
@@ -95,6 +117,9 @@ function activate(context) {
             ...investigation,
           });
           questions.publish();
+          await openSample();
+        } else if (msg.action === "sample") {
+          await openSample();
         } else if (msg.action === "answer-question") {
           questions.answer(msg.id, msg.kind, msg.value);
         } else if (msg.action === "recorded" && Number.isInteger(msg.step)) {
@@ -105,8 +130,10 @@ function activate(context) {
             if (!recording || msg.step !== progress || progress > 3)
               throw Error("Refresh to resume the recorded walkthrough.");
             let applied;
-            if (progress === 3)
+            if (progress === 3) {
               applied = await recorded.applyRecording(root, recording);
+              if (sample && !sample.state.busy) void sample.reset().catch(error => samplePanel?.webview.postMessage({ type: "sample-error", message: error.message }));
+            }
             await context.workspaceState.update(recordingKey, progress + 1);
             current.webview.postMessage({
               type: "recorded",

@@ -27,6 +27,7 @@
         border-bottom: 1px solid var(--vscode-panel-border);
       }
       header {
+        flex-wrap: wrap;
         display: flex;
         align-items: center;
         gap: 16px;
@@ -465,6 +466,7 @@
   <body>
     <header>
       <h1>Codex + RELAI</h1>
+      <button class="link" id="sample-agent">Try SkyServe ↗</button>
       <button class="link" id="open-tour">Quick tour</button>
     </header>
     <section id="quick-tour" class="tour-card" aria-label="Playground introduction" hidden>
@@ -626,6 +628,7 @@
         save();
         el("open-tour").focus();
       }
+      el("sample-agent").onclick = () => post("sample");
       el("open-tour").onclick = () => { tourComplete = false; tourStep = 0; showTour(true); save(); };
       el("tour-next").onclick = () => {
         if (tourStep === tourCards.length - 1) return closeTour();
