@@ -211,22 +211,28 @@
         gap: 16px;
         flex-wrap: wrap;
       }
+      .content:has(> #next-steps:not([hidden])) {
+        padding-bottom: 8px;
+      }
       #next-steps {
         max-width: 900px;
-        margin: 12px auto 0;
+        margin: 8px auto 0;
       }
       .next-steps {
-        margin-bottom: 8px;
+        margin-bottom: 0;
       }
       .next-steps h3 {
-        margin-top: 0;
+        margin: 0 0 4px;
       }
       .suggestions {
         display: flex;
-        gap: 16px;
+        gap: 4px 16px;
         flex-wrap: wrap;
-        margin-top: 12px;
+        margin-top: 0;
         font-size: 12px;
+      }
+      .suggestions .link {
+        padding: 2px 0;
       }
       #status {
         color: var(--vscode-errorForeground);
