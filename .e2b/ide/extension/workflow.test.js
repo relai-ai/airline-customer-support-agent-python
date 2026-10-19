@@ -134,6 +134,7 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   assert.match(elements.get("tour-count").textContent, /1 OF 4/);
   elements.get("tour-next").click();
   assert.match(elements.get("tour-title").textContent, /coding agent/);
+  assert.equal(elements.get("tour-location").textContent, "Conversation · center pane");
   elements.get("tour-back").click();
   assert.match(elements.get("tour-count").textContent, /1 OF 4/);
   elements.get("tour-next").click();
@@ -195,12 +196,12 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
     data: { type: "loaded", recording, recordedProgress: 0, sessionId: "same-session" },
   });
   assert.equal(elements.get("mode").hidden, false);
-  assert.match(elements.get("mode").textContent, /Guided tour/);
+  assert.match(elements.get("mode").textContent, /Recorded walkthrough/);
   assert.equal(elements.get("next-steps").hidden, true);
   assert.equal(elements.get("next-steps").children.length, 0);
   assert.equal(elements.get("prompt").value, prompts[0]);
   assert.equal(elements.get("prompt").readOnly, true);
-  assert.equal(elements.get("run-notice").textContent, "The first 4 steps use precomputed results. Afterward, sending a message starts a live Codex run.");
+  assert.equal(elements.get("run-notice").textContent, "These prompts replay saved Codex + RELAI responses. No live model calls are made.");
   elements.get("prompt").value = "Attempt to bypass the guided demo";
   elements.get("prompt").oninput();
   assert.equal(elements.get("prompt").value, prompts[0]);
@@ -209,14 +210,14 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   assert.equal(sent.at(-1).action, "recorded");
   assert.equal(sent.at(-1).step, 0);
   handlers.message({ data: { type: "recorded", recordedProgress: 1 } });
-  assert.equal(elements.get("mode").textContent, "Guided tour · 3 steps to live mode");
+  assert.equal(elements.get("mode").textContent, "Recorded walkthrough · 3 steps to live mode");
   assert.equal(elements.get("next-steps").hidden, true);
   assert.equal(elements.get("next-steps").children.length, 0);
   assert.equal(elements.get("history").children[0].scrolledIntoView, "start");
   const riskNodes = flatten(elements.get("history"));
   assert.equal(riskNodes.filter(n => n.tag === "table").length, 1);
   assert.equal(riskNodes.filter(n => n.tag === "small" && n.textContent === "Codex + RELAI").length, 0);
-  assert.ok(riskNodes.some(n => n.textContent === "Codex + RELAI precomputed results · initialization: 3m 11.9s"));
+  assert.ok(riskNodes.some(n => n.textContent === "Recorded result · Codex + RELAI · initialization: 3m 11.9s"));
   assert.ok(riskNodes.some(n => n.textContent === "Suggested next steps"));
   assert.ok(riskNodes.some(n => n.textContent === "Open saved wiki results ↗"));
   assert.ok(!riskNodes.some(n => /No baseline or risk-validation|^Evidence$/.test(n.textContent)));
@@ -256,10 +257,11 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   recording.steps[1].exactResponse = { path: "saved-second.json" };
   handlers.message({ data: { type: "loaded", recording, recordedProgress: 2 } });
   assert.ok(!flatten(elements.get("history")).some(n => n.textContent === "▸ Explore the simulation"));
-  assert.ok(flatten(elements.get("history")).some(n => n.textContent === "Codex + RELAI precomputed results · validation: 1m 0.0s"));
+  assert.ok(flatten(elements.get("history")).some(n => n.textContent === "Recorded result · Codex + RELAI · validation: 1m 0.0s"));
   assert.equal(elements.get("prompt").readOnly, true);
   handlers.message({ data: { type: "recorded", recordedProgress: 3 } });
-  assert.equal(elements.get("mode").textContent, "Guided tour · 1 step to live mode");
+  assert.equal(elements.get("mode").textContent, "Recorded walkthrough · 1 step to live mode");
+  assert.match(elements.get("run-notice").textContent, /Apply the recorded changes/);
   assert.equal(elements.get("prompt").readOnly, true);
   assert.equal(elements.get("next-steps").hidden, true);
   elements.get("send").click();
@@ -270,7 +272,7 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   assert.equal(elements.get("prompt").readOnly, false);
   assert.equal(elements.get("run-notice").className, "live");
   assert.equal(elements.get("mode").textContent, "Live mode · write your own prompt");
-  assert.equal(elements.get("run-notice").textContent, "You’re now in Live Mode. The guided walkthrough is complete. Your next message starts a real Codex run in this workspace.");
+  assert.equal(elements.get("run-notice").textContent, "Live mode: write your own request. Sending starts a real Codex run in this workspace.");
   const beforeSuggestions = sent.length;
   for (const [label, expected] of [
     ["Create a test for your scenario", /proposal-only suggestion generation first.*wait for my explicit approval before accepting, building or running/],

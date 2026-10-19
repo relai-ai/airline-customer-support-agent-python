@@ -443,18 +443,21 @@
       }
       .tour-card {
         flex-shrink: 0;
-        margin: 16px 24px 0;
-        padding: 16px 20px;
-        border: 1px solid var(--vscode-focusBorder, #375dd6);
+        width: calc(100% - 48px);
+        max-width: 900px;
+        margin: 12px auto 0;
+        padding: 12px 16px;
+        border: 1px solid var(--vscode-panel-border, #d8dce3);
         border-radius: 10px;
         background: var(--vscode-editorWidget-background, var(--vscode-editor-background));
       }
       [hidden] { display: none !important; }
-      .tour-card h2 { margin: 6px 0; }
-      .tour-card p { margin-bottom: 12px; }
+      .tour-meta { display: flex; flex-wrap: wrap; gap: 4px 16px; justify-content: space-between; }
+      .tour-card h2 { margin: 6px 0; font-size: 16px; }
+      .tour-card h2:focus { outline: none; }
+      .tour-card p { margin: 4px 0 12px; line-height: 1.45; }
       .tour-actions { display: flex; gap: 12px; align-items: center; }
       .tour-actions .link:last-child { margin-left: auto; }
-      .tour-target { outline: 2px solid var(--vscode-focusBorder, #375dd6); outline-offset: -2px; }
       @media (max-width: 600px) { .composer { max-height: 50vh; overflow-y: auto; } .composer-context { flex-wrap: wrap; } .tour-actions { flex-wrap: wrap; } }
       @media (max-height: 600px) { .tour-card { max-height: 35vh; overflow: auto; } }
     </style>
@@ -465,7 +468,7 @@
       <button class="link" id="open-tour">Quick tour</button>
     </header>
     <section id="quick-tour" class="tour-card" aria-label="Playground introduction" hidden>
-      <small id="tour-count"></small>
+      <div class="tour-meta"><small id="tour-count"></small><small id="tour-location"></small></div>
       <h2 id="tour-title" tabindex="-1"></h2>
       <p id="tour-description"></p>
       <div class="tour-actions">
@@ -599,23 +602,22 @@
       let tourComplete = Boolean(saved.tourComplete);
       let tourStep = Number.isInteger(saved.tourStep) && saved.tourStep >= 0 && saved.tourStep < 4 ? saved.tourStep : 0;
       const tourCards = [
-        ["Your files, ready to explore", "The Explorer on the left contains this agent’s files. RELAI is initialized here: requirements and risks are in .relai/evals-wiki; tests are in .relai/harbor.", "content"],
-        ["Follow the coding agent’s output", "Codex + RELAI replies appear in the conversation below. You can read findings, inspect test results, and review proposed code changes here.", "history"],
-        ["Send prompts from here", "The prompt box at the bottom is where you send requests. During the guided tour, the prompts are prepared for you. In live mode, write your own request or choose a suggestion.", "composer"],
-        ["Guided first, then live", "The four guided steps show saved results, then apply the verified change to this workspace. The badge above the prompt counts down the steps. When it says Live mode, your messages start real Codex runs.", "composer"],
+        ["Browse your agent’s files", "The file tree on the left is this agent’s repository. RELAI is already initialized here. Open Evals Wiki to inspect its requirements and risks.", "Explorer · left sidebar"],
+        ["Read the coding agent’s output", "Replies, test results, and proposed changes appear in the conversation in this center pane. The walkthrough starts with saved results; live work comes afterward.", "Conversation · center pane"],
+        ["Send a request", "Use the input at the bottom. Walkthrough prompts are prepared and read-only. In live mode, write your own request or choose a suggestion.", "Prompt · bottom panel"],
+        ["Check the mode before sending", "The badge above the input counts down the recorded walkthrough. The first three responses are saved results; the last step applies the recorded changes. Live mode starts only afterward.", "Mode badge · above the input"],
       ];
       function showTour(focus = false) {
         el("quick-tour").hidden = tourComplete;
-        for (const id of ["content", "history", "composer"]) el(id).className = el(id).className.replace(/\s*tour-target/g, "");
         if (tourComplete) return;
-        const [title, description, target] = tourCards[tourStep];
+        const [title, description, location] = tourCards[tourStep];
         el("tour-count").textContent = "QUICK TOUR · " + (tourStep + 1) + " OF " + tourCards.length;
+        el("tour-location").textContent = location;
         el("tour-title").textContent = title;
         el("tour-description").textContent = description;
         el("tour-next").textContent = tourStep === tourCards.length - 1 ? "Start exploring" : "Next";
         el("tour-back").hidden = tourStep === 0;
         el("tour-files").hidden = tourStep !== 0;
-        el(target).className += " tour-target";
         if (focus) el("tour-title").focus();
       }
       function closeTour() {
@@ -808,7 +810,7 @@
         const wrapper = node("div", "");
         wrapper.className = "risk-inventory";
         wrapper.setAttribute("tabindex", "0");
-        wrapper.setAttribute("aria-label", "Precomputed EvalsWiki risk inventory");
+        wrapper.setAttribute("aria-label", "Recorded EvalsWiki risk inventory");
         wrapper.append(node("small", "SAVED EVALSWIKI · " + inventory.command));
         const table = document.createElement("table");
         const caption = document.createElement("caption");
@@ -851,20 +853,20 @@
           const reply = message("assistant", recordedReplyText(index, step.text, recording.turns, recording.evidenceKind === "deterministic-recorder"), false);
           const timing = index === 0 ? recording.initialization : step;
           let timingText = [
-            recording.riskInventory ? "Precomputed relai wiki list risks" : "Precomputed relai init",
-            "Precomputed relai test create",
-            "Precomputed relai optimize",
+            recording.riskInventory ? "Recorded: relai wiki list risks" : "Recorded: relai init",
+            "Recorded: relai test create",
+            "Recorded: relai optimize",
           ][index];
           if (recording.provenance?.orchestrator === "Codex")
             timingText = [
-              "Codex + RELAI precomputed results",
-              "Codex + RELAI precomputed results",
+              "Recorded result · Codex + RELAI",
+              "Recorded result · Codex + RELAI",
               recording.evidenceKind === "deterministic-recorder"
-                ? "Codex + RELAI precomputed results · independent verification"
-                : "Precomputed Codex + RELAI · " + recording.provenance.totalRollouts + "-rollout budget",
+                ? "Recorded result · Codex + RELAI · independent verification"
+                : "Recorded result · Codex + RELAI · " + recording.provenance.totalRollouts + "-rollout budget",
             ][index];
           if (recording.evidenceKind === "live-agent")
-            timingText = "Codex + RELAI precomputed results";
+            timingText = "Recorded result · Codex + RELAI";
           if (Number.isFinite(timing?.durationSeconds))
             timingText +=
               (index === 0 && recording.initialization
@@ -982,10 +984,12 @@
         el("prompt").readOnly = !recording || recorded || Boolean(questionRequest);
         if (recorded && !replayPending) el("prompt").value = preset;
         el("run-notice").textContent = recorded
-          ? "The first 4 steps use precomputed results. Afterward, sending a message starts a live Codex run."
+          ? progress === 3
+            ? "Apply the recorded changes to this workspace. This step makes no live model calls."
+            : "These prompts replay saved Codex + RELAI responses. No live model calls are made."
           : recording
-            ? "You’re now in Live Mode. The guided walkthrough is complete. Your next message starts a real Codex run in this workspace."
-            : "Loading guided demo…";
+            ? "Live mode: write your own request. Sending starts a real Codex run in this workspace."
+            : "Loading recorded walkthrough…";
         const awaitingVerification =
           recorded &&
           progress === 3 &&
@@ -993,8 +997,8 @@
           recording.verificationStatus === "pending";
         const remainingSteps = Math.max(0, 4 - progress);
         el("mode").textContent = recorded
-          ? "Guided tour · " + remainingSteps + (remainingSteps === 1 ? " step" : " steps") + " to live mode"
-          : recording ? "Live mode · write your own prompt" : "Loading guided tour…";
+          ? "Recorded walkthrough · " + remainingSteps + (remainingSteps === 1 ? " step" : " steps") + " to live mode"
+          : recording ? "Live mode · write your own prompt" : "Loading recorded walkthrough…";
         el("mode").hidden = false;
         const actionLabel = replayPending
           ? "Loading recorded result"
@@ -1005,7 +1009,7 @@
             : recorded && el("prompt").value.trim() === preset
               ? progress === 3
                 ? (recording.verificationStatus === "mixed" ? "Apply candidate changes" : "Apply verified changes")
-                : "Show precomputed result"
+                : "Show recorded result"
               : "Start live run";
         el("send").setAttribute("aria-label", actionLabel);
         el("send").setAttribute("title", actionLabel);
