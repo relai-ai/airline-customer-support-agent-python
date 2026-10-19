@@ -140,7 +140,8 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   assert.match(elements.get("tour-count").textContent, /1 OF 4/);
   elements.get("tour-next").click();
   assert.match(elements.get("tour-title").textContent, /coding agent/);
-  assert.equal(elements.get("tour-location").textContent, "Conversation · center pane");
+  assert.equal(elements.get("tour-explore").hidden, true);
+  assert.equal(elements.get("tour-location").textContent, "Codex + RELAI · conversation in this pane");
   elements.get("tour-back").click();
   assert.match(elements.get("tour-count").textContent, /1 OF 4/);
   elements.get("tour-next").click();
@@ -195,6 +196,7 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   handlers.message({
     data: { type: "loaded", recording, recordedProgress: 0, sessionId: "same-session" },
   });
+  assert.equal(elements.get("conversation-empty").hidden, false);
   assert.equal(elements.get("mode").hidden, false);
   assert.match(elements.get("mode").textContent, /Recorded walkthrough/);
   assert.equal(elements.get("next-steps").hidden, true);
@@ -208,6 +210,7 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   elements.get("prompt").value = "Attempt a custom send without an input event";
   elements.get("send").click();
   assert.equal(sent.at(-1).action, "recorded");
+  assert.equal(elements.get("conversation-empty").hidden, true);
   assert.equal(sent.at(-1).step, 0);
   assert.equal(elements.get("quick-tour").hidden, true, "Hide the guide immediately on the first send");
   assert.equal(elements.get("tour-marker").hidden, true);

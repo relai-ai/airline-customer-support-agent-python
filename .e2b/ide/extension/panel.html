@@ -102,6 +102,9 @@
         max-width: 900px;
         margin: auto;
       }
+      .conversation-empty { max-width: 900px; margin: 20px auto; padding: 16px; border: 1px dashed var(--vscode-panel-border, #d8dce3); border-radius: 8px; }
+      .conversation-empty p { margin: 6px 0 0; color: var(--vscode-descriptionForeground); }
+      .tour-explore { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 12px 0; }
       .message {
         margin: 20px 0;
         padding: 12px 0;
@@ -480,9 +483,13 @@
       <div class="tour-meta"><small id="tour-count"></small><small id="tour-location"></small></div>
       <h2 id="tour-title" tabindex="-1"></h2>
       <p id="tour-description"></p>
+      <div id="tour-explore" class="tour-explore">
+        <button id="tour-source" class="link">Explore agent source ↗</button>
+        <button id="tour-tests" class="link">Explore agent tests ↗</button>
+      </div>
       <div class="tour-actions">
         <button id="tour-next">Next</button>
-        <button id="tour-files" class="link">Show files ↗</button>
+        <button id="tour-files" class="link">Explore Evals Wiki ↗</button>
         <button id="tour-back" class="link">Back</button>
         <button id="tour-skip" class="link">Skip tour</button>
       </div>
@@ -516,6 +523,10 @@
           Use Codex with RELAI to explore and improve this agent in a real coding
           workspace.
         </p>
+      </section>
+      <section id="conversation-empty" class="conversation-empty" aria-label="Coding agent output area" hidden>
+        <strong>Coding agent output appears here</strong>
+        <p>Send the first prepared prompt below to see the risks RELAI found. The next results will show the generated test and proposed fix.</p>
       </section>
       <section
         id="history"
@@ -611,15 +622,15 @@
       let tourComplete = Boolean(saved.tourComplete);
       let tourStep = Number.isInteger(saved.tourStep) && saved.tourStep >= 0 && saved.tourStep < 4 ? saved.tourStep : 0;
       const tourCards = [
-        ["Browse your agent’s files", "The file tree on the left is this agent’s repository. RELAI is already initialized here. Open Evals Wiki to inspect its requirements and risks.", "Explorer · left sidebar"],
-        ["Read the coding agent’s output", "Replies, test results, and proposed changes appear in the conversation in this center pane. The walkthrough starts with saved results; live work comes afterward.", "Conversation · center pane"],
+        ["Explore the files in the left sidebar", "Use Explorer on the far left: src/airline_support contains the agent’s instructions and tools; .relai/evals-wiki contains requirements and risks; .relai/harbor/agent-tests contains evaluations. Choose a shortcut below to reveal its folder, then click a file to read it.", "← Explorer · file tree on the far left"],
+        ["Explore the coding agent’s results here", "This conversation is where Codex + RELAI explains the risks, shows test results, and proposes code changes. It starts empty. Send the prepared prompt at the bottom to populate it, then scroll through each reply and open its result or code-review links. The airline-agent comparison is in Try SkyServe on the right.", "Codex + RELAI · conversation in this pane"],
         ["Try the three prepared prompts", "Send each prefilled prompt below and review its result: identify risks, build a test, then improve the agent. Finally, apply the proposed changes. This guide will return when live mode starts. These steps make no live model calls.", "Prompt · bottom panel"],
         ["You’re in live mode", "The recorded changes are applied. You can now write your own request or choose a suggestion below. Sending starts a real coding-agent run in this workspace; check the mode badge before sending.", "Mode badge · above the input"],
       ];
       function positionTour() {
         if (tourComplete || el("quick-tour").hidden) return;
         const card = el("quick-tour"), marker = el("tour-marker");
-        const target = tourStep === 0 ? null : tourStep === 1 ? el("history") : tourStep === 2 ? el("prompt") : el("mode");
+        const target = tourStep === 0 ? null : tourStep === 1 ? (el("conversation-empty").hidden ? el("history") : el("conversation-empty")) : tourStep === 2 ? el("prompt") : el("mode");
         const rect = target?.getBoundingClientRect();
         const anchorX = tourStep === 0 ? 12 : Math.max(12, Math.min(innerWidth - 36, rect.left + 12));
         const anchorY = tourStep === 0 ? 120 : tourStep === 1 ? Math.max(90, rect.top + 16) : rect.top;
@@ -653,6 +664,8 @@
           : tourStep === tourCards.length - 1 ? "Start exploring" : "Next";
         el("tour-back").hidden = tourStep === 0;
         el("tour-files").hidden = tourStep !== 0;
+        el("tour-explore").hidden = tourStep !== 0;
+        if (focus && tourStep === 1) (el("conversation-empty").hidden ? el("history") : el("conversation-empty")).scrollIntoView({ block: "center" });
         positionTour();
         if (focus && !el("quick-tour").hidden) el("tour-title").focus();
       }
@@ -672,6 +685,8 @@
       el("tour-back").onclick = () => { tourStep = Math.max(0, tourStep - 1); showTour(true); save(); };
       el("tour-skip").onclick = closeTour;
       el("tour-files").onclick = () => post("folder", { folder: "wiki" });
+      el("tour-source").onclick = () => post("folder", { folder: "source" });
+      el("tour-tests").onclick = () => post("folder", { folder: "tests" });
       showTour();
       function post(action, fields = {}) {
         vscode.postMessage({ action, ...fields });
@@ -882,6 +897,7 @@
       function recordedHistory() {
         const root = el("history");
         root.replaceChildren();
+        el("conversation-empty").hidden = !recording || progress > 0 || Boolean(sent || replayPending || state?.messages?.length);
         el("next-steps").replaceChildren();
         el("next-steps").hidden = !recording || progress < 4;
         if (!recording) return;
