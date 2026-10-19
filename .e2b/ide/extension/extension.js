@@ -72,17 +72,43 @@ function activate(context) {
       const side = vscode.window.createWebviewPanel("relaiSample", "Try SkyServe", { viewColumn: vscode.ViewColumn.Beside, preserveFocus: true },
         { enableScripts: true, retainContextWhenHidden: true, localResourceRoots: [vscode.Uri.file(context.extensionPath)] });
       samplePanel = side;
-      const comparison = new SampleComparison(root, env, recording, state => side.webview.postMessage({ type: "sample-state", state }));
-      sample = comparison;
-      side.onDidDispose(() => { if (samplePanel === side) { samplePanel = undefined; sample = undefined; } void comparison.close(); });
+      if (!sample) {
+        sample = new SampleComparison(root, env, recording, state => samplePanel?.webview.postMessage({ type: "sample-state", state }));
+        const comparison = sample;
+        context.subscriptions.push({ dispose: () => { void comparison.close(); } });
+        current.onDidDispose(() => {
+          if (sample === comparison) sample = undefined;
+          samplePanel?.dispose();
+          void comparison.close();
+        });
+      }
+      const comparison = sample;
+      side.onDidDispose(() => { if (samplePanel === side) samplePanel = undefined; });
+      // Resize only our two panes; leave layouts containing other editors alone.
+      let compacted = false;
+      const compactSample = () => {
+        const groups = vscode.window.tabGroups?.all;
+        if (!compacted && groups?.length === 2 && groups.every(group => group.tabs.length === 1 &&
+            ["Codex + RELAI", "Try SkyServe"].includes(group.tabs[0].label))) {
+          compacted = true;
+          void vscode.commands.executeCommand("workbench.action.setEditorLayout", {
+            orientation: 0, groups: [{ size: 0.7 }, { size: 0.3 }],
+          }).catch(() => {});
+        }
+      };
+      const tabListener = vscode.window.tabGroups?.onDidChangeTabs?.(compactSample);
+      const groupListener = vscode.window.tabGroups?.onDidChangeTabGroups?.(compactSample);
+      side.onDidDispose(() => { tabListener?.dispose(); groupListener?.dispose(); });
+      compactSample();
       context.subscriptions.push(side);
       side.webview.onDidReceiveMessage(async message => {
         try {
-          if (message.action === "load") { if (!comparison.dir) await comparison.reset(); else comparison.publish(); }
+          if (message.action === "load") { if (!comparison.dir && !comparison.state.busy) await comparison.reset(); else comparison.publish(); }
+          else if (message.action === "hide") side.dispose();
           else if (message.action === "reset") await comparison.reset();
           else if (message.action === "send") await comparison.send(message.prompt);
           else if (message.action === "stop") comparison.stop();
-        } catch (error) { side.webview.postMessage({ type: "sample-error", message: error.message }); }
+        } catch (error) { samplePanel?.webview.postMessage({ type: "sample-error", message: error.message }); }
       });
       const sampleNonce = crypto.randomBytes(24).toString("hex");
       side.webview.html = (await fs.readFile(path.join(context.extensionPath, "sample-panel.html"), "utf8")).replaceAll("NONCE", sampleNonce);

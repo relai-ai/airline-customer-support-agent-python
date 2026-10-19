@@ -303,7 +303,7 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   assert.equal(elements.get("prompt").readOnly, false);
   assert.equal(elements.get("run-notice").className, "live");
   assert.equal(elements.get("mode").textContent, "Live mode · write your own prompt");
-  assert.equal(elements.get("run-notice").textContent, "Live mode: write your own request. Sending starts a real Codex run in this workspace.");
+  assert.equal(elements.get("run-notice").textContent, "");
   const beforeSuggestions = sent.length;
   for (const [label, expected] of [
     ["Create a test for your scenario", /proposal-only suggestion generation first.*wait for my explicit approval before accepting, building or running/],
