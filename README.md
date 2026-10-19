@@ -85,3 +85,7 @@ remain unchanged. These results establish success on the recorded scenarios.
 
 The template starts at the seeded baseline so visitors can review and apply the
 candidate themselves. The saved walkthrough uses no scripted SDK responses.
+
+### Live optimization limits
+
+After the recorded guide, the optimization suggestions propose 30 total rollouts with batch size one and no automatic PR. This is an upper bound: the hosted session spending limit and one-hour expiry still apply, and the selected tests and regression capacity are reviewed before execution. Historical recorded results keep their original rollout counts.

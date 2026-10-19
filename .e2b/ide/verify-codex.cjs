@@ -1,8 +1,14 @@
 // Verify actual app-server startup and installed skills without starting a model turn.
 const { spawn } = require('node:child_process');
 const readline = require('node:readline');
+const { commandNetworkConfig, configValue } = require('/opt/playground/extensions/relai.relai-playground-0.1.0/codex-network');
 
-const child = spawn('codex', ['app-server', '--listen', 'stdio://'], {
+const child = spawn('codex', ['app-server', '--listen', 'stdio://',
+  '-c', 'sandbox_mode="workspace-write"',
+  '-c', 'features.default_mode_request_user_input=true',
+  '-c', 'developer_instructions=' + JSON.stringify(require('/opt/playground/extensions/relai.relai-playground-0.1.0/hosted-runtime').developerInstructions),
+  ...Object.entries(commandNetworkConfig({ RELAI_API_BASE: 'https://gateway.example.test/' }))
+    .flatMap(([key, value]) => ['-c', key + '=' + configValue(value)])], {
   cwd: '/home/user/airline',
   stdio: ['pipe', 'pipe', 'pipe'],
 });
@@ -40,9 +46,21 @@ async function verify() {
   try {
     const initialized = await rpc('initialize', {
       clientInfo: { name: 'relai_setup_probe', version: '1.0' },
+      capabilities: { experimentalApi: true },
     });
     child.stdin.write(JSON.stringify({ method: 'initialized' }) + '\n');
     console.log('Real Codex app-server initialized:', initialized.userAgent);
+    const { config } = await rpc('config/read', {});
+    if (config.features?.default_mode_request_user_input !== true)
+      throw Error('Native questions are disabled in Codex app-server');
+    if (config.developer_instructions !== require('/opt/playground/extensions/relai.relai-playground-0.1.0/hosted-runtime').developerInstructions)
+      throw Error('Hosted execution guidance is missing');
+    console.log('Native user questions and hosted execution guidance enabled');
+    if (config.sandbox_workspace_write?.network_access !== true ||
+        config.features?.network_proxy?.enabled !== true ||
+        config.features?.network_proxy?.domains?.['gateway.example.test'] !== 'allow')
+      throw Error('Command gateway network policy is not configured');
+    console.log('Command gateway network policy configured');
     const result = await rpc('skills/list', {
       cwds: ['/home/user/airline'], forceReload: true,
     });

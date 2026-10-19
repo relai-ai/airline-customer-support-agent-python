@@ -79,6 +79,7 @@ function emitResponse(res, response) {
 }
 async function startProvider(env, request = fetch) {
   const token = crypto.randomBytes(32).toString("hex");
+  let lastFailure;
   const model = env.RELAI_SESSION_MODEL?.split("/").at(-1);
   if (!model || !env.RELAI_API_BASE || !env.RELAI_TEAM_API_KEY)
     throw Error("Codex session model configuration is missing.");
@@ -104,6 +105,8 @@ async function startProvider(env, request = fetch) {
     res.on("close", () => {
       if (!res.writableEnded) abort.abort();
     });
+    let failureStatus = 502;
+    let failureCode = "codex_session_gateway_error";
     try {
       let raw = "";
       for await (const chunk of req) {
@@ -128,35 +131,43 @@ async function startProvider(env, request = fetch) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ ...payload, stream: false, store: false }),
-          signal: AbortSignal.any([abort.signal, AbortSignal.timeout(120000)]),
+          signal: AbortSignal.any([abort.signal, AbortSignal.timeout(390000)]),
           redirect: "error",
         },
       );
       const response = await upstream.json();
-      if (!upstream.ok)
-        throw Error(
-          response.error?.message ||
-            "The scoped RELAI model gateway returned HTTP " +
-              upstream.status +
-              ".",
-        );
+      if (!upstream.ok) {
+        failureStatus = upstream.status;
+        failureCode = response.error?.code || response.code || failureCode;
+        // A hard session bound cannot be repaired by Codex's rate-limit
+        // retries. Keep genuine provider throttling retryable, but make a
+        // budget/context rejection a terminal local request error.
+        if (upstream.status === 429 && failureCode === "playground_budget_exceeded")
+          failureStatus = 400;
+        throw Error(response.error?.message ||
+          (typeof response.error === "string" ? response.error : response.detail) ||
+          "The scoped RELAI model gateway returned HTTP " + upstream.status + ".");
+      }
       if (!Array.isArray(response.output))
         throw Error(
           "The scoped model gateway returned an invalid Responses result.",
         );
+      lastFailure = undefined;
       if (payload.stream) emitResponse(res, response);
       else {
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify(response));
       }
     } catch (error) {
+      lastFailure = { code: failureCode, message: error.message };
       if (!res.headersSent) {
-        res.writeHead(502, { "Content-Type": "application/json" });
+        res.writeHead(error.name === "TimeoutError" ? 504 : failureStatus, { "Content-Type": "application/json" });
         res.end(
           JSON.stringify({
             error: {
               message: error.message,
-              type: "codex_session_gateway_error",
+              type: failureCode,
+              code: failureCode,
             },
           }),
         );
@@ -167,6 +178,8 @@ async function startProvider(env, request = fetch) {
   return {
     url: "http://127.0.0.1:" + server.address().port + "/v1",
     token,
+    takeFailure() { const failure = lastFailure; lastFailure = undefined; return failure; },
+    clearFailure() { lastFailure = undefined; },
     close: () => server.close(),
   };
 }
