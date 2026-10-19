@@ -613,11 +613,11 @@
       const tourCards = [
         ["Browse your agent’s files", "The file tree on the left is this agent’s repository. RELAI is already initialized here. Open Evals Wiki to inspect its requirements and risks.", "Explorer · left sidebar"],
         ["Read the coding agent’s output", "Replies, test results, and proposed changes appear in the conversation in this center pane. The walkthrough starts with saved results; live work comes afterward.", "Conversation · center pane"],
-        ["Try the three prepared prompts", "Send each prefilled prompt below and review its result: identify risks, build a test, then improve the agent. These are saved responses, so no live model calls are made.", "Prompt · bottom panel"],
-        ["Apply the changes, then explore", "You’ve seen the risks, test results, and proposed fix. Review the changes, then send the final prefilled prompt to apply them. The badge switches to live mode after applying; you can then write your own requests.", "Mode badge · above the input"],
+        ["Try the three prepared prompts", "Send each prefilled prompt below and review its result: identify risks, build a test, then improve the agent. Finally, apply the proposed changes. This guide will return when live mode starts. These steps make no live model calls.", "Prompt · bottom panel"],
+        ["You’re in live mode", "The recorded changes are applied. You can now write your own request or choose a suggestion below. Sending starts a real coding-agent run in this workspace; check the mode badge before sending.", "Mode badge · above the input"],
       ];
       function positionTour() {
-        if (tourComplete) return;
+        if (tourComplete || el("quick-tour").hidden) return;
         const card = el("quick-tour"), marker = el("tour-marker");
         const target = tourStep === 0 ? null : tourStep === 1 ? el("history") : tourStep === 2 ? el("prompt") : el("mode");
         const rect = target?.getBoundingClientRect();
@@ -635,23 +635,26 @@
       window.addEventListener("resize", positionTour);
       document.addEventListener("scroll", positionTour, true);
       function showTour(focus = false) {
-        el("quick-tour").hidden = tourComplete;
-        el("tour-marker").hidden = tourComplete;
+        if (!tourComplete && tourStep === 2 && recording && progress >= 4) tourStep = 3;
+        const readingResults = tourStep === 2 && (progress > 0 || Boolean(replayPending));
+        const awaitingLiveMode = tourStep === 3 && (!recording || progress < 4);
+        el("quick-tour").hidden = tourComplete || readingResults || awaitingLiveMode;
+        el("tour-marker").hidden = tourComplete || readingResults || awaitingLiveMode;
         if (tourComplete) return;
         const [title, description, location] = tourCards[tourStep];
         el("tour-count").textContent = "QUICK TOUR · " + (tourStep + 1) + " OF " + tourCards.length;
         el("tour-location").textContent = location;
         el("tour-title").textContent = title;
         el("tour-description").textContent = description;
-        const waitingForResults = tourStep === 2 && (!recording || progress < 3 || Boolean(replayPending));
+        const waitingForResults = tourStep === 2 && (!recording || progress < 4 || Boolean(replayPending));
         el("tour-next").disabled = waitingForResults;
         el("tour-next").textContent = tourStep === 2
-          ? waitingForResults ? Math.min(progress, 3) + " of 3 results · send the prompt below" : "Results ready · continue"
+          ? waitingForResults ? "Send the prepared prompt below" : "Continue"
           : tourStep === tourCards.length - 1 ? "Start exploring" : "Next";
         el("tour-back").hidden = tourStep === 0;
         el("tour-files").hidden = tourStep !== 0;
         positionTour();
-        if (focus) el("tour-title").focus();
+        if (focus && !el("quick-tour").hidden) el("tour-title").focus();
       }
       function closeTour() {
         tourComplete = true;
@@ -1281,7 +1284,7 @@
         if (d.type === "loaded") {
           recording = { ...d.recording, prompts: d.recording.prompts.map(recordedPromptText) };
           progress = d.recordedProgress;
-          if (!tourComplete && tourStep === 3 && progress < 3) tourStep = 2;
+          if (!tourComplete && tourStep === 3 && progress < 4) tourStep = 2;
           sessionId = d.sessionId;
           const sameSession = saved.sessionId === sessionId;
           live = progress >= 4;
