@@ -622,10 +622,10 @@
       let tourComplete = Boolean(saved.tourComplete);
       let tourStep = Number.isInteger(saved.tourStep) && saved.tourStep >= 0 && saved.tourStep < 4 ? saved.tourStep : 0;
       const tourCards = [
-        ["Explore the files in the left sidebar", "Use Explorer on the far left: src/airline_support contains the agent’s instructions and tools; .relai/evals-wiki contains requirements and risks; .relai/harbor/agent-tests contains evaluations. Choose a shortcut below to reveal its folder, then click a file to read it.", "← Explorer · file tree on the far left"],
-        ["Explore the coding agent’s results here", "This conversation is where Codex + RELAI explains the risks, shows test results, and proposes code changes. It starts empty. Send the prepared prompt at the bottom to populate it, then scroll through each reply and open its result or code-review links. The airline-agent comparison is in Try SkyServe on the right.", "Codex + RELAI · conversation in this pane"],
-        ["Try the three prepared prompts", "Send each prefilled prompt below and review its result: identify risks, build a test, then improve the agent. Finally, apply the proposed changes. This guide will return when live mode starts. These steps make no live model calls.", "Prompt · bottom panel"],
-        ["You’re in live mode", "The recorded changes are applied. You can now write your own request or choose a suggestion below. Sending starts a real coding-agent run in this workspace; check the mode badge before sending.", "Mode badge · above the input"],
+        ["Explore the files", "Use the shortcuts to open agent code, risks, or tests in the file tree on the left.", "← Explorer · left sidebar"],
+        ["Read the coding agent’s results", "Read replies, test results, and proposed changes in this conversation.", "Conversation · center pane"],
+        ["Try the prepared prompts", "Send the three prepared prompts to view saved results, then apply the fix.", "Prompt · bottom panel"],
+        ["You’re in live mode", "Write your own request below to start a live coding-agent run.", "Mode badge · above the input"],
       ];
       function positionTour() {
         if (tourComplete || el("quick-tour").hidden) return;

@@ -141,7 +141,7 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   elements.get("tour-next").click();
   assert.match(elements.get("tour-title").textContent, /coding agent/);
   assert.equal(elements.get("tour-explore").hidden, true);
-  assert.equal(elements.get("tour-location").textContent, "Codex + RELAI · conversation in this pane");
+  assert.equal(elements.get("tour-location").textContent, "Conversation · center pane");
   elements.get("tour-back").click();
   assert.match(elements.get("tour-count").textContent, /1 OF 4/);
   elements.get("tour-next").click();
