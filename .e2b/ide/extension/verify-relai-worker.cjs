@@ -31,6 +31,10 @@ function sandbox(args, env = {}) {
     const { config } = await bridge.rpc('config/read', {});
     assert.equal(config.features.network_proxy.domains['127.0.0.1'], 'allow');
     assert.equal(config.features.default_mode_request_user_input, true);
+    const inherited = await bridge.rpc('command/exec', { command: ['python3', '-c',
+      'import os,json;print(json.dumps({"url":bool(os.environ.get("RELAI_WORKER_URL")),"token":bool(os.environ.get("RELAI_WORKER_TOKEN"))}))'], timeoutMs: 10000 });
+    assert.equal(inherited.exitCode, 0, inherited.stderr);
+    assert.deepEqual(JSON.parse(inherited.stdout), { url: true, token: true });
     assert.equal((await fetch(bridge.worker.url + '/run', { method: 'POST' })).status, 401);
     console.log('RELAI_WORKER_STARTUP_PASSED: real dialog bridge and Codex app-server initialized; no turn submitted');
   } finally {
@@ -74,7 +78,7 @@ process.stdout.write(JSON.stringify({schema_version:'relai.agent_interaction.v1'
     assert.notEqual(direct.code, 0, 'Direct Docker access must remain sandboxed');
     assert.match(direct.stderr, /permission denied|operation not permitted/i);
     const result = await sandbox([...args, '--', 'python3', '/opt/playground/relai-hosted.py',
-      'test', 'create', '--agent-interaction'], { RELAI_WORKER_URL: worker.url, RELAI_WORKER_TOKEN: worker.token });
+      'test', 'suggestion', 'generate', '--agent-interaction'], { RELAI_WORKER_URL: worker.url, RELAI_WORKER_TOKEN: worker.token });
     assert.equal(result.code, 0, result.stderr);
     const outcome = JSON.parse(result.stdout);
     assert.equal(outcome.verifier, 'worker-verifier-ok');

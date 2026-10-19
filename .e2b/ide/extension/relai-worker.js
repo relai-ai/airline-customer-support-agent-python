@@ -10,7 +10,10 @@ function workflowAllowed(argv) {
       argv.some(a => ['--help', '-h', '--version', '-V'].includes(a))) return false;
   if (argv[0] === 'runs' && argv[1] === 'wait') return true;
   return argv.includes('--agent-interaction') && (
-    (argv[0] === 'test' && ['create', 'discover'].includes(argv[1])) ||
+    (argv[0] === 'test' && (
+      ['create', 'update', 'discover'].includes(argv[1]) ||
+      (argv[1] === 'suggestion' && ['generate', 'review', 'accept', 'reject'].includes(argv[2]))
+    )) ||
     ['simulate', 'optimize', 'init', 'ingest', 'wiki', 'evaluator', 'benchmark'].includes(argv[0])
   );
 }

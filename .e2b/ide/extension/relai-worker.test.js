@@ -34,6 +34,27 @@ test('only authenticated typed RELAI invocations run; arguments never become she
   assert.equal(events.at(-1).exitCode, 0);
 });
 
+test('canonical test suggestion and update workflows reach the CLI', async t => {
+  const { worker } = await fixture(t, `console.log(JSON.stringify(process.argv.slice(2)));`);
+  for (const command of [
+    ['test', 'suggestion', 'generate', '--count', '1'],
+    ['test', 'suggestion', 'review'],
+    ['test', 'suggestion', 'accept', 'fixture-id'],
+    ['test', 'suggestion', 'reject', 'fixture-id'],
+    ['test', 'update', 'fixture-id'],
+  ]) {
+    const args = [...command, '--agent-interaction'];
+    const response = await run(worker, args);
+    assert.equal(response.status, 200, command.join(' '));
+    const events = (await response.text()).trim().split('\n').map(JSON.parse);
+    const output = events.filter(e => e.stream === 'stdout').map(e => Buffer.from(e.data, 'base64').toString()).join('');
+    assert.deepEqual(JSON.parse(output), args);
+    assert.equal(events.at(-1).exitCode, 0);
+  }
+  for (const command of [['test', 'suggestion', 'clear-memory'], ['test', 'suggestion', 'unknown']])
+    assert.equal((await run(worker, [...command, '--agent-interaction'])).status, 400);
+});
+
 test('Python wrapper preserves CLI protocol, stderr, review exit status and input without a model', async t => {
   const response = { schema_version: 'relai.agent_interaction.v1', status: 'action_required', request: { kind: 'choice' } };
   const { worker } = await fixture(t, `process.stdout.write(${JSON.stringify(JSON.stringify(response) + '\n')}); process.stderr.write('progress ✓\\n'); process.exitCode=3;`);
@@ -64,6 +85,25 @@ test('disconnect cancels the workflow and rejects concurrent invocations', async
     await new Promise(resolve => setTimeout(resolve, 20));
   }
   assert.fail('The disconnected workflow was not cancelled');
+});
+
+test('Python wrapper reports HTTP rejection without exposing the worker credential', async t => {
+  const { worker } = await fixture(t, `console.log('must-not-run');`);
+  const result = await new Promise((resolve, reject) => {
+    const child = spawn('python3', [path.resolve(__dirname, '../relai_hosted.py'),
+      'test', 'suggestion', 'clear-memory', '--agent-interaction'], {
+      env: { PATH: process.env.PATH, RELAI_WORKER_URL: worker.url, RELAI_WORKER_TOKEN: worker.token },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let stdout = '', stderr = '';
+    child.stdout.on('data', x => stdout += x); child.stderr.on('data', x => stderr += x);
+    child.on('error', reject); child.on('close', code => resolve({ code, stdout, stderr }));
+  });
+  assert.equal(result.code, 1);
+  assert.equal(result.stdout, '');
+  assert.match(result.stderr, /request rejected \(HTTP 400\)/);
+  assert.doesNotMatch(result.stderr, /worker unavailable|must-not-run/);
+  assert(!result.stderr.includes(worker.token));
 });
 
 test('worker does not forward its credential or ambient provider keys to the CLI', async t => {

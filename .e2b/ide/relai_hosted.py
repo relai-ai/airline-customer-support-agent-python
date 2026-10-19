@@ -9,6 +9,7 @@ import base64
 import json
 import re
 import sys
+import urllib.error
 import urllib.request
 from urllib.parse import urlsplit
 
@@ -83,6 +84,11 @@ if __name__ == '__main__':
             sys.exit(run_worker(argv, os.environ['RELAI_WORKER_URL'], os.environ['RELAI_WORKER_TOKEN']))
         except (KeyboardInterrupt, BrokenPipeError):
             sys.exit(130)  # Closing the stream cancels the worker process group.
+        except urllib.error.HTTPError as error:
+            # Status codes distinguish rejected commands/busy workers from a
+            # broken connection. Never expose response bodies or credentials.
+            print(f'RELAI worker request rejected (HTTP {error.code}). Preserve the checkpoint and inspect the command or worker state; do not restart blindly.', file=sys.stderr)
+            sys.exit(1)
         except Exception:
             print('RELAI worker unavailable. No successful result is recorded; preserve the checkpoint and inspect the runtime.', file=sys.stderr)
             sys.exit(1)
