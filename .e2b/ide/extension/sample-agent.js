@@ -86,9 +86,12 @@ class SampleComparison {
     this.state = { busy: false, ready: false, disabled: env.PLAYGROUND_SAMPLE_LIVE_DISABLED === '1', messages: { before: [], after: [] }, error: '', needsReset: false };
   }
   snapshot() { return structuredClone(this.state); }
-  publish() { this.changed(this.snapshot()); }
+  publish() { if (!this.closed) this.changed(this.snapshot()); }
   async reset() {
+    if (this.closed) throw Error('This comparison is closed.');
     if (this.state.busy) throw Error('Stop the current comparison first.');
+    this.state.busy = true; this.state.ready = false; this.state.needsReset = true; this.publish();
+    this.resetting = (async () => {
     if (this.dir) await fs.rm(this.dir, { recursive: true, force: true });
     const current = await sources(this.root), original = new Map(current);
     for (const file of this.manifest.files) if (file.path.startsWith('src/')) {
@@ -103,12 +106,13 @@ class SampleComparison {
     }
     this.version = fingerprint(current);
     this.bookings = { before: undefined, after: undefined };
-    this.state = { ...this.state, busy: false, ready: fingerprint(original) !== this.version,
+    this.state = { ...this.state, ready: fingerprint(original) !== this.version,
       messages: { before: [], after: [] }, error: '', needsReset: false, example: await recordedExample(this.root, this.manifest) };
-    this.publish();
+    })();
+    try { await this.resetting; } finally { this.resetting = null; this.state.busy = false; this.publish(); }
   }
   async send(prompt) {
-    if (this.state.busy) return;
+    if (this.closed || this.state.busy) return;
     if (this.state.disabled) throw Error('Live comparisons are disabled in this local preview. The recorded example is available.');
     if (this.state.needsReset) throw Error('Start a new comparison before sending another request.');
     if (!this.state.ready) throw Error('Apply the walkthrough changes before comparing the original and current agent.');
@@ -138,6 +142,6 @@ class SampleComparison {
     finally { this.state.busy = false; this.pending = null; this.publish(); }
   }
   stop() { this.abort?.abort(); }
-  async close() { this.stop(); await this.pending; if (this.dir) await fs.rm(this.dir, { recursive: true, force: true }); }
+  async close() { this.closed = true; this.stop(); await this.pending; await this.resetting?.catch(() => {}); if (this.dir) await fs.rm(this.dir, { recursive: true, force: true }); }
 }
 module.exports = { SampleComparison, recordedExample, exchanges, fingerprint, runTurn };

@@ -77,3 +77,11 @@ test('sample panel script compiles and never injects model output as HTML',async
  const html=await fs.readFile(path.join(__dirname,'sample-panel.html'),'utf8');const script=html.match(/<script nonce="NONCE">([\s\S]*?)<\/script>/)[1];
  new(require('node:vm').Script)(script);assert.ok(!script.includes('innerHTML'));
 });
+
+test('reset is exclusive and disposal waits for source preparation before removing snapshots',async()=>{
+ await fixture(async()=>({reply:'ok',bookings:{}}),{check:async c=>{
+  const first=c.reset();await assert.rejects(c.reset(),/Stop/);await first;
+  const resetting=c.reset();const closing=c.close();await resetting;await closing;
+  await assert.rejects(fs.stat(c.dir),/ENOENT/);
+ }});
+});
