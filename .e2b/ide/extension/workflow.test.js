@@ -73,6 +73,9 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
       this.scrollTop = 0;
       this.clientHeight = 100;
       this.dataset = {};
+      this.style = {};
+      this.offsetWidth = 340;
+      this.offsetHeight = 200;
       this.className = "";
     }
     append(...items) {
@@ -87,6 +90,7 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
     querySelectorAll() {
       return [];
     }
+    getBoundingClientRect() { return { left: 24, top: 500 }; }
     focus() {}
     scrollIntoView(options) { this.scrolledIntoView = options.block; }
     setAttribute(name, value) {
@@ -98,6 +102,7 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   }
   const elements = new Map();
   const doc = {
+    addEventListener: () => {},
     getElementById: (id) => {
       if (!elements.has(id)) elements.set(id, new Element());
       return elements.get(id);
@@ -113,9 +118,10 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
     );
   const context = {
     document: doc,
+    innerWidth: 800, innerHeight: 900,
     window: {
-      addEventListener: (_event, fn) => {
-        handlers.message = fn;
+      addEventListener: (event, fn) => {
+        handlers[event] = fn;
       },
     },
     acquireVsCodeApi: () => ({
