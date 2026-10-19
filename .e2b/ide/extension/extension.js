@@ -5,6 +5,7 @@ const path = require("node:path");
 const recorded = require("./recorded");
 const { reviewHtml } = require("./review");
 const { CodexBridge } = require("./codex-bridge");
+const { InlineQuestions } = require("./native-questions");
 function activate(context) {
   let panel, reviewPanel;
   const reviewDocuments = new Map();
@@ -52,8 +53,12 @@ function activate(context) {
     const root = "/home/user/airline";
     if (env.PLAYGROUND_ASSISTANT_ENGINE !== "codex")
       throw Error("This Python playground requires the Codex runtime. Start a newly configured session.");
+    const questions = new InlineQuestions((question) =>
+      current.webview.postMessage({ type: "question", question }));
+    current.onDidDispose(() => questions.close());
     const codex = new CodexBridge(env, root, (investigation) =>
-      current.webview.postMessage({ type: "state", investigation }));
+      current.webview.postMessage({ type: "state", investigation }),
+      (items, signal) => questions.ask(items, signal));
     if (codex) {
       context.subscriptions.push({ dispose: () => codex.close() });
       current.onDidDispose(() => codex.close());
@@ -89,6 +94,9 @@ function activate(context) {
             recordedProgress: context.workspaceState.get(recordingKey, 0),
             ...investigation,
           });
+          questions.publish();
+        } else if (msg.action === "answer-question") {
+          questions.answer(msg.id, msg.kind, msg.value);
         } else if (msg.action === "recorded" && Number.isInteger(msg.step)) {
           if (recordingBusy) return;
           recordingBusy = true;

@@ -37,6 +37,9 @@ RUN git config --global user.name "RELAI Playground" && git config --global user
 
 # Keep UI iteration independent of tool installation.
 USER root
+# Preserve the CLI binary and adapt typed workflow waiting for PID-scoped commands.
+COPY .e2b/ide/relai_hosted.py /opt/playground/relai-hosted.py
+RUN install -m 0755 /home/user/.local/bin/relai /opt/playground/relai-real && rm /home/user/.local/bin/relai && install -m 0755 /opt/playground/relai-hosted.py /home/user/.local/bin/relai
 COPY .e2b/ide/start-ide.py /opt/playground/start-ide.py
 COPY .e2b/ide/verify-codex.cjs /opt/playground/verify-codex.cjs
 COPY .e2b/ide/session_config.py /opt/playground/session_config.py
