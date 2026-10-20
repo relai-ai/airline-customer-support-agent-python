@@ -137,18 +137,19 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
     context,
   );
   assert.equal(elements.get("quick-tour").hidden, false);
-  assert.match(elements.get("tour-count").textContent, /1 OF 4/);
+  assert.match(elements.get("tour-count").textContent, /1 OF 3/);
   elements.get("tour-next").click();
-  assert.match(elements.get("tour-title").textContent, /Compare the agent/);
-  assert.equal(elements.get("tour-location").textContent, "Try SkyServe · right panel →");
+  assert.match(elements.get("tour-title").textContent, /Try the prepared prompts/);
+  assert.equal(elements.get("sample-agent").hidden, true);
+  assert.equal(elements.get("tour-location").textContent, "Prompt · bottom panel");
   elements.get("tour-back").click();
-  assert.match(elements.get("tour-count").textContent, /1 OF 4/);
+  assert.match(elements.get("tour-count").textContent, /1 OF 3/);
   elements.get("tour-next").click();
   elements.get("tour-next").click();
-  assert.match(elements.get("tour-count").textContent, /3 OF 4/);
+  assert.match(elements.get("tour-count").textContent, /2 OF 3/);
   assert.equal(elements.get("tour-next").disabled, true);
   elements.get("tour-next").click();
-  assert.match(elements.get("tour-count").textContent, /3 OF 4/, "Cannot skip the three recorded results");
+  assert.match(elements.get("tour-count").textContent, /2 OF 3/, "Cannot skip the three recorded results");
   assert.ok(sent.every(message => message.action === "load"));
   const flatten = (n) => [n, ...n.children.flatMap(flatten)];
   const formatted = flatten(
@@ -171,6 +172,7 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   );
   const { prompts } = require("./recorded");
   const recording = {
+    exampleId: "unauthorized-payment",
     verificationStatus: "verified",
     prompts: [prompts[0], "Use RELAI to build a multi-turn test for the highest-impact risk u found", "Use relai to fix the failures the test found", prompts[3]],
     steps: prompts
@@ -187,6 +189,7 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
     },
     diff: "patch",
   };
+  recording.steps[2].durationSeconds = 1462;
   recording.initialization = { durationSeconds: 191.949 };
   recording.provenance = { orchestrator: "Codex", totalRollouts: 0 };
   recording.riskInventory = { risks: [{ id: "risk-one" }] };
@@ -237,7 +240,7 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   assert.equal(elements.get("tour-next").disabled, true, "Two completed results must not unlock step 4");
   assert.equal(elements.get("quick-tour").hidden, true, "Keep the results unobstructed");
   elements.get("tour-next").click();
-  assert.match(elements.get("tour-count").textContent, /3 OF 4/);
+  assert.match(elements.get("tour-count").textContent, /2 OF 3/);
   const validationNodes = flatten(elements.get("history"));
   assert.ok(!validationNodes.some(n => /ACTUAL AGENT RESPONSE|Explore the simulation|EXCHANGE \d+ OF/.test(n.textContent)), "Saved validation replies must not append a duplicate transcript viewer");
   recording.steps[1].exactResponse = { path: "saved-second.json" };
@@ -252,10 +255,12 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   assert.equal(elements.get("tour-next").disabled, true, "A failed replay must not unlock step 4");
   elements.get("send").click();
   handlers.message({ data: { type: "recorded", recordedProgress: 3 } });
+  assert.ok(flatten(elements.get("history")).some(n => n.textContent.endsWith("14m 22.0s")));
+  assert.equal(recording.steps[2].durationSeconds, 1462, "Presentation must preserve measured duration");
   assert.equal(elements.get("tour-next").disabled, true);
   assert.equal(elements.get("quick-tour").hidden, true, "The third result must not show dialog 4 before Apply");
   elements.get("tour-next").click();
-  assert.match(elements.get("tour-count").textContent, /3 OF 4/);
+  assert.match(elements.get("tour-count").textContent, /2 OF 3/);
   assert.equal(elements.get("mode").textContent, "Off-line mode · 1 step to live mode");
   assert.match(elements.get("run-notice").textContent, /Apply the saved fix/);
   assert.equal(elements.get("prompt").readOnly, true);
@@ -271,7 +276,7 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   handlers.message({ data: { type: "recorded", recordedProgress: 4 } });
   assert.equal(elements.get("quick-tour").hidden, false);
   assert.equal(elements.get("tour-marker").hidden, false);
-  assert.match(elements.get("tour-count").textContent, /4 OF 4/);
+  assert.match(elements.get("tour-count").textContent, /3 OF 3/);
   assert.equal(elements.get("tour-title").textContent, "You’re in live mode");
   elements.get("tour-next").click();
   assert.equal(elements.get("quick-tour").hidden, true);

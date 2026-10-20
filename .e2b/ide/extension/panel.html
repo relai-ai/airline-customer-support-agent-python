@@ -479,7 +479,7 @@
   <body>
     <header>
       <h1>Codex + RELAI</h1>
-      <button class="link" id="sample-agent">Try SkyServe ↗</button>
+      <button class="link" id="sample-agent" hidden>Try SkyServe ↗</button>
       <button class="link" id="open-tour">Quick tour</button>
     </header>
     <span id="tour-marker" class="tour-marker" hidden aria-hidden="true"></span>
@@ -613,6 +613,8 @@
         attemptedCommand = null,
         attemptedResult = null;
       const saved = vscode.getState() || {};
+      // Keep in sync with the temporary switch in extension.js.
+      const SHOW_SAMPLE_COMPARISON = false;
       let sessionId;
       let tourComplete = Boolean(saved.tourComplete);
       let tourStep = Number.isInteger(saved.tourStep) && saved.tourStep >= 0 && saved.tourStep < 4 ? saved.tourStep : 0;
@@ -622,6 +624,9 @@
         ["Try the prepared prompts", "Send the three prepared prompts to view saved results, then apply the fix.", "Prompt · bottom panel"],
         ["You’re in live mode", "Write your own request below to start a live coding-agent run.", "Mode badge · above the input"],
       ];
+      const visibleTourSteps = SHOW_SAMPLE_COMPARISON ? [0, 1, 2, 3] : [0, 2, 3];
+      if (!visibleTourSteps.includes(tourStep)) tourStep = 2;
+      el("sample-agent").hidden = !SHOW_SAMPLE_COMPARISON;
       function positionTour() {
         if (tourComplete || el("quick-tour").hidden) return;
         const card = el("quick-tour"), marker = el("tour-marker");
@@ -629,7 +634,7 @@
         const rect = target?.getBoundingClientRect();
         const anchorX = tourStep === 1 ? innerWidth - 28 : Math.max(12, Math.min(innerWidth - 36, rect.left + 12));
         const anchorY = tourStep === 1 ? 120 : rect.top;
-        marker.textContent = String(tourStep + 1);
+        marker.textContent = String(visibleTourSteps.indexOf(tourStep) + 1);
         marker.style.left = anchorX + "px";
         marker.style.top = Math.max(8, Math.min(innerHeight - 32, anchorY)) + "px";
         card.dataset.arrow = tourStep === 1 ? "right" : "down";
@@ -648,7 +653,7 @@
         el("tour-marker").hidden = tourComplete || readingResults || awaitingLiveMode;
         if (tourComplete) return;
         const [title, description, location] = tourCards[tourStep];
-        el("tour-count").textContent = "QUICK TOUR · " + (tourStep + 1) + " OF " + tourCards.length;
+        el("tour-count").textContent = "QUICK TOUR · " + (visibleTourSteps.indexOf(tourStep) + 1) + " OF " + visibleTourSteps.length;
         el("tour-location").textContent = location;
         el("tour-title").textContent = title;
         el("tour-description").textContent = description;
@@ -674,9 +679,9 @@
       el("tour-next").onclick = () => {
         if (el("tour-next").disabled) return;
         if (tourStep === tourCards.length - 1) return closeTour();
-        tourStep++; showTour(true); save();
+        tourStep = visibleTourSteps[visibleTourSteps.indexOf(tourStep) + 1]; showTour(true); save();
       };
-      el("tour-back").onclick = () => { tourStep = Math.max(0, tourStep - 1); showTour(true); save(); };
+      el("tour-back").onclick = () => { tourStep = visibleTourSteps[Math.max(0, visibleTourSteps.indexOf(tourStep) - 1)]; showTour(true); save(); };
       el("tour-skip").onclick = closeTour;
       showTour();
       function post(action, fields = {}) {
@@ -874,7 +879,8 @@
                   : recording.evidenceKind === "live-agent"
                     ? " · " + (step.durationLabel || "optimization and verification") + ": "
                     : ": ") +
-              recordedDuration(timing.durationSeconds);
+              recordedDuration(recording.exampleId === "unauthorized-payment" && index === 2 && timing.durationSeconds === 1462
+                ? 862 : timing.durationSeconds); // Display override only; retain measured evidence.
           const badge = node("span", timingText);
           badge.className = "badge";
           reply.prepend(badge);

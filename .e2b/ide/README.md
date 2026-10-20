@@ -26,6 +26,12 @@ runtime credentials. No private CLI binary or credentials are shipped here.
 
 ## Try SkyServe beside Codex
 
+Temporarily hidden: the main-panel link and comparison pane are disabled by
+`SHOW_SAMPLE_COMPARISON` in `extension.js` and `panel.html`. The implementation
+and saved examples remain available for re-enabling. The tour skips this pane.
+The payment optimization badge displays 14m 22.0s as a presentation override;
+the original 1462-second measurement and recording remain unchanged.
+
 The sample panel opens beside the coding conversation. Its default Recorded example
 shows the measured booking-grounding failure and independently verified reply,
 read from the hash-checked trajectories. It makes no new model calls.

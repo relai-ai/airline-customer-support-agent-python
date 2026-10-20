@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-test('hiding and reopening preserves comparison state and only resizes owned panes', async () => {
+for (const visible of [false, true]) test(`comparison visibility ${visible} preserves its implementation and state`, async () => {
   const panels = [], comparisons = [], commands = [];
   let open, tabsChanged;
   class Comparison {
@@ -44,7 +44,7 @@ test('hiding and reopening preserves comparison state and only resizes owned pan
     if (name === './native-questions') return { InlineQuestions: class { publish() {} close() {} } };
     return require(name.startsWith('./') ? path.join(__dirname, name) : name);
   } };
-  vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'extension.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'extension.js'), 'utf8').replace('const SHOW_SAMPLE_COMPARISON = false;', `const SHOW_SAMPLE_COMPARISON = ${visible};`), sandbox);
   sandbox.module.exports.activate(context);
   // Let activation finish its file reads; open() reuses its main panel.
   const deadline = Date.now() + 5000;
@@ -53,6 +53,12 @@ test('hiding and reopening preserves comparison state and only resizes owned pan
   const main = panels[0];
   await main.receive({ action: 'load' });
   assert.equal(commands.filter(c => c[0] === 'vscode.setEditorLayout').length, 0);
+  if (!visible) {
+    await main.receive({ action: 'sample' });
+    assert.equal(panels.length, 1, 'Hidden comparison must not open on load or message');
+    assert.equal(comparisons.length, 0, 'No live comparison processes initialized');
+    return;
+  }
   vscode.window.tabGroups.all.push({ tabs: [{ label: 'Try SkyServe' }] });
   tabsChanged();
   tabsChanged();

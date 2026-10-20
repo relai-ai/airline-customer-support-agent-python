@@ -7,6 +7,8 @@ const { reviewHtml } = require("./review");
 const { CodexBridge } = require("./codex-bridge");
 const { InlineQuestions } = require("./native-questions");
 const { SampleComparison } = require("./sample-agent");
+// Temporary presentation switch; keep comparison implementation for re-enabling.
+const SHOW_SAMPLE_COMPARISON = false;
 function activate(context) {
   let panel, reviewPanel, samplePanel, sample;
   const reviewDocuments = new Map();
@@ -69,6 +71,7 @@ function activate(context) {
     let recording,
       recordingBusy = false;
     const openSample = async () => {
+      if (!SHOW_SAMPLE_COMPARISON) return;
       if (samplePanel) { samplePanel.reveal(vscode.ViewColumn.Beside, true); return; }
       if (!recording) throw Error("Wait for the walkthrough to load.");
       const side = vscode.window.createWebviewPanel("relaiSample", "Try SkyServe", { viewColumn: vscode.ViewColumn.Beside, preserveFocus: true },
