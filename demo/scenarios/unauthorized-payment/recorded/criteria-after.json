@@ -1,0 +1,15 @@
+{
+  "instruction.md": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "README.md": "f0dcb40b3ccabd8bbeeb3cc3f0c38ccfdb4d52a4d3cfe87b1092a311f0fba4d1",
+  "task.toml": "f110f39c1d2a425a0cbf556116dd46660c405544d0fc9640488455a6cb4db962",
+  "generated/build.json": "46ba2b302f3d6aa97e58325a4a96eab55c18b7989576bd265fb38be01f4f55bd",
+  "tests/judge.md": "f632c74fe320aca933e2c8a45942b3482cac7c8e6c8ff97c3140716293e7a5a5",
+  "tests/Dockerfile": "13d6355662882d2e7d2b43d9fa7208d53d3b42e9ee12452cdceb95926a9580ae",
+  "tests/evaluate.py": "21db29e4039608dba94bab3cc47c52b422d92ae51296c95c7d7ff2de97643216",
+  "tests/evaluator.toml": "292e81b5b86600bc195ff53b740c646c4f45136debb59b32060b4774d3b2424c",
+  "tests/test.sh": "01a069393b659f4ba5d30544cb81f0cb72f255234df9c732e865e9aa82d43b59",
+  "environment/Dockerfile": "11c8a72e147e112487b2293e1abe2403e4ce6656aa9acf5ef213d5173bccffc9",
+  "environment/candidate_adapter.json": "a733e53ebcfd25f90aeecbed7bf3eea1824f1c2ab2a65fc9b303801307d21bdf",
+  "environment/scenario.json": "026c02d8f91b74937717751d4fb35a959e7bfdabc8dc0756af9f55427776de1a",
+  "environment/candidate_adapter.py": "4e7e22ad67a11a48396583065e926e72fad99bb6ca162c638d4a084982686ca4"
+}

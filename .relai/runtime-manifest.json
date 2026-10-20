@@ -7,7 +7,8 @@
     {"name":"RELAI_API_BASE","required":false,"sensitive":false,"reason":"Gateway URL required when AIRLINE_MODEL_PROVIDER is relai; model transport only, not an application backend."},
     {"name":"RELAI_SESSION_MODEL","required":false,"sensitive":false,"reason":"Server-pinned model name required by the existing relai provider."},
     {"name":"RELAI_TEAM_API_KEY","required":false,"sensitive":true,"reason":"Scoped gateway credential required by the existing relai provider."},
-    {"name":"OPENAI_AGENTS_DISABLE_TRACING","required":false,"sensitive":false,"reason":"Optional SDK hosted tracing control."}
+    {"name":"OPENAI_AGENTS_DISABLE_TRACING","required":false,"sensitive":false,"reason":"Optional SDK hosted tracing control."},
+    {"name":"ATIF_REDACT_ENV_VARS","required":false,"sensitive":false,"reason":"Optional comma-separated variable names for the repository recorder's additional redaction sources; contains names only."}
   ],
   "files": []
 }

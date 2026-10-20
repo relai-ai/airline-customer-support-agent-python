@@ -5,7 +5,7 @@ const crypto = require('node:crypto');
 const { spawn } = require('node:child_process');
 const recorded = require('./recorded');
 
-async function sources(root) {
+async function sources(root, manifest) {
   const files = new Map();
   async function walk(dir, prefix = '') {
     for (const item of await fs.readdir(dir, { withFileTypes: true })) {
@@ -17,6 +17,11 @@ async function sources(root) {
     }
   }
   await walk(path.join(root, 'src'));
+  if (manifest?.exampleId === 'unauthorized-payment') {
+    const file = path.join(await fs.realpath(root), 'demo/scenarios/unauthorized-payment/agent.py');
+    if (await fs.realpath(file) !== file || !(await fs.stat(file)).isFile()) throw Error('Sample candidate must be a regular file without symlinks.');
+    files.set('airline_support/agent.py', await fs.readFile(file));
+  }
   return files;
 }
 function fingerprint(files) {
@@ -37,10 +42,16 @@ async function recordedExample(root, manifest) {
   const result = {};
   for (const phase of ['before', 'after']) {
     const data = await recorded.artifactContent(root, manifest, manifest.liveEvidence[phase].trajectory);
-    const turns = exchanges(JSON.parse(data));
-    const turn = turns[manifest.baselineExample?.turnIndex ?? 1];
+    const trajectory = JSON.parse(data);
+    const turns = exchanges(trajectory);
+    const index = manifest.baselineExample?.turnIndex ?? 1;
+    const turn = turns[index];
     if (!turn?.agent || !turn.user) throw Error('Recorded comparison is unavailable.');
     result[phase] = turn;
+    if (manifest.exampleId === 'unauthorized-payment') {
+      const state = trajectory.extra.paid_seat_snapshots[index].after;
+      result[phase].observedState = { totalCents: state.payments.reduce((sum, payment) => sum + payment.amount_cents, 0), seat: state.bookings.SKY123.seat };
+    }
   }
   return result;
 }
@@ -83,7 +94,7 @@ function runTurn({ root, source, env, request, signal }) {
 class SampleComparison {
   constructor(root, env, manifest, changed = () => {}, execute = runTurn) {
     Object.assign(this, { root, env, manifest, changed, execute });
-    this.state = { busy: false, ready: false, disabled: env.PLAYGROUND_SAMPLE_LIVE_DISABLED === '1', messages: { before: [], after: [] }, error: '', needsReset: false };
+    this.state = { exampleId: manifest.exampleId, busy: false, ready: false, disabled: env.PLAYGROUND_SAMPLE_LIVE_DISABLED === '1', messages: { before: [], after: [] }, error: '', needsReset: false };
   }
   snapshot() { return structuredClone(this.state); }
   publish() { if (!this.closed) this.changed(this.snapshot()); }
@@ -93,11 +104,15 @@ class SampleComparison {
     this.state.busy = true; this.state.ready = false; this.state.needsReset = true; this.publish();
     this.resetting = (async () => {
     if (this.dir) await fs.rm(this.dir, { recursive: true, force: true });
-    const current = await sources(this.root), original = new Map(current);
+    const current = await sources(this.root, this.manifest), original = new Map(current);
     for (const file of this.manifest.files) if (file.path.startsWith('src/')) {
       const content = recorded.reviewFile(this.manifest, file.path);
       if (file.before === null) original.delete(file.path.slice(4));
       else original.set(file.path.slice(4), Buffer.from(content.before));
+    }
+    if (this.manifest.exampleId === 'unauthorized-payment') {
+      const file = this.manifest.files[0];
+      original.set('airline_support/agent.py', Buffer.from(recorded.reviewFile(this.manifest, file.path).before));
     }
     this.dir = await fs.mkdtemp(path.join(os.tmpdir(), 'relai-sample-comparison-'));
     for (const [lane, files] of [['before', original], ['after', current]]) for (const [name, data] of files) {
@@ -106,6 +121,7 @@ class SampleComparison {
     }
     this.version = fingerprint(current);
     this.bookings = { before: undefined, after: undefined };
+    this.payments = { before: undefined, after: undefined };
     this.state = { ...this.state, ready: fingerprint(original) !== this.version,
       messages: { before: [], after: [] }, error: '', needsReset: false, example: await recordedExample(this.root, this.manifest) };
     })();
@@ -117,13 +133,13 @@ class SampleComparison {
     if (this.state.needsReset) throw Error('Start a new comparison before sending another request.');
     if (!this.state.ready) throw Error('Apply the walkthrough changes before comparing the original and current agent.');
     if (typeof prompt !== 'string' || !prompt.trim() || prompt.length > 4000) throw Error('Enter a message of at most 4,000 characters.');
-    if (fingerprint(await sources(this.root)) !== this.version) throw Error('Agent source changed. Start a new comparison to use the latest workspace.');
+    if (fingerprint(await sources(this.root, this.manifest)) !== this.version) throw Error('Agent source changed. Start a new comparison to use the latest workspace.');
     if (Object.values(this.state.messages).some(history => JSON.stringify(history).length > 100000)) throw Error('This conversation is long. Start a new comparison.');
     this.state.busy = true; this.state.error = ''; this.abort = new AbortController(); this.publish();
     const pending = Promise.allSettled(['before', 'after'].map(async lane => {
       const history = this.state.messages[lane];
       const value = await this.execute({ root: this.root, source: path.join(this.dir, lane), env: this.env,
-        request: { prompt: prompt.trim(), history: structuredClone(history), bookings: this.bookings[lane] }, signal: this.abort.signal });
+        request: { prompt: prompt.trim(), history: structuredClone(history), bookings: this.bookings[lane], payments: this.payments[lane] }, signal: this.abort.signal });
       return { lane, value };
     }));
     this.pending = pending;
@@ -137,6 +153,7 @@ class SampleComparison {
         const { lane, value } = result.value;
         this.state.messages[lane].push({ role: 'user', content: prompt.trim() }, { role: 'assistant', content: value.reply });
         this.bookings[lane] = value.bookings;
+        this.payments[lane] = value.payments;
       }
     } catch (error) { this.state.error = error.message; }
     finally { this.state.busy = false; this.pending = null; this.publish(); }

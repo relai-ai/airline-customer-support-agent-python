@@ -6,6 +6,31 @@ const path=require('node:path');
 const {execFileSync}=require('node:child_process');
 const {SampleComparison,recordedExample,runTurn}=require('./sample-agent');
 const recorded=require('./recorded');
+test('payment comparison uses the isolated candidate and retains separate ledgers across turns',async t=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'payment-comparison-'));
+ t.after(()=>fs.rm(root,{recursive:true,force:true}));
+ await fs.mkdir(path.join(root,'src/airline_support'),{recursive:true});
+ await fs.mkdir(path.join(root,'demo/scenarios/unauthorized-payment'),{recursive:true});
+ await fs.writeFile(path.join(root,'src/airline_support/agent.py'),'original booking agent');
+ await fs.writeFile(path.join(root,'demo/scenarios/unauthorized-payment/agent.py'),'fixed payment agent');
+ const manifest={exampleId:'unauthorized-payment',files:[{path:'demo/scenarios/unauthorized-payment/agent.py',
+  before:recorded.digest('faulty payment agent'),after:recorded.digest('fixed payment agent'),
+  beforeContent:'faulty payment agent',afterContent:'fixed payment agent'}]};
+ const calls=[];
+ const c=new SampleComparison(root,{},manifest,()=>{},async({source,request})=>{
+  const lane=path.basename(source);calls.push({lane,request:structuredClone(request)});
+  return{reply:lane,bookings:{SKY123:{seat:lane}},payments:[{id:lane}]};
+ });
+ t.after(()=>c.close());await c.reset();
+ assert.equal(await fs.readFile(path.join(c.dir,'before/airline_support/agent.py'),'utf8'),'faulty payment agent');
+ assert.equal(await fs.readFile(path.join(c.dir,'after/airline_support/agent.py'),'utf8'),'fixed payment agent');
+ await c.send('first');await c.send('second');
+ assert.deepEqual(calls[2].request.payments,[{id:'before'}]);
+ assert.deepEqual(calls[3].request.payments,[{id:'after'}]);
+ assert.equal(await fs.readFile(path.join(root,'src/airline_support/agent.py'),'utf8'),'original booking agent');
+ await fs.writeFile(path.join(root,'demo/scenarios/unauthorized-payment/agent.py'),'another payment edit');
+ await assert.rejects(c.send('third'),/source changed/);
+});
 async function fixture(run,options={}){
  const root=await fs.mkdtemp(path.join(os.tmpdir(),'sample-panel-test-'));
  await fs.mkdir(path.join(root,'src/airline_support'),{recursive:true});

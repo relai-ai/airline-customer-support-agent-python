@@ -1,0 +1,6 @@
+{"elapsed_s":36,"event":"activity","label":"Updating workspace files","schema_version":"relai.progress.v1","workflow":"wiki_bootstrap"}
+{"elapsed_s":37,"event":"activity","label":"Validating work","schema_version":"relai.progress.v1","workflow":"wiki_bootstrap"}
+{"elapsed_s":37,"event":"milestone","label":"Validation completed","schema_version":"relai.progress.v1","workflow":"wiki_bootstrap"}
+{"elapsed_s":37,"event":"activity","label":"Continuing agent work","schema_version":"relai.progress.v1","workflow":"wiki_bootstrap"}
+{"elapsed_s":43,"event":"activity","label":"Recording agent findings","schema_version":"relai.progress.v1","workflow":"wiki_bootstrap"}
+{"elapsed_s":43,"event":"finished","exit_code":0,"outcome":"completed","schema_version":"relai.progress.v1","workflow":"wiki_bootstrap"}

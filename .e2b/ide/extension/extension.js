@@ -49,8 +49,9 @@ function activate(context) {
     const env = JSON.parse(
       await fs.readFile("/home/user/.playground/environment.json", "utf8"),
     );
-    const recordingKey =
-      "relai.playground.recording." + env.PLAYGROUND_SESSION_ID;
+    const example = env.PLAYGROUND_EXAMPLE || "booking";
+    const sessionId = env.PLAYGROUND_SESSION_ID + (example === "booking" ? "" : ":" + example);
+    const recordingKey = "relai.playground.recording." + sessionId;
     const root = "/home/user/airline";
     if (env.PLAYGROUND_ASSISTANT_ENGINE !== "codex")
       throw Error("This Python playground requires the Codex runtime. Start a newly configured session.");
@@ -91,8 +92,8 @@ function activate(context) {
         if (!compacted && groups?.length === 2 && groups.every(group => group.tabs.length === 1 &&
             ["Codex + RELAI", "Try SkyServe"].includes(group.tabs[0].label))) {
           compacted = true;
-          void vscode.commands.executeCommand("workbench.action.setEditorLayout", {
-            orientation: 0, groups: [{ size: 0.7 }, { size: 0.3 }],
+          void vscode.commands.executeCommand("vscode.setEditorLayout", {
+            orientation: 0, groups: [{ size: 0.75 }, { size: 0.25 }],
           }).catch(() => {});
         }
       };
@@ -132,12 +133,12 @@ function activate(context) {
       try {
         // Explicit action allowlist. Webview cannot choose URLs, paths or credentials.
         if (msg.action === "load") {
-          recording = await recorded.loadRecording(root);
+          recording = await recorded.loadRecording(root, example);
           await codex.restore();
           const investigation = { investigation: codex.snapshot() };
           current.webview.postMessage({
             type: "loaded",
-            sessionId: env.PLAYGROUND_SESSION_ID,
+            sessionId,
             recording,
             recordedProgress: context.workspaceState.get(recordingKey, 0),
             ...investigation,
@@ -183,7 +184,7 @@ function activate(context) {
           ["source", "relai", "project", "wiki", "tests", "harbor"].includes(msg.folder)
         ) {
           const folders = {
-            source: "src/airline_support",
+            source: recording?.exampleId === "unauthorized-payment" ? "demo/scenarios/unauthorized-payment/agent.py" : "src/airline_support",
             relai: ".relai",
             project: ".",
             wiki: ".relai/evals-wiki",

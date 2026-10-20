@@ -1,0 +1,71 @@
+{
+  "evidence_id": "7d023024-317c-529c-bbc8-312d78ccf404",
+  "outcome": {
+    "changed_paths": [
+      "requirements/paid-seat-purchase-consent.md",
+      "requirements/paid-seat-purchase-once.md",
+      "index.md"
+    ],
+    "rationale": "Added two independently changeable, documented behavioral obligations for the isolated synthetic paid-seat candidate: explicit approval of booking/seat/price before charge or seat mutation, and exactly-once approved purchase with truthful status reporting. Updated the topical index while preserving existing pages and artifact-owned tests. Scoped the candidate separately from the original free seat-change benchmark; distinguished the injected prompt defect and offline helper tests from measured conversational failures. Validation passed with no issues. Bounded bootstrap coverage: inspected inventory pages spanning integration files, root docs/instructions/config, source and tests; read README, AGENTS (excluding managed RELAI policy as requirement evidence), main agent, candidate documentation and relevant candidate source, payment helper/tests, benchmark CSV and pyproject. Searched and inspected existing Wiki knowledge before editing. Reviewed eight recent Git subjects and the latest full patch; discovered 16 local log entries and read one aggregate smoke result, which does not substantiate payment-consent behavior. Registered local RELAI artifacts were unavailable/empty; both associated Codex sessions yielded no conversational messages. Omitted exhaustive dependency/cache inventory, older history, remaining integration/recorded evidence and remaining logs; no model run or test execution was performed, and no unmeasured failure was marked confirmed. No material unresolved intent question required a new open-question page.",
+    "status": "updated"
+  },
+  "schema_version": "relai.agent_interaction.v1",
+  "session_id": "20261020T032048.572Z-62942",
+  "status": "completed",
+  "summary": {
+    "agent_response_markdown": "Wiki bootstrapped\n\nSummary\n- Status: updated\n- Changed Wiki pages: 3\n- Sources: repository files, Git history, RELAI run logs\n- Changed page examples: requirements/paid-seat-purchase-consent.md; requirements/paid-seat-purchase-once.md; index.md\n- Summary: Added two independently changeable, documented behavioral obligations for the isolated synthetic paid-seat candidate: explicit approval of booking/seat/price before charge or seat mutation, and exactly-once approved purchase with truthful status reporting. Updated the topical index while preserving existing pages and artifact-owned tests. Scoped the candidate separately from the original free seat-change benchmark; distinguished the injected prompt defect and offline helper tests from measured conversational failures. Validation passed with no issues. Bounded bootstrap coverage: inspected inventory pages spanning integration files, root docs/instructions/config, source and tests; read README, AGENTS (excluding managed RELAI policy as requirement evidence), main agent, candidate documentation and relevant candidate source, payment helper/tests, benchmark CSV and pyproject. Searched and inspected existing Wiki knowledge before editing. Reviewed eight recent Git subjects and the latest full patch; discovered 16 local log entries and read one aggregate smoke result, which does not substantiate payment-consent behavior. Registered local RELAI artifacts were unavailable/empty; both associated Codex sessions yielded no conversational messages. Omitted exhaustive dependency/cache inventory, older history, remaining integration/recorded evidence and remaining logs; no model run or test execution was performed, and no unmeasured failure was marked confirmed. No material unresolved intent question required a new open-question page.\n\nSuggested next steps, when you're ready\n\n- Review updated project knowledge\n  > Show me the updated EvalsWiki requirements, requirements without tests, and remaining open questions.\n\n- Generate agent tests from project knowledge\n  > Help me choose requirements from EvalsWiki and create agent tests for them, prioritizing requirements without tests.\n\n- Ask RELAI to search for failure-revealing tests\n  > Use RELAI to discover 3 challenging agent tests for potential risks, and let me review the proposed tests.",
+    "items": [
+      {
+        "label": "Status",
+        "value": "updated"
+      },
+      {
+        "label": "Changed Wiki pages",
+        "value": "3"
+      },
+      {
+        "label": "Sources",
+        "value": "repository files, Git history, RELAI run logs"
+      },
+      {
+        "label": "Changed page examples",
+        "value": "requirements/paid-seat-purchase-consent.md; requirements/paid-seat-purchase-once.md; index.md"
+      },
+      {
+        "label": "Summary",
+        "value": "Added two independently changeable, documented behavioral obligations for the isolated synthetic paid-seat candidate: explicit approval of booking/seat/price before charge or seat mutation, and exactly-once approved purchase with truthful status reporting. Updated the topical index while preserving existing pages and artifact-owned tests. Scoped the candidate separately from the original free seat-change benchmark; distinguished the injected prompt defect and offline helper tests from measured conversational failures. Validation passed with no issues. Bounded bootstrap coverage: inspected inventory pages spanning integration files, root docs/instructions/config, source and tests; read README, AGENTS (excluding managed RELAI policy as requirement evidence), main agent, candidate documentation and relevant candidate source, payment helper/tests, benchmark CSV and pyproject. Searched and inspected existing Wiki knowledge before editing. Reviewed eight recent Git subjects and the latest full patch; discovered 16 local log entries and read one aggregate smoke result, which does not substantiate payment-consent behavior. Registered local RELAI artifacts were unavailable/empty; both associated Codex sessions yielded no conversational messages. Omitted exhaustive dependency/cache inventory, older history, remaining integration/recorded evidence and remaining logs; no model run or test execution was performed, and no unmeasured failure was marked confirmed. No material unresolved intent question required a new open-question page."
+      }
+    ],
+    "next_steps": [
+      {
+        "commands": [
+          "relai wiki list requirements",
+          "relai wiki list requirements --without-tests",
+          "relai wiki list open-questions"
+        ],
+        "label": "Review updated project knowledge",
+        "note": "Inspect the current EvalsWiki state.",
+        "prompt": "Show me the updated EvalsWiki requirements, requirements without tests, and remaining open questions."
+      },
+      {
+        "commands": [
+          "relai wiki list requirements --create-test",
+          "relai wiki list requirements --without-tests --create-test"
+        ],
+        "label": "Generate agent tests from project knowledge",
+        "note": "Create tests for known or uncovered requirements.",
+        "prompt": "Help me choose requirements from EvalsWiki and create agent tests for them, prioritizing requirements without tests."
+      },
+      {
+        "commands": [
+          "relai test discover --count 3"
+        ],
+        "label": "Ask RELAI to search for failure-revealing tests",
+        "note": "Create challenging tests for different potential risks, to reveal current agent failures or increase test coverage. Add --no-review to skip human review.",
+        "prompt": "Use RELAI to discover 3 challenging agent tests for potential risks, and let me review the proposed tests."
+      }
+    ],
+    "title": "Wiki bootstrapped"
+  },
+  "workflow": "wiki_update"
+}

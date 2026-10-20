@@ -1,0 +1,19 @@
+{
+  "argv": [
+    "relai",
+    "simulate",
+    "--tests",
+    "skyserve-payment-consent-dialogue",
+    "--agent-interaction",
+    "--wait",
+    "20s",
+    "--result-json",
+    "/private/tmp/payment-final-independent-suite.json"
+  ],
+  "exitCode": 0,
+  "durationSeconds": 33,
+  "protocolPath": "demo/scenarios/unauthorized-payment/recorded/verify-protocol.json",
+  "candidateSha256": "4de96cfa0ffccdbaad6a923ace5ebc35e6b82db74ed510e0f003b75147731dc3",
+  "workflowCliVersion": "0.2.10+997cefe2fc9f",
+  "independentCheckout": true
+}

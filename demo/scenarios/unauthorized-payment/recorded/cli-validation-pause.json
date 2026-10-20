@@ -1,0 +1,32 @@
+{
+  "schema_version": "relai.agent_interaction.v1",
+  "status": "action_required",
+  "workflow": "learning_env_create",
+  "session_id": "20261020T032138.800Z-63130",
+  "request": {
+    "kind": "external_action",
+    "id": "call_yu8lYfHS4O8h7EM4ziwk1oMn",
+    "category": "other manual action",
+    "summary": "Full Harbor validation is blocked by a reproducible static metadata error: the CLI reports 'component Harbor metadata ... requires target_import_path' although the field exists. Both the file path and dotted entrypoint forms produced the identical error before any trial. No model failure has been measured.",
+    "steps": [
+      "Repair or update the RELAI CLI static Harbor metadata validator to support target_type = \"agent\" with component_adapter_asset, as permitted by the agent-test contract, and to retain/read its target_import_path.",
+      "Inspect the staged task.toml at .relai/harbor/agent-tests/.stage-20261020T032138.800Z-63130: [metadata.relai] already declares target_import_path = \"paid_seat_candidate.stream_agent_response\" and component_adapter_asset = \"environment/candidate_adapter.json\". The adapter explicitly imports only /workspace/demo/scenarios/unauthorized-payment/agent.py.",
+      "Preserve the task's six-turn scenario, frozen ledger criteria, independent positive-control reset, candidate instruction defect, original agent, synthetic payment helper, and existing demo recordings. The reported static error must be resolved without relabeling this whole-agent test as a component test or removing its candidate adapter."
+    ],
+    "verification": {
+      "kind": "simulator_validation",
+      "mode": "full"
+    },
+    "choices": [
+      "completed",
+      "decline"
+    ]
+  },
+  "resume_argv": [
+    "relai",
+    "test",
+    "create",
+    "--resume",
+    "--agent-interaction"
+  ]
+}

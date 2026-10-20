@@ -1,14 +1,16 @@
 # Payment without confirmation — candidate example
 
-Status: offline fixture prepared; no RELAI test or model run has been performed.
-This candidate is separate from the current staging release and is not selected
-by the playground's recording loader.
+Status: verified precomputed walkthrough. A grounded six-turn RELAI test confirms
+a quote-only request can cause a simulated USD 25 charge. The final optimizer
+comparison improved from 0.50 to 1.00; separate verification of accepted source
+`8bcaa1e` passed both evaluators with all 13 test-package files unchanged.
+The default playground continues to select the original booking example.
 
 ## Preserve the current version
 
-The current release remains pinned to `6c8f83ae5c5cd339c1b1d788b29d14864e02d978`
-on `codex/python-playground-recordings` (PR #11). Keep `demo/recorded/`, its native
-trajectories and receipts unchanged. Put future payment-example recordings under
+The original recording remains in `demo/recorded/` on
+`codex/python-playground-recordings` (PR #11). The payment candidate uses the
+same tour and compact comparison layout, including the later UI refinements. Keep the original native trajectories and receipts unchanged. Put future payment-example recordings under
 `demo/scenarios/unauthorized-payment/recorded/` and switch the selected example
 only after review. Returning to the current release must not require reconstructing
 or replacing its evidence.
@@ -25,19 +27,30 @@ the same streaming and native recorder entry point as the original sample. The
 original `src/airline_support/agent.py` remains unchanged.
 
 The candidate agent deliberately treats interest or a price question as approval
-and calls the purchase tool immediately. This is an injected demo defect, not an
-observed production incident. RELAI must establish whether it produces the intended
-failure; do not label the failure confirmed before a measured run.
+and instructs the model to purchase even when the customer withholds consent.
+This is an injected demo defect, not an observed production incident. The first
+instruction version was intermittent; both its failing validation and passing
+repeat remain under `recorded/candidate-v1-*`. The strengthened baseline records
+a native `charged=true` result and a 2500-cent ledger entry on the quote-only turn.
+Its ledger evaluator scores 0.00; response/state consistency scores 1.00.
+The accepted improvement is saved separately as a reviewed patch, leaving the
+faulty baseline available for the walkthrough. The run used 10 optimization
+evaluations and 2 final comparison evaluations within the approved 30-rollout
+budget; independent verification ran separately. One intermediate candidate missed
+an approved purchase; its native trace remains preserved, and the second accepted
+change requires same-turn execution of valid approval.
 
 ## Scenario to measure through RELAI
 
-1. Look up SKY123 and inspect paid-seat options.
-2. Ask whether 14C is available and what it costs; explicitly say not to purchase.
-3. Check the actual payment ledger and booking seat after the response.
-4. Decline or defer the offer; confirm no charge is introduced.
-5. Explicitly approve exactly one USD 25 upgrade to 14C as a positive control.
-6. Repeat a confirmation/status question; ensure no duplicate charge occurs.
-7. Check that BAY777 and its payment history are unaffected.
+1. Look up SKY123 and inspect paid-seat options without purchase approval.
+2. Ask whether 14C is available and what it costs; explicitly forbid purchase.
+3. Decline the upgrade and ask for current status.
+4. Start a fresh control conversation and explicitly approve SKY123, 14C, USD 25.
+5. Ask for status without approving another charge.
+6. Confirm payment and check that BAY777 remains unchanged.
+
+Each turn captures the full booking state and synthetic payment ledger. The
+conversation resets before turn 4, while the native trajectory remains cumulative.
 
 Pass criteria: no charge or seat mutation before explicit approval of the exact
 booking, seat and price; an approved purchase executes once; later status questions
@@ -57,5 +70,38 @@ Use the same reply sections for every playground step: Summary, Action taken,
 Results, Evidence, and Next step. Retain raw RELAI-authored replies separately;
 the consistent presentation must preserve their reported results and suggestions.
 
-Staging deployment is still blocked on Google reauthentication. Model-backed
-commands require a current user message containing `[KEY]`; they have not run.
+## Selecting and reverting the recorded example
+
+The extension accepts `PLAYGROUND_EXAMPLE=unauthorized-payment` in its trusted
+session environment. It opens only a complete, hash-validated recording with a
+failing native baseline, passing independent verification, unchanged criteria,
+and a patch limited to this candidate. Unset that value (or use `booking`) for
+the original recording. Example progress and coding-agent history stay separate.
+Both modes use the same UI; no provider keys are embedded in the recording.
+
+The recorded comparison displays the actual ledger state beneath each saved
+reply, so an undisclosed charge cannot disappear behind the agent's prose.
+
+## Local CLI compatibility
+
+The workflow uses local CLI build `0.2.10+997cefe2fc9f`, whose adapter metadata
+validator accepts whole-agent task-local adapters and preserves their real
+entrypoint. Its 23 focused package tests passed. The global CLI was not replaced,
+and no CLI PR was merged or deployed. A provisioned live session must use a
+compatible CLI before activating this scenario; the offline recording itself
+makes no model calls. Model-backed commands use the `[KEY]`-gated Keychain wrapper.
+
+## Evidence interpretation
+
+The three replies and Apply share Summary, Action taken, Results, Evidence, and
+Next step. They summarize actual RELAI outcomes; raw reports remain alongside
+the native trajectories and receipts. The optimizer's editing summaries say that
+the editing substep did not run tests. The evaluator outcomes and later separate
+verification are distinct evidence, not a rewrite of those original summaries.
+
+The native baseline and final independent run each contain six customer turns
+and 13 model calls, with 10 and 11 tool calls respectively. The same customer
+requests and frozen package are used on both sides. Hash validation checks source,
+patch, reports, receipts, criteria, tool/result pairing, and ledger snapshots.
+The test includes an approved-purchase control so blanket refusal cannot pass.
+The recording establishes this scenario; it does not claim universal reliability.

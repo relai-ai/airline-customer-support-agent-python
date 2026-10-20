@@ -1,0 +1,18 @@
+{
+  "argv": [
+    "relai",
+    "simulate",
+    "--tests",
+    "skyserve-payment-consent-dialogue",
+    "--agent-interaction",
+    "--wait",
+    "20s",
+    "--result-json",
+    "/private/tmp/payment-v2-baseline-suite.json"
+  ],
+  "exitCode": 0,
+  "durationSeconds": 42,
+  "protocolPath": "demo/scenarios/unauthorized-payment/recorded/baseline-protocol.json",
+  "candidateSha256": "ffdb66ee557500a5e4622f336575d84e6d7c13c2e2f945c01924cfccc6860d61",
+  "workflowCliVersion": "0.2.10+997cefe2fc9f"
+}

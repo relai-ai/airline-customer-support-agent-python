@@ -26,7 +26,7 @@ const livePrompts = [
 const digest = (data) => crypto.createHash("sha256").update(data).digest("hex");
 async function regular(root, name) {
   if (
-    !/^((?:src\/airline_support\/[a-zA-Z0-9_-]+\.py|tests\/test_[a-zA-Z0-9_-]+\.py)|demo\/recorded\/[a-zA-Z0-9_.-]+)$/.test(
+    !/^((?:src\/airline_support\/[a-zA-Z0-9_-]+\.py|tests\/test_[a-zA-Z0-9_-]+\.py)|demo\/recorded\/[a-zA-Z0-9_.-]+|demo\/scenarios\/unauthorized-payment\/(?:agent\.py|recorded\/[a-zA-Z0-9_.-]+))$/.test(
       name,
     )
   )
@@ -38,7 +38,9 @@ async function regular(root, name) {
     throw Error("Recorded artifacts must be regular files");
   return fs.readFile(file);
 }
-async function loadRecording(root) {
+async function loadRecording(root, example = "booking") {
+  if (example === "unauthorized-payment") return require("./scenario-recording").load(root);
+  if (example !== "booking") throw Error("Unknown playground example");
   const manifest = JSON.parse(
     await regular(root, "demo/recorded/walkthrough.json"),
   );
@@ -482,13 +484,13 @@ async function applyRecording(root, manifest) {
     throw Error(
       "Independent verification is pending. The recorded patch cannot be applied yet.",
     );
-  const patch = await regular(root, "demo/recorded/verified.patch");
+  const patch = await regular(root, manifest.patchPath || "demo/recorded/verified.patch");
   if (digest(patch) !== manifest.patchSha256)
     throw Error("Recorded patch integrity check failed");
   let before = true,
     after = true;
   for (const file of manifest.files) {
-    if (!/^(?:src\/airline_support\/[a-zA-Z0-9_-]+\.py|tests\/test_[a-zA-Z0-9_-]+\.py)$/.test(file.path))
+    if (!sourcePath(file.path, manifest))
       throw Error("Only recorded agent code can be applied");
     let hash;
     try {
@@ -521,7 +523,7 @@ async function applyRecording(root, manifest) {
     )
   )
     throw Error("Recorded patch contains an unexpected file");
-  const patchFile = path.join(root, "demo/recorded/verified.patch");
+  const patchFile = path.join(root, manifest.patchPath || "demo/recorded/verified.patch");
   await exec("git", ["apply", "--check", "--", patchFile], { cwd: root });
   await exec("git", ["apply", "--", patchFile], { cwd: root });
   for (const file of manifest.files)
@@ -531,9 +533,14 @@ async function applyRecording(root, manifest) {
     ? "Applied the recorded candidate to this workspace. Evaluation results remain mixed; review the recorded limitations."
     : "Applied the recorded, verified improvement to this workspace. New requests now use these files.";
 }
+function sourcePath(name, manifest) {
+  return manifest.exampleId === "unauthorized-payment"
+    ? name === "demo/scenarios/unauthorized-payment/agent.py"
+    : /^(?:src\/airline_support\/[a-zA-Z0-9_-]+\.py|tests\/test_[a-zA-Z0-9_-]+\.py)$/.test(name);
+}
 function reviewFile(manifest, name) {
   const file = manifest.files.find((item) => item.path === name);
-  if (!file || !/^(?:src\/airline_support\/[a-zA-Z0-9_-]+\.py|tests\/test_[a-zA-Z0-9_-]+\.py)$/.test(name))
+  if (!file || !sourcePath(name, manifest))
     throw Error("This file is not part of the recorded change");
   if (
     typeof file.beforeContent !== "string" ||

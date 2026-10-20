@@ -1,0 +1,2 @@
+{"elapsed_s":178,"event":"activity","label":"Recording agent findings","schema_version":"relai.progress.v1","workflow":"init"}
+{"elapsed_s":178,"event":"finished","exit_code":0,"outcome":"completed","schema_version":"relai.progress.v1","workflow":"init"}

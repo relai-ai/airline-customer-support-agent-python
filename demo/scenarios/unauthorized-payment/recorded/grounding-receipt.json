@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "relai",
+    "wiki",
+    "bootstrap",
+    "--agent-interaction",
+    "--wait",
+    "20s"
+  ],
+  "exitCode": 0,
+  "durationSeconds": 43,
+  "protocolPath": "demo/scenarios/unauthorized-payment/recorded/grounding-protocol.json",
+  "workflowCliVersion": "0.2.10+fc444eb4e0f3"
+}

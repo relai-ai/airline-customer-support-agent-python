@@ -20,6 +20,7 @@ COPY src/ ./src/
 COPY tests/ ./tests/
 COPY benchmarks/ ./benchmarks/
 COPY demo/recorded/ ./demo/recorded/
+COPY demo/scenarios/ ./demo/scenarios/
 # Public RELAI test definitions only. Never include local auth/config or run state.
 COPY .relai/harbor/ ./.relai/harbor/
 COPY .relai/evals-wiki/ ./.relai/evals-wiki/

@@ -1,0 +1,13 @@
+{
+  "argv": [
+    "relai",
+    "test",
+    "create",
+    "--resume",
+    "--agent-interaction"
+  ],
+  "exitCode": 0,
+  "durationSeconds": 80,
+  "protocolPath": "demo/scenarios/unauthorized-payment/recorded/test-protocol.json",
+  "workflowCliVersion": "0.2.10+997cefe2fc9f"
+}

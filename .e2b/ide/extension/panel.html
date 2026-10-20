@@ -16,7 +16,7 @@
         height: 100vh;
         display: flex;
         flex-direction: column;
-        font: 14px/1.55 var(--vscode-font-family);
+        font: 16px/1.55 var(--vscode-font-family);
         color: var(--vscode-foreground);
         background: var(--vscode-editor-background);
       }
@@ -33,15 +33,15 @@
         gap: 16px;
       }
       h1 {
-        font-size: 18px;
+        font-size: 20px;
         margin: 0;
       }
       h2 {
-        font-size: 18px;
+        font-size: 20px;
         margin: 0 0 12px;
       }
       h3 {
-        font-size: 14px;
+        font-size: 16px;
         margin: 18px 0 8px;
       }
       p {
@@ -116,7 +116,7 @@
       }
       .badge {
         display: inline-block;
-        font-size: 11px;
+        font-size: 13px;
         border: 1px solid var(--vscode-panel-border);
         border-radius: 20px;
         padding: 3px 9px;
@@ -131,7 +131,7 @@
         width: 100%;
         min-width: 700px;
         border-collapse: collapse;
-        font-size: 12px;
+        font-size: 14px;
       }
       .risk-inventory caption {
         text-align: left;
@@ -149,7 +149,7 @@
         min-width: 130px;
       }
       pre {
-        font: 12px/1.6 var(--vscode-editor-font-family);
+        font: 14px/1.6 var(--vscode-editor-font-family);
         background: var(--vscode-textCodeBlock-background);
         white-space: pre-wrap;
         overflow-wrap: anywhere;
@@ -229,7 +229,7 @@
         gap: 4px 16px;
         flex-wrap: wrap;
         margin-top: 0;
-        font-size: 12px;
+        font-size: 14px;
       }
       .suggestions .link {
         padding: 2px 0;
@@ -262,7 +262,7 @@
         background: var(--vscode-list-hoverBackground);
       }
       .folder-card code {
-        font: 11px var(--vscode-editor-font-family);
+        font: 13px var(--vscode-editor-font-family);
         overflow-wrap: anywhere;
       }
       .recorded-table { overflow-x: auto; }
@@ -277,14 +277,14 @@
       }
       .assistant-label {
         font-weight: 600;
-        font-size: 12px;
+        font-size: 14px;
       }
       .composer-context .badge {
         margin: 0;
       }
       #run-notice {
         color: var(--vscode-descriptionForeground);
-        font-size: 12px;
+        font-size: 14px;
         line-height: 1.45;
         margin: 0 0 6px;
       }
@@ -296,7 +296,7 @@
         border-left: 3px solid var(--vscode-focusBorder);
         border-radius: 4px;
         padding: 6px 10px;
-        font-size: 12px;
+        font-size: 14px;
         line-height: 1.4;
       }
       .prompt-box {
@@ -356,7 +356,7 @@
       .result-highlight strong {
         display: block;
         margin-top: 5px;
-        font-size: 16px;
+        font-size: 18px;
       }
       .result-highlight[data-tone="failure"] {
         border-left: 3px solid var(--vscode-errorForeground);
@@ -449,6 +449,7 @@
         margin: 20px 0 8px;
       }
       .tour-card {
+        font: 14px/1.55 var(--vscode-font-family);
         position: fixed;
         z-index: 100;
         width: min(340px, calc(100vw - 32px));
@@ -463,7 +464,7 @@
       .tour-card[data-arrow="right"]::after { right: -7px; top: 28px; border-bottom: 0; border-left: 0; }
       .tour-card[data-arrow="down"]::after { bottom: -7px; left: 28px; border-top: 0; border-left: 0; }
       .tour-card[data-arrow="up"]::after { top: -7px; left: 28px; border-bottom: 0; border-right: 0; }
-      .tour-marker { position: fixed; z-index: 101; width: 24px; height: 24px; border-radius: 50%; background: var(--vscode-button-background); color: var(--vscode-button-foreground); text-align: center; font-weight: 600; line-height: 24px; pointer-events: none; }
+      .tour-marker { font-size: 14px; position: fixed; z-index: 101; width: 24px; height: 24px; border-radius: 50%; background: var(--vscode-button-background); color: var(--vscode-button-foreground); text-align: center; font-weight: 600; line-height: 24px; pointer-events: none; }
       [hidden] { display: none !important; }
       .tour-meta { display: flex; flex-wrap: wrap; gap: 4px 16px; justify-content: space-between; }
       .tour-card h2 { margin: 6px 0; font-size: 16px; }
@@ -495,8 +496,8 @@
     <main class="content" id="content">
       <section class="intro">
         <div class="badge">Agent repository · RELAI initialized</div>
-        <h2>Meet SkyServe, your airline support agent</h2>
-        <p>
+        <h2 id="agent-intro-title">Meet SkyServe, your airline support agent</h2>
+        <p id="agent-intro-copy">
           This is the agent’s actual repository. SkyServe looks up bookings and
           changes seats using Python tools. RELAI is already initialized here to
           find risks, create evaluations, simulate conversations and improve the
@@ -505,16 +506,16 @@
         <p class="muted">Click a card to open its folder in the Explorer.</p>
         <div class="folders" id="explore-cards">
           <button class="folder-card" data-folder="source" aria-label="Open agent source folder in Explorer">
-            <strong>Agent source</strong><code>src/airline_support/</code>
-            <small>Agent instructions, booking state and Python tools.</small>
+            <strong>Agent source</strong><code id="agent-source-path">src/airline_support/</code>
+            <small id="agent-source-hint">Agent instructions, booking state and Python tools.</small>
           </button>
           <button class="folder-card" data-folder="wiki" aria-label="Open Evals Wiki folder in Explorer">
             <strong>Evals Wiki</strong><code>.relai/evals-wiki/</code>
             <small>Requirements, risks and findings.</small>
           </button>
-          <button class="folder-card" data-folder="harbor" aria-label="Open Agent tests folder in Explorer">
-            <strong>Agent tests</strong><code>.relai/harbor/</code>
-            <small>Evaluations, simulators and evaluators.</small>
+          <button class="folder-card" data-folder="tests" aria-label="Open Agent tests folder in Explorer">
+            <strong>Agent tests</strong><code>.relai/harbor/agent-tests/</code>
+            <small>Repeatable scenarios and their evaluators.</small>
           </button>
         </div>
         <p class="muted">
@@ -654,7 +655,7 @@
         const waitingForResults = tourStep === 2 && (!recording || progress < 4 || Boolean(replayPending));
         el("tour-next").disabled = waitingForResults;
         el("tour-next").textContent = tourStep === 2
-          ? waitingForResults ? "Send the prepared prompt below" : "Continue"
+          ? waitingForResults ? "Send the prompts" : "Continue"
           : tourStep === tourCards.length - 1 ? "Start exploring" : "Next";
         el("tour-back").hidden = tourStep === 0;
         if (focus && tourStep === 0) el("explore-cards").scrollIntoView({ block: "center" });
@@ -1028,8 +1029,8 @@
         if (recorded && !replayPending) el("prompt").value = preset;
         el("run-notice").textContent = recorded
           ? progress === 3
-            ? "Apply the recorded changes to this workspace. This step makes no live model calls."
-            : "These prompts replay saved Codex + RELAI responses. No live model calls are made."
+            ? "Apply the saved fix to this workspace."
+            : "Saved responses · send the prepared prompts to continue."
           : recording
             ? ""
             : "Loading recorded walkthrough…";
@@ -1040,7 +1041,7 @@
           recording.verificationStatus === "pending";
         const remainingSteps = Math.max(0, 4 - progress);
         el("mode").textContent = recorded
-          ? "Recorded walkthrough · " + remainingSteps + (remainingSteps === 1 ? " step" : " steps") + " to live mode"
+          ? "Off-line mode · " + remainingSteps + (remainingSteps === 1 ? " step" : " steps") + " to live mode"
           : recording ? "Live mode · write your own prompt" : "Loading recorded walkthrough…";
         el("mode").hidden = false;
         const actionLabel = replayPending
@@ -1288,6 +1289,13 @@
         }
         if (d.type === "loaded") {
           recording = { ...d.recording, prompts: d.recording.prompts.map(recordedPromptText) };
+          if (recording.exampleId === "unauthorized-payment") {
+            tourCards[1][1] = 'The right panel compares the original agent’s response with the recorded fix for the same payment request.';
+            el('agent-intro-title').textContent = 'When a quote becomes a $25 charge';
+            el('agent-source-path').textContent = 'demo/scenarios/unauthorized-payment/agent.py';
+            el('agent-source-hint').textContent = 'The isolated paid-seat agent and its instructions.';
+            el('agent-intro-copy').textContent = 'SkyServe’s paid-seat flow has a deliberate consent bug. Follow RELAI from risk to test to verified fix. All charges are simulated.';
+          }
           progress = d.recordedProgress;
           if (!tourComplete && tourStep === 3 && progress < 4) tourStep = 2;
           sessionId = d.sessionId;

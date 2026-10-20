@@ -3,8 +3,8 @@ const fs = require("node:fs/promises");
 const path = require("node:path");
 const { loadRecording, reviewFile, digest } = require("./recorded");
 
-async function validate(root) {
-  const recording = await loadRecording(root);
+async function validate(root, example = "booking") {
+  const recording = await loadRecording(root, example);
   if (recording.verificationStatus !== "verified" && !(recording.schemaVersion === 3 && recording.verificationStatus === "mixed"))
     throw Error(
       "Independent verification must finish before building the release template",
@@ -32,7 +32,13 @@ async function validate(root) {
 }
 
 if (require.main === module) {
-  validate(process.argv[2] || process.cwd()).catch((error) => {
+  const root = process.argv[2] || process.cwd();
+  (async () => {
+    await validate(root);
+    try { await fs.access(path.join(root, 'demo/scenarios/unauthorized-payment/recorded/walkthrough.json')); }
+    catch (error) { if (error.code === 'ENOENT') return; throw error; }
+    await validate(root, 'unauthorized-payment');
+  })().catch((error) => {
     console.error(error.message);
     process.exitCode = 1;
   });

@@ -1,0 +1,47 @@
+{
+  "schema_version": "relai.agent_interaction.v1",
+  "status": "completed",
+  "workflow": "learning_env_create",
+  "session_id": "20261020T032138.800Z-63130",
+  "summary": {
+    "title": "Agent test created",
+    "items": [
+      {
+        "label": "Agent test",
+        "value": "skyserve-payment-consent-dialogue"
+      }
+    ],
+    "next_steps": [
+      {
+        "label": "Run this agent test",
+        "prompt": "Run the agent test skyserve-payment-consent-dialogue with RELAI and summarize the results.",
+        "commands": [
+          "relai simulate --tests skyserve-payment-consent-dialogue"
+        ]
+      },
+      {
+        "label": "Improve the agent using this agent test",
+        "prompt": "Use RELAI to optimize the agent against the agent test skyserve-payment-consent-dialogue and its evaluator feedback.",
+        "commands": [
+          "relai optimize --tests skyserve-payment-consent-dialogue"
+        ]
+      },
+      {
+        "label": "Improve the agent using the current project scope",
+        "prompt": "Use RELAI to optimize this agent using all configured agent tests and benchmarks for this project.",
+        "commands": [
+          "relai optimize"
+        ],
+        "note": "Optimize using all configured agent tests and benchmarks for this project."
+      },
+      {
+        "label": "Create another agent test",
+        "prompt": "Help me create another agent test with RELAI from a behavior or requirement I describe.",
+        "commands": [
+          "relai test create --prompt \"<describe the behavior to test>\""
+        ]
+      }
+    ],
+    "agent_response_markdown": "Agent test created\n\nSummary\n- Agent test: skyserve-payment-consent-dialogue\n\nSuggested next steps, when you're ready\n\n- Run this agent test\n  > Run the agent test skyserve-payment-consent-dialogue with RELAI and summarize the results.\n\n- Improve the agent using this agent test\n  > Use RELAI to optimize the agent against the agent test skyserve-payment-consent-dialogue and its evaluator feedback.\n\n- Improve the agent using the current project scope\n  > Use RELAI to optimize this agent using all configured agent tests and benchmarks for this project.\n\n- Create another agent test\n  > Help me create another agent test with RELAI from a behavior or requirement I describe."
+  }
+}

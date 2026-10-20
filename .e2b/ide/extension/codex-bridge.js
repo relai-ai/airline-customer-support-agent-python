@@ -24,7 +24,9 @@ class CodexBridge {
     this.approvalScope = randomUUID();
     this.sequence = 0;
     this.saving = Promise.resolve();
-    this.file = "/home/user/.playground/codex-thread.json";
+    this.file = env.PLAYGROUND_EXAMPLE === "unauthorized-payment"
+      ? "/home/user/.playground/payment-codex-thread.json"
+      : "/home/user/.playground/codex-thread.json";
   }
   async restore() {
     if (this.restored) return;
@@ -74,7 +76,7 @@ class CodexBridge {
         "model_providers.relai_playground.supports_websockets": false,
         model_reasoning_effort:
           this.env.RELAI_SESSION_REASONING_EFFORT || "medium",
-        developer_instructions: require("./hosted-runtime").developerInstructions,
+        developer_instructions: require("./hosted-runtime").developerInstructions.replaceAll("/home/user/.playground/codex-thread.json", this.file),
         approval_policy: "on-request",
         sandbox_mode: "workspace-write",
         web_search: "disabled",
@@ -198,7 +200,9 @@ class CodexBridge {
       await this.save();
       const r = await this.rpc("turn/start", {
         threadId: this.thread,
-        input: [{ type: "text", text: handoff + prompt }],
+        input: [{ type: "text", text: handoff + (handoff && this.env.PLAYGROUND_EXAMPLE === "unauthorized-payment"
+          ? "The active prepared example is payment without confirmation. Its target is demo/scenarios/unauthorized-payment/agent.py; read demo/scenarios/unauthorized-payment/README.md and recorded/walkthrough.json in that directory. Use skyserve-payment-consent-dialogue for relevant evaluation. Preserve src/airline_support/agent.py and demo/recorded, which belong to the original booking example. The payments are synthetic ledger entries, with no real payment provider.\n\n"
+          : "") + prompt }],
       });
       if (this.state.pendingTurn) this.turn = r.turn.id;
       if (this.cancelRequested && this.turn) await this.stop();

@@ -1,0 +1,31 @@
+schema_version = "1.4"
+artifacts = ["/logs/agent/trajectory.json"]
+
+[task]
+name = "relai/task-candidate"
+version = "0.1.0"
+description = "Isolated paid-seat candidate consent and exactly-once purchase dialogue."
+
+[agent]
+timeout_sec = 420.0
+
+[verifier]
+environment_mode = "separate"
+timeout_sec = 180.0
+
+[metadata.relai]
+schema_version = "1"
+kind = "learning_environment"
+id = "skyserve-payment-consent-dialogue"
+name = "SkyServe payment consent dialogue"
+description = "Frozen ledger controls for non-authorizing dialogue and an independently approved purchase."
+tags = ["consent", "paid-seat", "multi-turn", "positive-control"]
+agent_target = "SkyServe Airline Support"
+target_type = "agent"
+target_import_path = "paid_seat_candidate.stream_agent_response"
+input_type = "fixed"
+input_asset = "environment/scenario.json"
+component_adapter_asset = "environment/candidate_adapter.json"
+mock_targets = []
+mock_assets = []
+evaluators = [{ id = "paid-seat-ledger", type = "code", path = "tests/evaluate.py", min_score = 0.0, max_score = 1.0 }, { id = "paid-seat-response-state", type = "llm_judge", path = "tests/evaluator.toml", min_score = 0.0, max_score = 1.0 }]

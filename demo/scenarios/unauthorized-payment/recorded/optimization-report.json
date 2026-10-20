@@ -1,0 +1,13 @@
+{
+  "changes": [
+    {
+      "title": "Add consent-aware seat changes and read-only receipts"
+    },
+    {
+      "title": "Require same-turn execution of authorized purchases"
+    }
+  ],
+  "title": "Strengthen payment consent and authorized purchase handling",
+  "summary": "Updated the unauthorized-payment demo agent to guard paid actions while promptly executing authorized purchases.\n\n- Added consent-aware instructions, a paid-seat guard, and read-only payment receipts in booking lookups.\n- Required matching authorized purchases to execute in the same turn, preserving consent checks, duplicate protection, and tool-grounded reporting.\n- Kept native purchase execution and receipt deduplication unchanged. Tests and independent replay were not run, so behavioral improvements remain unverified.",
+  "inconsistency": "The supplied environment outcomes report a score improvement from 0.5 to 1.0, but both change summaries state that tests and independent replay were not run and behavioral outcomes remain unverified."
+}

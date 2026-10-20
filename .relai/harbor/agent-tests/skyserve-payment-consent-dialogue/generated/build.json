@@ -1,0 +1,24 @@
+{
+  "schema_version": 2,
+  "setup_commands": [],
+  "assets": [
+    {
+      "source": "candidate_adapter.json",
+      "destination": "/app/candidate_adapter.json"
+    },
+    {
+      "source": "candidate_adapter.py",
+      "destination": "/app/candidate_adapter.py"
+    },
+    {
+      "source": "scenario.json",
+      "destination": "/app/scenario.json"
+    }
+  ],
+  "verifier_command": "python3 /tests/evaluate.py",
+  "trajectory_example": null,
+  "rendered_sha256": {
+    "environment/Dockerfile": "11c8a72e147e112487b2293e1abe2403e4ce6656aa9acf5ef213d5173bccffc9",
+    "tests/test.sh": "01a069393b659f4ba5d30544cb81f0cb72f255234df9c732e865e9aa82d43b59"
+  }
+}

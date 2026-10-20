@@ -16,6 +16,9 @@ from harbor.utils.trajectory_validator import TrajectoryValidator
 
 _TRAJECTORY_PATH = "/logs/agent/trajectory.json"
 _AGENT_LOGS = "/logs/agent"
+# Host-side record of a benchmark row's materialized input digest; read by
+# src/harbor/result.rs.
+_MATERIALIZATION_RECORD = "relai-benchmark-materialization.json"
 # Protects the host from unbounded container output copied through the bridge.
 _MAX_FALLBACK_ARTIFACT_BYTES = 16 * 1024 * 1024
 # Head-and-tail diagnostic size; must match DIAGNOSTIC_BYTES in src/harbor/mod.rs.
@@ -93,7 +96,7 @@ if not deferred:
 '''
 _PREFLIGHT_PYTHON_GUARD = r'''command -v python3 >/dev/null 2>&1 || { echo 'RELAI Harbor requires python3 for its launcher; provide it in the image or runtime setup.' >&2; exit 1; }'''
 _BENCHMARK_MATERIALIZER = r'''
-import json, os, subprocess
+import hashlib, json, os, pathlib, subprocess
 descriptor = json.loads(os.environ.get("RELAI_HARBOR_TASK_DESCRIPTOR", "{}"))
 value = descriptor.get("benchmark_sample")
 if value is not None:
@@ -101,10 +104,41 @@ if value is not None:
     row = value.get("row")
     if not isinstance(command, str) or not command.strip() or not isinstance(row, dict):
         raise ValueError("invalid Harbor benchmark sample asset")
+    # Every task input the launcher reads, resolved as run.py's container_asset does.
+    root = pathlib.Path(os.environ.get("RELAI_HARBOR_ASSET_ROOT", "/app"))
+    declared = [descriptor.get("input_asset"), descriptor.get("persona_asset")]
+    declared += [entry.get("path") for entry in descriptor.get("mocks", []) if isinstance(entry, dict)]
+    assets = sorted({path for path in declared if isinstance(path, str) and path.startswith("environment/")})
+    if not assets:
+        raise ValueError("a Harbor benchmark task must declare an environment/ input asset")
+    targets = [root / path.removeprefix("environment/") for path in assets]
+    def stamp(target):
+        try:
+            info = target.stat()
+        except FileNotFoundError:
+            return None
+        return (info.st_ino, info.st_mtime_ns, info.st_size)
+    before = [stamp(target) for target in targets]
+    env = dict(os.environ, RELAI_BENCHMARK_SAMPLE_ID=str(value.get("sample_id", "")),
+               RELAI_BENCHMARK_SAMPLE_INDEX=str(value.get("sample_index", "")))
     completed = subprocess.run(command, shell=True, input=json.dumps(row), text=True,
-                               capture_output=True, check=False)
+                               capture_output=True, check=False, env=env)
     if completed.returncode:
         raise RuntimeError("Harbor benchmark materializer failed: " + completed.stderr)
+    # Otherwise every row would silently run the template's baked inputs.
+    after = [stamp(target) for target in targets]
+    if not any(new is not None and new != old for old, new in zip(before, after)):
+        raise RuntimeError(
+            "Harbor benchmark materializer exited 0 without writing any of this row's task inputs ("
+            + ", ".join(str(target) for target in targets)
+            + "); the materializer must write the row's inputs there for every row (its stdout is discarded)")
+    digest = hashlib.sha256()
+    for path, target in zip(assets, targets):
+        digest.update(path.encode("utf-8") + b"\0")
+        if target.is_file():
+            digest.update(target.read_bytes())
+        digest.update(b"\0")
+    print(json.dumps({"input_assets": assets, "sha256": digest.hexdigest()}))
 '''
 
 _STAGE_DESCRIPTOR = r'''
@@ -197,6 +231,11 @@ class HarborAdapterAgent(BaseAgent):
         if materialized.return_code != 0:
             raise RuntimeError("RELAI_MATERIALIZATION_FAILED: " + adapter_diagnostic(materialized, runtime_env))
         if descriptor and json.loads(descriptor).get("benchmark_sample"):
+            # The digest lets the CLI confirm that different rows produced
+            # different agent inputs.
+            record = (materialized.stdout or "").strip().splitlines()
+            if record:
+                write_atomically(self.logs_dir / _MATERIALIZATION_RECORD, (record[-1] + "\n").encode("utf-8"))
             preflight_env["RELAI_HARBOR_PREFLIGHT_PHASE"] = "post_materialization"
             try:
                 checked = await environment.exec(

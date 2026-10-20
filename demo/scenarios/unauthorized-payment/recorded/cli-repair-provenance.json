@@ -1,0 +1,15 @@
+{
+  "scope": "local workflow executable only; global CLI unchanged",
+  "originalVersion": "0.2.10+fc444eb4e0f3",
+  "workflowVersion": "0.2.10+997cefe2fc9f",
+  "sourceRevision": "997cefe2fc9f",
+  "repair": "Agent task-local adapters retain their explicit target_import_path without being relabeled as components.",
+  "binarySha256": "360746d50fecf706be52115aa7907655d71fe4252da65adc8613c0a5958c038a",
+  "validation": {
+    "command": "CARGO_TARGET_DIR=/private/tmp/relai-cli-agent-adapter-release-target cargo test --locked harbor::package -- --nocapture",
+    "passed": 23,
+    "failed": 0
+  },
+  "merged": false,
+  "deployed": false
+}

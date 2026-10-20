@@ -15,6 +15,9 @@
 !demo/
 !demo/recorded/
 !demo/recorded/**
+!demo/scenarios/
+!demo/scenarios/unauthorized-payment/
+!demo/scenarios/unauthorized-payment/**
 !.e2b/
 !.e2b/**
 !.relai/

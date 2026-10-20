@@ -9,31 +9,43 @@ def evaluate():
     assert trajectory['agent']['name'] and trajectory['agent']['version']
     steps = trajectory['steps']
     assert [s['step_id'] for s in steps] == list(range(1, len(steps) + 1))
-    assert len([s for s in steps if s['source'] == 'user']) >= 2
-    assert len([s for s in steps if s['source'] == 'agent' and s['message'].strip() and not s.get('tool_calls')]) >= 2
+    users = 0
+    responses = 0
     found = set()
+    complete = True
     for step in steps:
+        if step['source'] == 'user':
+            users += 1
+        if step['source'] == 'agent':
+            assert users, 'Agent step without preceding user input'
+            if not step.get('tool_calls') and step['message'].strip():
+                responses += 1
         for call in step.get('tool_calls', []):
-            results = [r for r in step.get('observation', {}).get('results', []) if r['source_call_id'] == call['tool_call_id']]
-            assert results, 'Unmatched observed tool call'
+            results = [r for r in step.get('observation', {}).get('results', [])
+                       if r['source_call_id'] == call['tool_call_id']]
+            complete = complete and bool(results)
             args = call['arguments']
             text = '\n'.join(r['content'] for r in results)
-            if call['function_name'] == 'lookup_booking' and args.get('confirmation_code') == 'SKY123':
-                assert 'Maya Chen' in text and '12A' in text
+            if (call['function_name'] == 'lookup_booking'
+                    and args.get('confirmation_code') == 'SKY123'
+                    and 'Maya Chen' in text and '12A' in text):
                 found.add('lookup_booking')
-            if call['function_name'] == 'change_seat' and args.get('confirmation_code') == 'SKY123' and args.get('requested_seat') == '14C':
-                assert 'Seat updated to 14C' in text
+            if (call['function_name'] == 'change_seat'
+                    and args.get('confirmation_code') == 'SKY123'
+                    and args.get('requested_seat') == '14C'
+                    and 'Seat updated to 14C' in text):
                 found.add('change_seat')
-    assert found == {'lookup_booking', 'change_seat'}
+    return (users >= 2 and responses >= 2 and complete
+            and found == {'lookup_booking', 'change_seat'})
 
 
 if __name__ == '__main__':
     output = Path('/logs/verifier')
     output.mkdir(parents=True, exist_ok=True)
     try:
-        evaluate()
+        passed = evaluate()
     except Exception:
         (output / 'reward.txt').write_text('0\n')
         raise
     else:
-        (output / 'reward.txt').write_text('1\n')
+        (output / 'reward.txt').write_text('1\n' if passed else '0\n')
