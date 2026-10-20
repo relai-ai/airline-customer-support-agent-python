@@ -30,8 +30,9 @@ The sample panel opens beside the coding conversation. Its default Recorded exam
 shows the measured booking-grounding failure and independently verified reply,
 read from the hash-checked trajectories. It makes no new model calls.
 
-After Apply, Try live sends the same request to two independent real sample-agent
-conversations: the recorded original source and a snapshot of the current workspace.
+Try live is available before and after Apply. It sends the same request to two
+independent real sample-agent conversations: the recorded original source and a snapshot of the current workspace.
+Before any source change both snapshots are identical, and the panel says so.
 Each keeps separate history and booking state. New comparison takes a fresh source
 snapshot; source changes require a reset. Stop/disposal terminate the child process
 groups, and partial failures never commit a turn to either conversation. These live

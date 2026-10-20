@@ -801,54 +801,6 @@
         n.append(node("summary", label), node("pre", value));
         return n;
       }
-      function simulationViewer() {
-        const viewer = node("div", ""),
-          body = node("div", "");
-        body.className = "simulation-exchange";
-        body.hidden = true;
-        let turn = 0;
-        const show = () => {
-          const exchange = recording.turns[turn];
-          const text = node("div", "");
-          text.className = "simulation-text";
-          text.setAttribute("tabindex", "0");
-          text.setAttribute("aria-label", "Simulation exchange content");
-          text.append(
-            node(
-              "small",
-              "EXCHANGE " + (turn + 1) + " OF " + recording.turns.length,
-            ),
-            node("small", "ADVERSARIAL USER"),
-            formatted(exchange.user),
-            node("small", "AIRLINE AGENT"),
-            formatted(exchange.agent),
-          );
-          const controls = node("div", "");
-          controls.className = "simulation-controls";
-          const previous = button("Previous", () => {
-            turn--;
-            show();
-          });
-          previous.disabled = turn === 0;
-          const next = button("Next exchange →", () => {
-            turn++;
-            show();
-          });
-          next.disabled = turn === recording.turns.length - 1;
-          controls.append(previous, next);
-          body.replaceChildren(text, controls);
-        };
-        const toggle = button("▸ Explore the simulation", () => {
-          body.hidden = !body.hidden;
-          toggle.textContent =
-            (body.hidden ? "▸ " : "▾ ") + "Explore the simulation";
-          toggle.setAttribute("aria-expanded", String(!body.hidden));
-          if (!body.hidden) show();
-        });
-        toggle.setAttribute("aria-expanded", "false");
-        viewer.append(toggle, body);
-        return viewer;
-      }
       function riskInventoryViewer() {
         const inventory = recording.riskInventory;
         const wrapper = node("div", "");
@@ -935,18 +887,6 @@
             ));
             reply.append(button("Open saved wiki results ↗", () =>
               post("wiki-file")));
-          }
-          if (index === 1 && !step.exactResponse) {
-            const sampleIndex = recording.baselineExample?.turnIndex ?? 0;
-            const sample = node("div", "");
-            sample.className = "sample-reply";
-            sample.append(
-              node("small", (recording.evidenceKind === "deterministic-recorder"
-                ? "SCRIPTED SDK RESPONSE · RECORDER PROBE · EXCHANGE "
-                : "ACTUAL AGENT RESPONSE · EXCHANGE ") + (sampleIndex + 1)),
-              formatted(recording.turns[sampleIndex]?.agent || ""),
-            );
-            reply.append(sample, simulationViewer());
           }
           if (index === 2) {
             if (recording.verificationStatus === "mixed") reply.append(node("p", "Evaluation status: " + recording.reliabilityNote));

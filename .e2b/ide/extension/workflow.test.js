@@ -238,28 +238,8 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   assert.equal(elements.get("quick-tour").hidden, true, "Keep the results unobstructed");
   elements.get("tour-next").click();
   assert.match(elements.get("tour-count").textContent, /3 OF 4/);
-  flatten(elements.get("history"))
-    .find((n) => n.textContent === "▸ Explore the simulation")
-    .click();
-  assert.ok(
-    flatten(elements.get("history")).some(
-      (n) => n.textContent === "EXCHANGE 1 OF 2",
-    ),
-  );
-  flatten(elements.get("history"))
-    .find((n) => n.textContent === "Next exchange →")
-    .click();
-  assert.ok(
-    flatten(elements.get("history")).some(
-      (n) => n.textContent === "EXCHANGE 2 OF 2",
-    ),
-  );
-  assert.equal(
-    flatten(elements.get("history")).find(
-      (n) => n.textContent === "Next exchange →",
-    ).disabled,
-    true,
-  );
+  const validationNodes = flatten(elements.get("history"));
+  assert.ok(!validationNodes.some(n => /ACTUAL AGENT RESPONSE|Explore the simulation|EXCHANGE \d+ OF/.test(n.textContent)), "Saved validation replies must not append a duplicate transcript viewer");
   recording.steps[1].exactResponse = { path: "saved-second.json" };
   handlers.message({ data: { type: "loaded", recording, recordedProgress: 2 } });
   assert.ok(!flatten(elements.get("history")).some(n => n.textContent === "▸ Explore the simulation"));

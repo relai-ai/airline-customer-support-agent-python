@@ -50,10 +50,27 @@ test('comparison snapshots source without switching workspace and isolates both 
   assert.equal(await fs.readFile(path.join(root,'src/airline_support/agent.py'),'utf8'),'updated');
  }});
 });
-test('recorded-only local previews and unchanged source cannot accidentally call models',async()=>{
- let calls=0;const execute=async()=>{calls++};
- await fixture(execute,{original:true,check:async c=>{await assert.rejects(c.send('hello'),/Apply/);assert.equal(calls,0)}});
- await fixture(execute,{env:{PLAYGROUND_SAMPLE_LIVE_DISABLED:'1'},check:async c=>{await assert.rejects(c.send('hello'),/disabled/);assert.equal(calls,0)}});
+test('live chat works before Apply with independent original snapshots and histories',async()=>{
+ const calls=[];
+ await fixture(async ({source,request})=>{
+  calls.push({source,request:structuredClone(request)});
+  assert.equal(await fs.readFile(path.join(source,'airline_support/agent.py'),'utf8'),'original');
+  return {reply:path.basename(source),bookings:{SKY123:{seat:path.basename(source)}},payments:[]};
+ },{original:true,check:async c=>{
+  assert.equal(c.state.ready,true);assert.equal(c.state.hasChanges,false);
+  await c.send('hello');await c.send('follow up');
+  assert.equal(calls.length,4);
+  assert.notEqual(calls[0].source,calls[1].source);
+  assert.equal(calls[2].request.history[1].content,'before');
+  assert.equal(calls[3].request.history[1].content,'after');
+  assert.equal(c.state.error,'');
+ }});
+});
+test('recorded-only local fixtures still block model calls',async()=>{
+ let calls=0;
+ await fixture(async()=>{calls++},{env:{PLAYGROUND_SAMPLE_LIVE_DISABLED:'1'},check:async c=>{
+  await assert.rejects(c.send('hello'),/disabled/);assert.equal(calls,0);
+ }});
 });
 test('source edits require an explicit reset and do not silently change an ongoing comparison',async()=>{
  await fixture(async()=>({reply:'ok',bookings:{}}),{check:async(c,root)=>{

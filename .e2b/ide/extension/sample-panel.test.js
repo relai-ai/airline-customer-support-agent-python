@@ -75,3 +75,29 @@ test('hiding and reopening preserves comparison state and only resizes owned pan
   await panels[3].receive({ action: 'load' });
   assert.equal(comparisons.length, 2, 'Closing the main workspace must create a fresh comparison on reopening');
 });
+
+test('Try live enables chat before Apply and exposes reset after a failed turn', () => {
+  const elements = new Map(), handlers = {}, sent = [];
+  const element = () => ({ value: '', children: [], setAttribute() {}, append(...nodes) { this.children.push(...nodes); }, replaceChildren(...nodes) { this.children = nodes; }, focus() {} });
+  const get = id => { if (!elements.has(id)) elements.set(id, element()); return elements.get(id); };
+  const html = fs.readFileSync(path.join(__dirname, 'sample-panel.html'), 'utf8');
+  const script = html.match(/<script nonce="NONCE">([\s\S]*?)<\/script>/)[1];
+  vm.runInNewContext(script, {
+    acquireVsCodeApi: () => ({ postMessage: message => sent.push(message) }),
+    document: { getElementById: get, createElement: element },
+    window: { addEventListener: (name, handler) => { handlers[name] = handler; } },
+  });
+  const state = { exampleId: 'unauthorized-payment', ready: true, hasChanges: false, disabled: false, busy: false, needsReset: false, messages: { before: [], after: [] } };
+  handlers.message({ data: { type: 'sample-state', state } });
+  get('live-mode').onclick();
+  assert.equal(get('live-controls').hidden, false);
+  assert.equal(get('sample-prompt').disabled, false);
+  assert.match(get('notice').textContent, /both agents currently use the original code/);
+  get('sample-prompt').value = 'Quote only'; get('sample-prompt').oninput();
+  assert.equal(get('sample-send').disabled, false);
+  get('sample-send').onclick();
+  assert.equal(sent.at(-1).action, 'send'); assert.equal(sent.at(-1).prompt, 'Quote only');
+  handlers.message({ data: { type: 'sample-state', state: { ...state, ready: false, needsReset: true, error: 'Start a new comparison to retry.' } } });
+  assert.equal(get('sample-reset').disabled, false);
+  get('sample-reset').onclick(); assert.equal(sent.at(-1).action, 'reset');
+});

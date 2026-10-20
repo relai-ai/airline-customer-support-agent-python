@@ -122,7 +122,7 @@ class SampleComparison {
     this.version = fingerprint(current);
     this.bookings = { before: undefined, after: undefined };
     this.payments = { before: undefined, after: undefined };
-    this.state = { ...this.state, ready: fingerprint(original) !== this.version,
+    this.state = { ...this.state, ready: true, hasChanges: fingerprint(original) !== this.version,
       messages: { before: [], after: [] }, error: '', needsReset: false, example: await recordedExample(this.root, this.manifest) };
     })();
     try { await this.resetting; } finally { this.resetting = null; this.state.busy = false; this.publish(); }
@@ -131,7 +131,7 @@ class SampleComparison {
     if (this.closed || this.state.busy) return;
     if (this.state.disabled) throw Error('Live comparisons are disabled in this local preview. The recorded example is available.');
     if (this.state.needsReset) throw Error('Start a new comparison before sending another request.');
-    if (!this.state.ready) throw Error('Apply the walkthrough changes before comparing the original and current agent.');
+    if (!this.state.ready) throw Error('Start a new comparison to prepare the agents.');
     if (typeof prompt !== 'string' || !prompt.trim() || prompt.length > 4000) throw Error('Enter a message of at most 4,000 characters.');
     if (fingerprint(await sources(this.root, this.manifest)) !== this.version) throw Error('Agent source changed. Start a new comparison to use the latest workspace.');
     if (Object.values(this.state.messages).some(history => JSON.stringify(history).length > 100000)) throw Error('This conversation is long. Start a new comparison.');
