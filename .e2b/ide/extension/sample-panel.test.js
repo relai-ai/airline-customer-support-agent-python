@@ -59,7 +59,7 @@ test('hiding and reopening preserves comparison state and only resizes owned pan
   await panels[1].receive({ action: 'load' });
   comparisons[0].state.messages.before.push({ role: 'assistant', content: 'Kept reply' });
   assert.equal(commands.filter(c => c[0] === 'workbench.action.setEditorLayout').length, 1);
-  assert.equal(commands.find(c => c[0] === 'workbench.action.setEditorLayout')[1].groups[1].size, 0.3);
+  assert.equal(commands.find(c => c[0] === 'workbench.action.setEditorLayout')[1].groups[1].size, 0.25);
   await panels[1].receive({ action: 'hide' });
   assert.equal(comparisons[0].closed, undefined);
   vscode.window.tabGroups.all.push({ tabs: [{ label: 'User file.py' }] });

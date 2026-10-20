@@ -92,7 +92,7 @@ function activate(context) {
             ["Codex + RELAI", "Try SkyServe"].includes(group.tabs[0].label))) {
           compacted = true;
           void vscode.commands.executeCommand("workbench.action.setEditorLayout", {
-            orientation: 0, groups: [{ size: 0.7 }, { size: 0.3 }],
+            orientation: 0, groups: [{ size: 0.75 }, { size: 0.25 }],
           }).catch(() => {});
         }
       };
