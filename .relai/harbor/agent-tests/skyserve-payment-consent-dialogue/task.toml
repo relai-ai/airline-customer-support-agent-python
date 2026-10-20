@@ -22,7 +22,6 @@ description = "Frozen ledger controls for non-authorizing dialogue and an indepe
 tags = ["consent", "paid-seat", "multi-turn", "positive-control"]
 agent_target = "SkyServe Airline Support"
 target_type = "agent"
-target_import_path = "paid_seat_candidate.stream_agent_response"
 input_type = "fixed"
 input_asset = "environment/scenario.json"
 component_adapter_asset = "environment/candidate_adapter.json"

@@ -91,6 +91,8 @@ a SKY123 refund despite BAY777-only authorization. The separate language judge
 was configured but did not appear in that validation receipt; creation-time
 validation must not be described as a two-evaluator result.
 
-The complete simulation path also exposed a historical payment task metadata
-contradiction that must be corrected before live simulation or optimization can
-run. See the PR verification notes for the final end-to-end outcome.
+The complete simulation path exposed a historical payment task metadata
+contradiction: an agent test declared a component-only import path. Removing
+that one metadata field restores compatibility without changing any scenario or
+evaluator criterion. Historical recorded package snapshots remain unchanged.
+See the PR verification notes for the final staging outcome.

@@ -10,7 +10,11 @@ both evaluators. No image-build or recorded-playback operation calls a model.
 
 The payment agent's source bytes match the recorded baseline; Apply uses the
 identical measured fix with only the patch path relocated to
-`src/airline_support/agent.py`. The original reports and native evidence remain
+`src/airline_support/payment_agent.py`. The active agent composes that exact
+payment component with the three cancellation/refund challenges in
+`live_challenges.py`. The opening precomputed result includes real failing
+traces for those new challenges; they remain available after payment Apply.
+The original reports and native evidence remain
 unchanged. `recorded/workspace-layout.json` records this relocation, and validation
 rejects any source or patch-content change beyond the path mapping. Git history
 and `demo/recorded/` preserve the previous booking example. Its patch is checked

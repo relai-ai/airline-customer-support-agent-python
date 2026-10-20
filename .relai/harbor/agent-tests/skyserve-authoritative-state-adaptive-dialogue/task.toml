@@ -29,7 +29,6 @@ description = "Fourteen live adaptive exchanges testing current booking authorit
 tags = ["harbor", "multi-turn", "adaptive-customer", "authoritative-booking-facts", "seat-change", "booking-isolation"]
 agent_target = "SkyServe Airline Support"
 target_type = "agent"
-target_import_path = "airline_support.agent.stream_agent_response"
 input_type = "persona"
 input_asset = "environment/scenario.json"
 persona_asset = "environment/persona.json"
