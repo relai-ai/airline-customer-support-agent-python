@@ -632,11 +632,13 @@
         const card = el("quick-tour"), marker = el("tour-marker");
         const target = tourStep === 0 ? el("explore-cards") : tourStep === 1 ? el("sample-agent") : tourStep === 2 ? el("prompt") : el("mode");
         const rect = target?.getBoundingClientRect();
-        const anchorX = tourStep === 1 ? innerWidth - 28 : Math.max(12, Math.min(innerWidth - 36, rect.left + 12));
-        const anchorY = tourStep === 1 ? 120 : rect.top;
+        const placement = tourMarkerPosition(rect, innerWidth, innerHeight);
+        marker.hidden = !placement;
+        const anchorX = placement?.left ?? Math.max(12, rect?.left || 12);
+        const anchorY = placement?.top ?? Math.max(8, rect?.top || 8);
         marker.textContent = String(visibleTourSteps.indexOf(tourStep) + 1);
         marker.style.left = anchorX + "px";
-        marker.style.top = Math.max(8, Math.min(innerHeight - 32, anchorY)) + "px";
+        marker.style.top = anchorY + "px";
         card.dataset.arrow = tourStep === 1 ? "right" : "down";
         const left = tourStep === 1 ? innerWidth - card.offsetWidth - 46 : anchorX - 16;
         const top = tourStep === 1 ? anchorY - 16 : anchorY - card.offsetHeight - 14;

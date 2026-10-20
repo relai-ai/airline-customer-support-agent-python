@@ -90,7 +90,7 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
     querySelectorAll() {
       return [];
     }
-    getBoundingClientRect() { return { left: 24, top: 500 }; }
+    getBoundingClientRect() { return { left: 64, right: 400, top: 500, bottom: 540 }; }
     focus() {}
     scrollIntoView(options) { this.scrolledIntoView = options.block; }
     setAttribute(name, value) {
@@ -502,4 +502,23 @@ test("recorded durations match reply precision and patch labels stay readable", 
   const original = '[Combined patch](/saved/combined.patch)';
   assert.equal(recordedReplyText(2, original), '[View code changes](/saved/combined.patch)');
   assert.equal(original, '[Combined patch](/saved/combined.patch)');
+});
+
+test("tour markers never overlap highlighted text controls at desktop or narrow widths", () => {
+  const { tourMarkerPosition } = require("./workflow");
+  for (const [width, height, rect] of [
+    [1400, 900, { left: 280, right: 1120, top: 790, bottom: 850 }],
+    [1400, 900, { left: 1100, right: 1380, top: 750, bottom: 778 }],
+    [380, 700, { left: 48, right: 332, top: 610, bottom: 680 }],
+    [380, 700, { left: 48, right: 332, top: 12, bottom: 110 }],
+  ]) {
+    const marker = tourMarkerPosition(rect, width, height);
+    assert.ok(marker, "A marker should fit in the gutter beside these controls");
+    assert.ok(marker.left + 24 <= rect.left || marker.left >= rect.right ||
+      marker.top + 24 <= rect.top || marker.top >= rect.bottom, "Marker must not cover the target");
+    assert.ok(marker.left >= 8 && marker.left + 24 <= width - 8);
+    assert.ok(marker.top >= 8 && marker.top + 24 <= height - 8);
+  }
+  assert.equal(tourMarkerPosition({ left: 8, right: 372, top: 8, bottom: 692 }, 380, 700), null,
+    "Hide the decorative marker when there is no safe space");
 });

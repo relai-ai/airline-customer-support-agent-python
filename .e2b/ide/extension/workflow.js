@@ -56,6 +56,18 @@ function recordedPromptText(prompt) {
   };
   return corrections[prompt] || prompt;
 }
+// Keep the numbered marker outside the highlighted control, including at narrow widths.
+function tourMarkerPosition(rect, viewportWidth, viewportHeight) {
+  if (!rect) return null;
+  const size = 24, gap = 8, margin = 8;
+  const candidates = [
+    { left: rect.left - size - gap, top: rect.top },
+    { left: rect.right + gap, top: rect.top },
+  ];
+  return candidates.find(({ left, top }) => Number.isFinite(left) && Number.isFinite(top) &&
+    left >= margin && top >= margin && left + size <= viewportWidth - margin &&
+    top + size <= viewportHeight - margin) || null;
+}
 function recordedDuration(seconds) {
   const tenths = Math.round(seconds * 10);
   const minutes = Math.floor(tenths / 600);
@@ -93,4 +105,4 @@ function recordedReplyText(index, text, turns = [], scripted = false) {
   }
   return result.replace(/\[Combined patch\]\(/g, '[View code changes](');
 }
-if (typeof module !== 'undefined') module.exports = { workflowSteps, workflowView, shouldPrefill, startingRequest, stepValue, restoreOutputScroll, commandResultView, recordedReplyText, recordedPromptText, recordedDuration };
+if (typeof module !== 'undefined') module.exports = { workflowSteps, workflowView, shouldPrefill, startingRequest, stepValue, restoreOutputScroll, commandResultView, recordedReplyText, recordedPromptText, recordedDuration, tourMarkerPosition };
