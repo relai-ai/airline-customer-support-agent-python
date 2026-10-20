@@ -513,9 +513,9 @@
             <strong>Evals Wiki</strong><code>.relai/evals-wiki/</code>
             <small>Requirements, risks and findings.</small>
           </button>
-          <button class="folder-card" data-folder="harbor" aria-label="Open Agent tests folder in Explorer">
-            <strong>Agent tests</strong><code>.relai/harbor/</code>
-            <small>Evaluations, simulators and evaluators.</small>
+          <button class="folder-card" data-folder="tests" aria-label="Open Agent tests folder in Explorer">
+            <strong>Agent tests</strong><code>.relai/harbor/agent-tests/</code>
+            <small>Repeatable scenarios and their evaluators.</small>
           </button>
         </div>
         <p class="muted">
@@ -1029,8 +1029,8 @@
         if (recorded && !replayPending) el("prompt").value = preset;
         el("run-notice").textContent = recorded
           ? progress === 3
-            ? "Apply the recorded changes to this workspace. This step makes no live model calls."
-            : "These prompts replay saved Codex + RELAI responses. No live model calls are made."
+            ? "Apply the saved fix to this workspace."
+            : "Saved responses · send the prepared prompts to continue."
           : recording
             ? ""
             : "Loading recorded walkthrough…";
@@ -1041,7 +1041,7 @@
           recording.verificationStatus === "pending";
         const remainingSteps = Math.max(0, 4 - progress);
         el("mode").textContent = recorded
-          ? "Recorded walkthrough · " + remainingSteps + (remainingSteps === 1 ? " step" : " steps") + " to live mode"
+          ? "Off-line mode · " + remainingSteps + (remainingSteps === 1 ? " step" : " steps") + " to live mode"
           : recording ? "Live mode · write your own prompt" : "Loading recorded walkthrough…";
         el("mode").hidden = false;
         const actionLabel = replayPending

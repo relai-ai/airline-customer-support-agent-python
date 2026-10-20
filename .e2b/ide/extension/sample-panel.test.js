@@ -52,14 +52,14 @@ test('hiding and reopening preserves comparison state and only resizes owned pan
   assert.ok(panels[0]?.webview.html, 'Main panel must initialize');
   const main = panels[0];
   await main.receive({ action: 'load' });
-  assert.equal(commands.filter(c => c[0] === 'workbench.action.setEditorLayout').length, 0);
+  assert.equal(commands.filter(c => c[0] === 'vscode.setEditorLayout').length, 0);
   vscode.window.tabGroups.all.push({ tabs: [{ label: 'Try SkyServe' }] });
   tabsChanged();
   tabsChanged();
   await panels[1].receive({ action: 'load' });
   comparisons[0].state.messages.before.push({ role: 'assistant', content: 'Kept reply' });
-  assert.equal(commands.filter(c => c[0] === 'workbench.action.setEditorLayout').length, 1);
-  assert.equal(commands.find(c => c[0] === 'workbench.action.setEditorLayout')[1].groups[1].size, 0.25);
+  assert.equal(commands.filter(c => c[0] === 'vscode.setEditorLayout').length, 1);
+  assert.equal(commands.find(c => c[0] === 'vscode.setEditorLayout')[1].groups[1].size, 0.25);
   await panels[1].receive({ action: 'hide' });
   assert.equal(comparisons[0].closed, undefined);
   vscode.window.tabGroups.all.push({ tabs: [{ label: 'User file.py' }] });
@@ -68,7 +68,7 @@ test('hiding and reopening preserves comparison state and only resizes owned pan
   assert.equal(comparisons.length, 1);
   assert.equal(comparisons[0].resets, 1);
   assert.equal(comparisons[0].state.messages.before[0].content, 'Kept reply');
-  assert.equal(commands.filter(c => c[0] === 'workbench.action.setEditorLayout').length, 1);
+  assert.equal(commands.filter(c => c[0] === 'vscode.setEditorLayout').length, 1);
   main.dispose();
   assert.equal(comparisons[0].closed, true);
   await open();

@@ -91,7 +91,7 @@ function activate(context) {
         if (!compacted && groups?.length === 2 && groups.every(group => group.tabs.length === 1 &&
             ["Codex + RELAI", "Try SkyServe"].includes(group.tabs[0].label))) {
           compacted = true;
-          void vscode.commands.executeCommand("workbench.action.setEditorLayout", {
+          void vscode.commands.executeCommand("vscode.setEditorLayout", {
             orientation: 0, groups: [{ size: 0.75 }, { size: 0.25 }],
           }).catch(() => {});
         }

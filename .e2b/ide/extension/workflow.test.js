@@ -196,12 +196,12 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
     data: { type: "loaded", recording, recordedProgress: 0, sessionId: "same-session" },
   });
   assert.equal(elements.get("mode").hidden, false);
-  assert.match(elements.get("mode").textContent, /Recorded walkthrough/);
+  assert.match(elements.get("mode").textContent, /Off-line mode/);
   assert.equal(elements.get("next-steps").hidden, true);
   assert.equal(elements.get("next-steps").children.length, 0);
   assert.equal(elements.get("prompt").value, prompts[0]);
   assert.equal(elements.get("prompt").readOnly, true);
-  assert.equal(elements.get("run-notice").textContent, "These prompts replay saved Codex + RELAI responses. No live model calls are made.");
+  assert.equal(elements.get("run-notice").textContent, "Saved responses · send the prepared prompts to continue.");
   elements.get("prompt").value = "Attempt to bypass the guided demo";
   elements.get("prompt").oninput();
   assert.equal(elements.get("prompt").value, prompts[0]);
@@ -212,7 +212,7 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   assert.equal(elements.get("quick-tour").hidden, true, "Hide the guide immediately on the first send");
   assert.equal(elements.get("tour-marker").hidden, true);
   handlers.message({ data: { type: "recorded", recordedProgress: 1 } });
-  assert.equal(elements.get("mode").textContent, "Recorded walkthrough · 3 steps to live mode");
+  assert.equal(elements.get("mode").textContent, "Off-line mode · 3 steps to live mode");
   assert.equal(elements.get("next-steps").hidden, true);
   assert.equal(elements.get("next-steps").children.length, 0);
   assert.equal(elements.get("history").children[0].scrolledIntoView, "start");
@@ -276,8 +276,8 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   assert.equal(elements.get("quick-tour").hidden, true, "The third result must not show dialog 4 before Apply");
   elements.get("tour-next").click();
   assert.match(elements.get("tour-count").textContent, /3 OF 4/);
-  assert.equal(elements.get("mode").textContent, "Recorded walkthrough · 1 step to live mode");
-  assert.match(elements.get("run-notice").textContent, /Apply the recorded changes/);
+  assert.equal(elements.get("mode").textContent, "Off-line mode · 1 step to live mode");
+  assert.match(elements.get("run-notice").textContent, /Apply the saved fix/);
   assert.equal(elements.get("prompt").readOnly, true);
   assert.equal(elements.get("next-steps").hidden, true);
   elements.get("send").click();
