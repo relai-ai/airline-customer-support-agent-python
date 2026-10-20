@@ -43,7 +43,8 @@ function activate(context) {
       },
     );
     const current = panel;
-    await vscode.commands.executeCommand("workbench.action.closeAuxiliaryBar");
+    // Optional layout cleanup must not block rendering while editor workers restart.
+    void vscode.commands.executeCommand("workbench.action.closeAuxiliaryBar").catch(() => {});
     current.onDidDispose(() => {
       panel = undefined;
     });

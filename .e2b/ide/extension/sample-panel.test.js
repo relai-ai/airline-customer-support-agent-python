@@ -30,7 +30,9 @@ for (const visible of [false, true]) test(`comparison visibility ${visible} pres
     },
     commands: {
       registerCommand: (_id, fn) => { open = fn; return {}; },
-      executeCommand: async (...args) => { commands.push(args); },
+      executeCommand: async (...args) => { commands.push(args);
+        if (args[0] === "workbench.action.closeAuxiliaryBar") return new Promise(() => {});
+      },
     },
   };
   const context = { subscriptions: [], extensionPath: __dirname, workspaceState: { get: () => 0 } };
