@@ -939,8 +939,8 @@
           const suggestions = [
             ["Create a test for your scenario", "Use RELAI to propose one multi-turn test for this use scenario: [describe your scenario and the expected behavior]. Use proposal-only suggestion generation first. Show me the scenario and evaluation criteria, and wait for my explicit approval before accepting, building or running the test."],
             ["Investigate another risk", "Use RELAI to investigate the highest-impact risk that we have not tested yet. Propose a multi-turn test and show me the scenario and evaluation criteria before running it."],
-            ["Run another optimization", "Use RELAI to optimize the agent against the current tests. Propose the scope and a 30-total-rollout budget first, then compare the before-and-after results and check for regressions."],
-            ["Optimize for cost", "Use RELAI to reduce the agent’s model cost while preserving its behavior. Review the current optimization scope and propose any required changes, a 30-total-rollout budget, and quality checks before running it. Compare cost and quality before and after."],
+            ["Run another optimization", "Use RELAI to optimize the highest-impact failing agent test. Propose the scope and at most 8 total rollouts first, including the final comparison; check the remaining session budget before starting. Preserve the test criteria and simulated provider fixtures. Compare the before-and-after results and check for regressions before applying any fix."],
+            ["Optimize for cost", "Use RELAI to reduce the agent’s model cost on one representative existing test while preserving its behavior. Review the current optimization scope and propose any required changes, at most 8 total rollouts including the final comparison, and quality checks before running it. Check the remaining session budget first. Preserve the test criteria and simulated provider fixtures. Compare cost and quality before and after; report measured usage and do not claim savings without a valid quality comparison."],
           ];
           const choices = node("div", "");
           choices.className = "suggestions";

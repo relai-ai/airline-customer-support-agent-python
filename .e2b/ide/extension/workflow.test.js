@@ -293,8 +293,8 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   for (const [label, expected] of [
     ["Create a test for your scenario", /proposal-only suggestion generation first.*wait for my explicit approval before accepting, building or running/],
     ["Investigate another risk", /highest-impact risk/],
-    ["Run another optimization", /scope and a 30-total-rollout budget first/],
-    ["Optimize for cost", /Compare cost and quality before and after/],
+    ["Run another optimization", /highest-impact failing agent test.*scope and at most 8 total rollouts.*remaining session budget.*Preserve the test criteria and simulated provider fixtures/],
+    ["Optimize for cost", /one representative existing test.*at most 8 total rollouts.*remaining session budget.*Compare cost and quality before and after.*do not claim savings without a valid quality comparison/],
   ]) {
     flatten(elements.get("next-steps")).find(n => n.textContent === label).click();
     assert.match(elements.get("prompt").value, expected);
