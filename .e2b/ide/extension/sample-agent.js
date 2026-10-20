@@ -122,6 +122,7 @@ class SampleComparison {
     this.version = fingerprint(current);
     this.bookings = { before: undefined, after: undefined };
     this.payments = { before: undefined, after: undefined };
+    this.challenges = { before: undefined, after: undefined };
     this.state = { ...this.state, ready: true, hasChanges: fingerprint(original) !== this.version,
       messages: { before: [], after: [] }, error: '', needsReset: false, example: await recordedExample(this.root, this.manifest) };
     })();
@@ -139,7 +140,7 @@ class SampleComparison {
     const pending = Promise.allSettled(['before', 'after'].map(async lane => {
       const history = this.state.messages[lane];
       const value = await this.execute({ root: this.root, source: path.join(this.dir, lane), env: this.env,
-        request: { prompt: prompt.trim(), history: structuredClone(history), bookings: this.bookings[lane], payments: this.payments[lane] }, signal: this.abort.signal });
+        request: { prompt: prompt.trim(), history: structuredClone(history), bookings: this.bookings[lane], payments: this.payments[lane], challenges: this.challenges[lane] }, signal: this.abort.signal });
       return { lane, value };
     }));
     this.pending = pending;
@@ -154,6 +155,7 @@ class SampleComparison {
         this.state.messages[lane].push({ role: 'user', content: prompt.trim() }, { role: 'assistant', content: value.reply });
         this.bookings[lane] = value.bookings;
         this.payments[lane] = value.payments;
+        this.challenges[lane] = value.challenges;
       }
     } catch (error) { this.state.error = error.message; }
     finally { this.state.busy = false; this.pending = null; this.publish(); }

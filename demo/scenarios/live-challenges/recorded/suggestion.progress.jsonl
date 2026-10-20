@@ -1,0 +1,8 @@
+{"elapsed_s":1,"event":"activity","label":"Analyzing RELAI context and project code","schema_version":"relai.progress.v1","workflow":"test_suggestion"}
+{"elapsed_s":4,"event":"activity","label":"Inspecting Git history","schema_version":"relai.progress.v1","workflow":"test_suggestion"}
+{"elapsed_s":4,"event":"activity","label":"Inspecting project","schema_version":"relai.progress.v1","workflow":"test_suggestion"}
+{"elapsed_s":4,"event":"activity","label":"Reviewing EvalsWiki","schema_version":"relai.progress.v1","workflow":"test_suggestion"}
+{"elapsed_s":4,"event":"activity","label":"Refining hard agent test suggestions","schema_version":"relai.progress.v1","workflow":"test_suggestion"}
+{"elapsed_s":12,"event":"activity","label":"Reviewing simulation results","schema_version":"relai.progress.v1","workflow":"test_suggestion"}
+{"elapsed_s":44,"event":"activity","label":"Recording agent findings","schema_version":"relai.progress.v1","workflow":"test_suggestion"}
+{"elapsed_s":44,"event":"finished","exit_code":0,"outcome":"completed","schema_version":"relai.progress.v1","workflow":"test_suggestion"}

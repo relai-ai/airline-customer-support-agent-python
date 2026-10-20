@@ -98,11 +98,13 @@ test('the actual runner serializes input as data and restores booking state insi
   await fs.mkdir(path.join(root,'.venv/bin'),{recursive:true});await fs.symlink(execFileSync('which',['python3'],{encoding:'utf8'}).trim(),path.join(root,'.venv/bin/python'));
   const source=path.join(root,'source');await fs.mkdir(path.join(source,'airline_support'),{recursive:true});
   await fs.writeFile(path.join(source,'airline_support/__init__.py'),'');
+  await fs.writeFile(path.join(source,'airline_support/live_challenges.py'),"CANCELLATIONS=[]\nREFUNDS=[]\nREFUND_ATTEMPTS=[]\nREFUND_FAILURES={'BAY777':1}\n");
   await fs.writeFile(path.join(source,'airline_support/sessions.py'),"class ChatMessage:\n def __init__(self,role,content,_):self.role=role;self.content=content\n");
   await fs.writeFile(path.join(source,'airline_support/agent.py'),"BOOKINGS={}\nasync def stream_agent_response(messages):\n assert messages[0].content == 'previous reply'\n BOOKINGS['SKY123']['seat']='14C'\n yield messages[-1].content\n yield ' done'\n");
   const controller=new AbortController();const prompt='$(echo nope) <script>test</script>';
-  const result=await runTurn({root,source,env:{},request:{prompt,history:[{role:'assistant',content:'previous reply'}],bookings:{SKY123:{seat:'12A'}}},signal:controller.signal});
+  const result=await runTurn({root,source,env:{},request:{prompt,history:[{role:'assistant',content:'previous reply'}],bookings:{SKY123:{seat:'12A'}},challenges:{REFUNDS:[{id:'prior-refund',booking:'BAY777'}],REFUND_FAILURES:{BAY777:0}}},signal:controller.signal});
   assert.equal(result.reply,prompt+' done');assert.equal(result.bookings.SKY123.seat,'14C');
+  assert.deepEqual(result.challenges,{CANCELLATIONS:[],REFUNDS:[{id:'prior-refund',booking:'BAY777'}],REFUND_ATTEMPTS:[],REFUND_FAILURES:{BAY777:0}});
   await fs.writeFile(path.join(source,'airline_support/agent.py'),"import asyncio\nBOOKINGS={}\nasync def stream_agent_response(messages):\n await asyncio.sleep(60)\n yield 'late'\n");
   const stopping=new AbortController();
   const pending=runTurn({root,source,env:{},request:{prompt:'slow',history:[]},signal:stopping.signal});
@@ -132,15 +134,15 @@ test('relocated payment comparisons use the main source and detect edits there',
  const root=await fs.mkdtemp(path.join(os.tmpdir(),'payment-main-source-'));
  t.after(()=>fs.rm(root,{recursive:true,force:true}));
  await fs.mkdir(path.join(root,'src/airline_support'),{recursive:true});
- const file='src/airline_support/agent.py';
+ const file='src/airline_support/payment_agent.py';
  await fs.writeFile(path.join(root,file),'fixed main agent');
  const manifest={exampleId:'unauthorized-payment',workspaceLayout:{workspaceSource:file},files:[{path:file,
   before:recorded.digest('faulty main agent'),after:recorded.digest('fixed main agent'),
   beforeContent:'faulty main agent',afterContent:'fixed main agent'}]};
  const c=new SampleComparison(root,{},manifest,()=>{},async()=>({reply:'ok',bookings:{},payments:[]}));
  t.after(()=>c.close());await c.reset();
- assert.equal(await fs.readFile(path.join(c.dir,'before/airline_support/agent.py'),'utf8'),'faulty main agent');
- assert.equal(await fs.readFile(path.join(c.dir,'after/airline_support/agent.py'),'utf8'),'fixed main agent');
+ assert.equal(await fs.readFile(path.join(c.dir,'before/airline_support/payment_agent.py'),'utf8'),'faulty main agent');
+ assert.equal(await fs.readFile(path.join(c.dir,'after/airline_support/payment_agent.py'),'utf8'),'fixed main agent');
  await c.send('first');await fs.writeFile(path.join(root,file),'visitor edit');
  await assert.rejects(c.send('again'),/source changed/);
 });

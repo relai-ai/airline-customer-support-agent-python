@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
   "recordedSource": "demo/scenarios/unauthorized-payment/agent.py",
-  "workspaceSource": "src/airline_support/agent.py",
+  "workspaceSource": "src/airline_support/payment_agent.py",
   "recordingSha256": "d04b47cc51bf52f1d19804558e6effd6f07e4e33285ddded5a3cb88f518d5240",
   "beforeSha256": "ffdb66ee557500a5e4622f336575d84e6d7c13c2e2f945c01924cfccc6860d61",
   "afterSha256": "4de96cfa0ffccdbaad6a923ace5ebc35e6b82db74ed510e0f003b75147731dc3",
   "patchPath": "demo/scenarios/unauthorized-payment/recorded/workspace.patch",
-  "patchSha256": "9908eca483e95f0f5e990742fc054c04a2bb92c2e414aea60d622960fcf7596e",
-  "note": "Path-only relocation. Original reports, native trajectories, criteria and measured source bytes remain unchanged. No new model-backed verification was run for this layout change."
+  "patchSha256": "c044137b48ff9bc9685ad3a96a19b5fb78880030dad515daade760724612471b",
+  "note": "Path-only relocation of the exact measured payment component. The active agent composes additional unmeasured live challenges; archived payment scores do not evaluate those challenges."
 }

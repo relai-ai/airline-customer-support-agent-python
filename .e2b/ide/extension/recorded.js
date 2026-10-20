@@ -39,7 +39,8 @@ async function regular(root, name) {
   return fs.readFile(file);
 }
 async function loadRecording(root, example = "booking") {
-  if (example === "unauthorized-payment") return require("./scenario-recording").load(root);
+  if (example === "unauthorized-payment") return require("./live-challenges-recording").decorate(
+    root, await require("./scenario-recording").load(root));
   if (example !== "booking") throw Error("Unknown playground example");
   const manifest = JSON.parse(
     await regular(root, "demo/recorded/walkthrough.json"),
@@ -535,7 +536,7 @@ async function applyRecording(root, manifest) {
 }
 function sourcePath(name, manifest) {
   return manifest.exampleId === "unauthorized-payment"
-    ? name === (manifest.workspaceLayout ? "src/airline_support/agent.py" : "demo/scenarios/unauthorized-payment/agent.py")
+    ? name === (manifest.workspaceLayout ? "src/airline_support/payment_agent.py" : "demo/scenarios/unauthorized-payment/agent.py")
     : /^(?:src\/airline_support\/[a-zA-Z0-9_-]+\.py|tests\/test_[a-zA-Z0-9_-]+\.py)$/.test(name);
 }
 function reviewFile(manifest, name) {

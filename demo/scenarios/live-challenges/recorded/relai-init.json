@@ -1,0 +1,63 @@
+{
+  "schema_version": "relai.agent_interaction.v1",
+  "status": "completed",
+  "workflow": "init",
+  "session_id": "20261020T182909.720Z-39693",
+  "summary": {
+    "title": "RELAI is ready",
+    "items": [
+      {
+        "label": "Requirements",
+        "value": "17"
+      },
+      {
+        "label": "Risk hypotheses",
+        "value": "7 ready to test"
+      },
+      {
+        "label": "Open questions",
+        "value": "0"
+      },
+      {
+        "label": "Requirement examples",
+        "value": "airline-only-assistance; atomic-trajectory-writes; authoritative-booking-facts; behavior-preserving-recording; booking-isolation; \u2026 and 12 more"
+      },
+      {
+        "label": "Risk examples",
+        "value": "embedded-quoted-credentials-escape-trajectory-redaction (impact high, confidence high, triggerability high); paid-seat-quote-triggers-explicitly-forbidden-purchase (impact high, confidence high, triggerability high); refund-request-routed-to-last-looked-up-booking (impact high, confidence high, triggerability high); latest-summary-contaminates-another-booking (impact high, confidence medium, triggerability medium); seat-update-claimed-from-unverified-conversation-summary (impact high, confidence medium, triggerability medium); \u2026 and 2 more"
+      }
+    ],
+    "next_steps": [
+      {
+        "label": "Review project knowledge",
+        "prompt": "Show me what RELAI learned about this project: requirements, requirements without tests, risks, and open questions.",
+        "commands": [
+          "relai wiki list requirements",
+          "relai wiki list requirements --without-tests",
+          "relai wiki list risks",
+          "relai wiki list open-questions"
+        ],
+        "note": "Inspect what RELAI learned and what remains uncertain."
+      },
+      {
+        "label": "Generate agent tests from project knowledge",
+        "prompt": "Help me choose a risk hypothesis or requirement from EvalsWiki and create a targeted agent test, including for requirements without tests.",
+        "commands": [
+          "relai wiki list risks --create-test",
+          "relai wiki list requirements --create-test",
+          "relai wiki list requirements --without-tests --create-test"
+        ],
+        "note": "Create targeted tests from a risk hypothesis or requirement."
+      },
+      {
+        "label": "Ask RELAI to search for failure-revealing tests",
+        "prompt": "Use RELAI to discover 3 challenging agent tests for potential risks, and let me review the proposed tests.",
+        "commands": [
+          "relai test discover --count 3"
+        ],
+        "note": "Create challenging tests for different potential risks, to reveal current agent failures or increase test coverage. Add --no-review to skip human review."
+      }
+    ],
+    "agent_response_markdown": "RELAI is ready\n\nSummary\n- Requirements: 17\n- Risk hypotheses: 7 ready to test\n- Open questions: 0\n- Requirement examples: airline-only-assistance; atomic-trajectory-writes; authoritative-booking-facts; behavior-preserving-recording; booking-isolation; \u2026 and 12 more\n- Risk examples: embedded-quoted-credentials-escape-trajectory-redaction (impact high, confidence high, triggerability high); paid-seat-quote-triggers-explicitly-forbidden-purchase (impact high, confidence high, triggerability high); refund-request-routed-to-last-looked-up-booking (impact high, confidence high, triggerability high); latest-summary-contaminates-another-booking (impact high, confidence medium, triggerability medium); seat-update-claimed-from-unverified-conversation-summary (impact high, confidence medium, triggerability medium); \u2026 and 2 more\n\nSuggested next steps, when you're ready\n\n- Review project knowledge\n  > Show me what RELAI learned about this project: requirements, requirements without tests, risks, and open questions.\n\n- Generate agent tests from project knowledge\n  > Help me choose a risk hypothesis or requirement from EvalsWiki and create a targeted agent test, including for requirements without tests.\n\n- Ask RELAI to search for failure-revealing tests\n  > Use RELAI to discover 3 challenging agent tests for potential risks, and let me review the proposed tests."
+  }
+}

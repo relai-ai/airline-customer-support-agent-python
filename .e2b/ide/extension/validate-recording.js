@@ -9,6 +9,12 @@ async function validate(root, example = "booking", { archiveOnly = false } = {})
     throw Error(
       "Independent verification must finish before building the release template",
     );
+  if (recording.liveChallenges && !archiveOnly) {
+    for (const [name, hash] of Object.entries(recording.liveChallenges.sources)) {
+      if (!/^src\/airline_support\/[a-z_]+\.py$/.test(name) || digest(await fs.readFile(path.join(root, name))) !== hash)
+        throw Error("Template live challenge source differs from its diagnostic baseline");
+    }
+  }
   for (const file of recording.files) {
     reviewFile(recording, file.path);
     if (archiveOnly) continue;

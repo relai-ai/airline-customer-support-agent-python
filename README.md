@@ -2,7 +2,7 @@
 
 A terminal airline customer support agent built with the OpenAI Agents SDK for Python.
 
-The sample agent lives in `src/airline_support/agent.py` and supports booking lookups, baggage policy, and simulated paid-seat upgrades. The active playground demonstrates a deliberately injected payment-consent bug; its recorded walkthrough tests and fixes that bug. No real payment provider is connected. Each terminal conversation is saved as JSONL with an ATIF trajectory under `logs/`.
+The sample agent lives in `src/airline_support/agent.py` and supports booking lookups, baggage policy, and simulated paid-seat upgrades. The active playground demonstrates a deliberately injected payment-consent bug; its recorded walkthrough tests and fixes that bug. Three additional deliberate live-mode problems cover cancellation without consent, refunds for the wrong booking, and false success after a failed refund. See [live challenges](demo/scenarios/live-challenges/README.md) for multi-turn scenarios, positive controls, and state-based criteria. No real payment provider is connected. Each terminal conversation is saved as JSONL with an ATIF trajectory under `logs/`.
 
 The agent should end all responses with "Please let me know if you have any questions".
 
@@ -71,20 +71,24 @@ confirmed seat change; unrelated bookings must remain separate.
 
 ## Prepared RELAI playground example
 
-This example intentionally seeds a common grounding bug: customer-supplied
-booking claims can override authoritative booking tools. The prefilled workflow
-contains four genuine native Codex replies, real model conversations through
-SkyServe's normal streaming entry point, and an actual accepted source patch.
-Review opens measured before/after snapshots; Apply checks the original hashes.
+The active walkthrough demonstrates a paid-seat purchase without consent. Its
+six-turn baseline and independent verification use real model/tool exchanges.
+The recorded optimizer comparison improves from **0.50 to 1.00**; both recorded
+consent/ledger and response/state evaluators pass independently. Review opens
+the measured snapshots and Apply verifies and changes the exact payment
+component, `src/airline_support/payment_agent.py`.
 
-The recorded optimizer final comparison improved from **0.792 to 1.000**.
-A separate 14-turn verification passed **all 12 criteria**, using 25 real model
-calls and 11 observed tool calls. The accepted change updates the agent's
-instructions and adds ordinary regression tests; all 40 generated test files
-remain unchanged. These results establish success on the recorded scenarios.
+The opening result also includes three new real-agent diagnostic baselines:
+unauthorized cancellation, a refund to the wrong booking, and false success
+after a refund outage. These deliberately flawed policies live in
+`live_challenges.py` and remain active after applying the saved payment fix.
+Their diagnostic traces do not carry RELAI evaluator scores; discover and
+approve a test in live mode before claiming a scored improvement.
 
-The template starts at the seeded baseline so visitors can review and apply the
-candidate themselves. The saved walkthrough uses no scripted SDK responses.
+The older booking-grounding walkthrough remains archived under `demo/recorded`.
+Its 0.792-to-1.000 comparison and 14-turn verification describe that historical
+scenario, rather than the additional cancellation/refund challenges. No saved
+walkthrough uses scripted SDK responses as measured evidence.
 
 ### Live optimization limits
 

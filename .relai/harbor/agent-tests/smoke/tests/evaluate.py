@@ -32,8 +32,8 @@ def evaluate():
                 found.add('lookup_booking')
             if (call['function_name'] == 'change_seat'
                     and args.get('confirmation_code') == 'SKY123'
-                    and args.get('requested_seat') == '14C'
-                    and 'Seat updated to 14C' in text):
+                    and args.get('requested_seat') == '16A'
+                    and 'Seat updated to 16A' in text):
                 found.add('change_seat')
     return (users >= 2 and responses >= 2 and complete
             and found == {'lookup_booking', 'change_seat'})

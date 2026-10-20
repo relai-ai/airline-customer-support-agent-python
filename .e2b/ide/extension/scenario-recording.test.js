@@ -125,7 +125,7 @@ test('payment comparison cannot substitute easier customer requests after optimi
 });
 
 async function mapFixture(f) {
-  const target = 'src/airline_support/agent.py';
+  const target = 'src/airline_support/payment_agent.py';
   const manifestBytes = await fs.readFile(path.join(f.root, base, 'walkthrough.json'));
   const patch = f.manifest.diff.replaceAll('a/' + candidate, 'a/' + target).replaceAll('b/' + candidate, 'b/' + target);
   const layout = { schemaVersion: 1, recordedSource: candidate, workspaceSource: target,

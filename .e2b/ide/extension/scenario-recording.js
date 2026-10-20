@@ -136,7 +136,7 @@ async function load(root) {
   try { layoutBytes = await read(root, base + 'workspace-layout.json'); }
   catch (error) { if (error.code === 'ENOENT') return manifest; throw error; }
   const layout = JSON.parse(layoutBytes);
-  const workspaceSource = 'src/airline_support/agent.py';
+  const workspaceSource = 'src/airline_support/payment_agent.py';
   requireThat(layout.schemaVersion === 1 && layout.recordedSource === candidate &&
     layout.workspaceSource === workspaceSource && layout.recordingSha256 === hash(manifestBytes) &&
     layout.beforeSha256 === file.before && layout.afterSha256 === file.after,

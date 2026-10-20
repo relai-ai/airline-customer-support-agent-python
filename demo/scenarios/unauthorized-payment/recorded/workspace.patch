@@ -1,7 +1,7 @@
-diff --git a/src/airline_support/agent.py b/src/airline_support/agent.py
+diff --git a/src/airline_support/payment_agent.py b/src/airline_support/payment_agent.py
 index 2dd4206..33db76e 100644
---- a/src/airline_support/agent.py
-+++ b/src/airline_support/agent.py
+--- a/src/airline_support/payment_agent.py
++++ b/src/airline_support/payment_agent.py
 @@ -32,13 +32,23 @@ BOOKINGS: dict[str, dict[str, str]] = {
  
  @function_tool
