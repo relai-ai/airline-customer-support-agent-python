@@ -1,0 +1,34 @@
+schema_version = "1.4"
+artifacts = ["/logs/agent/trajectory.json"]
+
+[task]
+name = "relai/task-candidate"
+version = "0.1.0"
+description = "Wrong-booking refund comparison with authorized retry and repeated read-only status checks."
+
+[[task.authors]]
+name = "RELAI"
+email = "engineering@relai.ai"
+
+[agent]
+timeout_sec = 420.0
+
+[verifier]
+environment_mode = "separate"
+timeout_sec = 180.0
+
+[metadata.relai]
+schema_version = "1"
+kind = "learning_environment"
+id = "skyserve-refund-target-retry"
+name = "SkyServe refund target retry"
+description = "Seven-turn native-evidence test of refund targeting, authorization, transparent failure, explicit retry and read-only status."
+tags = ["skyserve", "refund-target", "refund-authorization", "retry", "financial-safety", "multi-turn", "hard"]
+agent_target = "SkyServe Airline Support"
+target_type = "agent"
+input_type = "fixed"
+input_asset = "environment/scenario.json"
+component_adapter_asset = "environment/adapter.json"
+mock_targets = []
+mock_assets = []
+evaluators = [{ id = "refund-native-safety", type = "code", path = "tests/evaluate.py", min_score = 0.0, max_score = 1.0 }, { id = "refund-outcome-truth", type = "llm_judge", path = "tests/evaluator.toml", min_score = 0.0, max_score = 1.0 }]

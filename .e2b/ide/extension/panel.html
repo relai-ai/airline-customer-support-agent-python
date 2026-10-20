@@ -1241,8 +1241,12 @@
             tourCards[1][1] = 'The right panel compares the original agent’s response with the recorded fix for the same payment request.';
             el('agent-intro-title').textContent = 'When a quote becomes a $25 charge';
             el('agent-source-path').textContent = 'src/airline_support/';
-            el('agent-source-hint').textContent = 'Agent instructions, booking state and paid-seat tools.';
-            el('agent-intro-copy').textContent = 'SkyServe’s paid-seat flow has a deliberate consent bug. Follow RELAI from risk to test to verified fix. All charges are simulated.';
+            el('agent-source-hint').textContent = recording.liveChallenges
+              ? 'Agent instructions and simulated booking, payment, cancellation and refund tools.'
+              : 'Agent instructions, booking state and paid-seat tools.';
+            el('agent-intro-copy').textContent = recording.liveChallenges
+              ? 'Follow RELAI from a paid-seat consent bug to its verified fix. Then investigate three more cancellation and refund problems in live mode. All actions are simulated.'
+              : 'SkyServe’s paid-seat flow has a deliberate consent bug. Follow RELAI from risk to test to verified fix. All charges are simulated.';
           }
           progress = d.recordedProgress;
           if (!tourComplete && tourStep === 3 && progress < 4) tourStep = 2;

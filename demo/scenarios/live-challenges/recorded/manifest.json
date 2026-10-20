@@ -25,7 +25,10 @@
     "suggestion.progress.jsonl": "ddbb7416edc72b596d81142c6fa5fd17ccdb6b72ae8cd85c86e03faa75a63777",
     "wiki-bootstrap.progress.jsonl": "d9eb2e117f00a33736470c49a8a607070f8126ec7673827451787b5f09ff5b3c",
     "suggestion.stdout.jsonl": "29bdb9e5dda90ba4f0bee1b7bc71f4ca69d83df18fed62940d0647c9487b4719",
-    "wiki-bootstrap.stdout.jsonl": "e5237c63bf56def496ceaf33f30cc3d43a44c937f0fa34d7ddaa1c050445a0bc"
+    "wiki-bootstrap.stdout.jsonl": "e5237c63bf56def496ceaf33f30cc3d43a44c937f0fa34d7ddaa1c050445a0bc",
+    "refund-test-validation.atif.json": "56defd8ab01a6b6c1bea86d5c51739540c09214b4f43905a18084613d04ea8eb",
+    "refund-test-validation-reward.json": "6ee4abce908cc249b21f6ac20c1c45484d41ea01fcc43dcb53bbfdaf36fc76d5",
+    "refund-test-validation-feedback.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   },
   "note": "Direct real-agent diagnostic baselines; no RELAI evaluator scores or optimization result for these three cases yet."
 }

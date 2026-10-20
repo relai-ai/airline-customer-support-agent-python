@@ -80,3 +80,17 @@ the criteria and complete test package frozen during optimization. Optimize the
 active agent/component policies, then independently verify the exact accepted
 source against the unchanged test. Fixing the tool fixture by disabling all
 operations is not a successful agent improvement.
+
+## Verified workflow checks in this change
+
+RELAI proposal generation selected the uncovered wrong-booking refund scenario
+rather than duplicating paid-seat consent coverage. It then created
+`skyserve-refund-target-retry`, a seven-turn test grounded in the five refund
+requirements. Its creation-time native-state validation scored 0.00 and observed
+a SKY123 refund despite BAY777-only authorization. The separate language judge
+was configured but did not appear in that validation receipt; creation-time
+validation must not be described as a two-evaluator result.
+
+The complete simulation path also exposed a historical payment task metadata
+contradiction that must be corrected before live simulation or optimization can
+run. See the PR verification notes for the final end-to-end outcome.
