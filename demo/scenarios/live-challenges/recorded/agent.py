@@ -12,7 +12,7 @@ from airline_support.payment_agent import (
     BOOKINGS, PAYMENTS, lookup_booking, baggage_policy, change_seat,
     paid_seat_options, purchase_seat_upgrade,
 )
-from airline_support.live_challenges import challenge_tools, CHALLENGE_INSTRUCTIONS
+from airline_support.live_challenges import challenge_tools, CHALLENGE_INSTRUCTIONS, tracked_lookup
 from airline_support.models import select_model
 from airline_support.sessions import ChatMessage
 from airline_support.trajectory import TrajectoryHooks, get_recorder
@@ -23,7 +23,7 @@ def create_airline_agent() -> Agent:
     return Agent(
         name="SkyServe Airline Support",
         instructions=payment_agent.AIRLINE_AGENT_INSTRUCTIONS + CHALLENGE_INSTRUCTIONS,
-        tools=[lookup_booking, baggage_policy, change_seat, paid_seat_options, purchase_seat_upgrade,
+        tools=[tracked_lookup(lookup_booking, BOOKINGS), baggage_policy, change_seat, paid_seat_options, purchase_seat_upgrade,
                *challenge_tools(BOOKINGS)],
         **model_kwargs,
     )

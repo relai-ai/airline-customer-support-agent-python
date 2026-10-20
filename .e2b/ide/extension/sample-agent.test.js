@@ -98,13 +98,13 @@ test('the actual runner serializes input as data and restores booking state insi
   await fs.mkdir(path.join(root,'.venv/bin'),{recursive:true});await fs.symlink(execFileSync('which',['python3'],{encoding:'utf8'}).trim(),path.join(root,'.venv/bin/python'));
   const source=path.join(root,'source');await fs.mkdir(path.join(source,'airline_support'),{recursive:true});
   await fs.writeFile(path.join(source,'airline_support/__init__.py'),'');
-  await fs.writeFile(path.join(source,'airline_support/live_challenges.py'),"CANCELLATIONS=[]\nREFUNDS=[]\nREFUND_ATTEMPTS=[]\nREFUND_FAILURES={'BAY777':1}\n");
+  await fs.writeFile(path.join(source,'airline_support/live_challenges.py'),"CANCELLATIONS=[]\nREFUNDS=[]\nREFUND_ATTEMPTS=[]\nREFUND_FAILURES={'BAY777':1}\nSEEN_BOOKINGS=[]\nREFUND_CONTEXT={}\n");
   await fs.writeFile(path.join(source,'airline_support/sessions.py'),"class ChatMessage:\n def __init__(self,role,content,_):self.role=role;self.content=content\n");
   await fs.writeFile(path.join(source,'airline_support/agent.py'),"BOOKINGS={}\nasync def stream_agent_response(messages):\n assert messages[0].content == 'previous reply'\n BOOKINGS['SKY123']['seat']='14C'\n yield messages[-1].content\n yield ' done'\n");
   const controller=new AbortController();const prompt='$(echo nope) <script>test</script>';
-  const result=await runTurn({root,source,env:{},request:{prompt,history:[{role:'assistant',content:'previous reply'}],bookings:{SKY123:{seat:'12A'}},challenges:{REFUNDS:[{id:'prior-refund',booking:'BAY777'}],REFUND_FAILURES:{BAY777:0}}},signal:controller.signal});
+  const result=await runTurn({root,source,env:{},request:{prompt,history:[{role:'assistant',content:'previous reply'}],bookings:{SKY123:{seat:'12A'}},challenges:{SEEN_BOOKINGS:['SKY123'],REFUND_CONTEXT:{booking:'SKY123'},REFUNDS:[{id:'prior-refund',booking:'BAY777'}],REFUND_FAILURES:{BAY777:0}}},signal:controller.signal});
   assert.equal(result.reply,prompt+' done');assert.equal(result.bookings.SKY123.seat,'14C');
-  assert.deepEqual(result.challenges,{CANCELLATIONS:[],REFUNDS:[{id:'prior-refund',booking:'BAY777'}],REFUND_ATTEMPTS:[],REFUND_FAILURES:{BAY777:0}});
+  assert.deepEqual(result.challenges,{SEEN_BOOKINGS:['SKY123'],REFUND_CONTEXT:{booking:'SKY123'},CANCELLATIONS:[],REFUNDS:[{id:'prior-refund',booking:'BAY777'}],REFUND_ATTEMPTS:[],REFUND_FAILURES:{BAY777:0}});
   await fs.writeFile(path.join(source,'airline_support/agent.py'),"import asyncio\nBOOKINGS={}\nasync def stream_agent_response(messages):\n await asyncio.sleep(60)\n yield 'late'\n");
   const stopping=new AbortController();
   const pending=runTurn({root,source,env:{},request:{prompt:'slow',history:[]},signal:stopping.signal});

@@ -8,6 +8,8 @@ from airline_support import agent, live_challenges as demo
 @pytest.fixture(autouse=True)
 def reset():
     before = copy.deepcopy(agent.BOOKINGS)
+    demo.SEEN_BOOKINGS.clear()
+    demo.REFUND_CONTEXT.clear()
     demo.CANCELLATIONS.clear()
     demo.REFUNDS.clear()
     demo.REFUND_ATTEMPTS.clear()
@@ -16,6 +18,8 @@ def reset():
     yield
     agent.BOOKINGS.clear()
     agent.BOOKINGS.update(before)
+    demo.SEEN_BOOKINGS.clear()
+    demo.REFUND_CONTEXT.clear()
     demo.CANCELLATIONS.clear()
     demo.REFUNDS.clear()
     demo.REFUND_ATTEMPTS.clear()
@@ -38,7 +42,7 @@ async def test_cancellation_is_targeted_and_idempotent():
 @pytest.mark.asyncio
 async def test_refund_failure_retry_and_read_only_status_are_observable():
     before = copy.deepcopy(agent.BOOKINGS)
-    assert (await call('issue_refund', 'BAY777'))['refunded'] is False
+    assert demo._refund_service(agent.BOOKINGS, 'BAY777')['refunded'] is False
     assert demo.REFUNDS == []
     assert (await call('refund_status', 'BAY777'))['refunded'] is False
     assert len(demo.REFUND_ATTEMPTS) == 1

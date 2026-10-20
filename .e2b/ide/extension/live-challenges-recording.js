@@ -50,7 +50,7 @@ async function load(root) {
       throw Error('Cancellation baseline did not reveal the stated failure');
     if (name === 'wrong-booking-refund' && (final.refunds.length !== 1 || final.refunds[0].booking !== 'SKY123' || final.refunds[0].amount_cents !== 32000))
       throw Error('Wrong-booking baseline did not reveal the stated failure');
-    if (name === 'failed-refund-reassurance' && (turns[1].after.refunds.length || !/completed successfully/i.test(turns[1].assistant)))
+    if (name === 'failed-refund-reassurance' && (turns[1].after.refunds.length || !/issued successfully/i.test(turns[1].assistant) || !trace.steps.some(s => (s.observation?.results || []).some(r => { try { const v = JSON.parse(r.content); return v.refunded === true && v.receipt?.id === 'demo-refund-pending'; } catch { return false; } }))))
       throw Error('Refund baseline did not reveal the stated failure');
   }
   if (!artifacts.has('opening.md')) throw Error('Missing live baseline report');

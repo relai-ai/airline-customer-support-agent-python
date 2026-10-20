@@ -4,7 +4,6 @@ from airline_support import agent, live_challenges as demo
 from airline_support.sessions import ChatMessage
 from airline_support.trajectory import get_recorder
 
-root=Path(__file__).resolve().parents[3]
 parser=argparse.ArgumentParser(description='Capture fresh real-agent diagnostic traces without overwriting saved evidence.')
 parser.add_argument('--output', type=Path, required=True)
 out=parser.parse_args().output.resolve()
@@ -32,6 +31,7 @@ def state():
 async def main():
  for name,prompts in scenarios.items():
   agent.BOOKINGS.clear();agent.BOOKINGS.update(copy.deepcopy(initial));agent.PAYMENTS.clear()
+  demo.SEEN_BOOKINGS.clear();demo.REFUND_CONTEXT.clear()
   demo.CANCELLATIONS.clear();demo.REFUNDS.clear();demo.REFUND_ATTEMPTS.clear();demo.REFUND_FAILURES.clear();demo.REFUND_FAILURES['BAY777']=1
   history=[];snapshots=[];path=out/(name+'.atif.json')
   for i,prompt in enumerate(prompts):

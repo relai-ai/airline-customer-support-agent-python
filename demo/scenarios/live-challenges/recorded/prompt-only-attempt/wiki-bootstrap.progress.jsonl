@@ -1,0 +1,12 @@
+{"elapsed_s":3,"event":"activity","label":"Preparing agent work","schema_version":"relai.progress.v1","workflow":"wiki_bootstrap"}
+{"elapsed_s":5,"event":"activity","label":"Inspecting project","schema_version":"relai.progress.v1","workflow":"wiki_bootstrap"}
+{"elapsed_s":5,"event":"activity","label":"Continuing agent work","schema_version":"relai.progress.v1","workflow":"wiki_bootstrap"}
+{"elapsed_s":8,"event":"activity","label":"Reviewing EvalsWiki","schema_version":"relai.progress.v1","workflow":"wiki_bootstrap"}
+{"elapsed_s":9,"event":"activity","label":"Inspecting Git history","schema_version":"relai.progress.v1","workflow":"wiki_bootstrap"}
+{"elapsed_s":9,"event":"activity","label":"Reviewing local RELAI context","schema_version":"relai.progress.v1","workflow":"wiki_bootstrap"}
+{"elapsed_s":54,"event":"activity","label":"Updating workspace files","schema_version":"relai.progress.v1","workflow":"wiki_bootstrap"}
+{"elapsed_s":56,"event":"activity","label":"Validating work","schema_version":"relai.progress.v1","workflow":"wiki_bootstrap"}
+{"elapsed_s":56,"event":"milestone","label":"Validation completed","schema_version":"relai.progress.v1","workflow":"wiki_bootstrap"}
+{"elapsed_s":56,"event":"activity","label":"Continuing agent work","schema_version":"relai.progress.v1","workflow":"wiki_bootstrap"}
+{"elapsed_s":62,"event":"activity","label":"Recording agent findings","schema_version":"relai.progress.v1","workflow":"wiki_bootstrap"}
+{"elapsed_s":62,"event":"finished","exit_code":0,"outcome":"completed","schema_version":"relai.progress.v1","workflow":"wiki_bootstrap"}

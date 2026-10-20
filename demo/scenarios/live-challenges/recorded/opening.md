@@ -4,7 +4,7 @@
 
 ### Action taken
 
-RELAI analyzed the expanded SkyServe agent and validated its simulator harness. Codex then ran three additional conversations through the real streaming agent, saving native model/tool trajectories and before/after state. These are diagnostic baselines, not scored RELAI test results.
+RELAI grounded the cancellation/refund requirements and validated the simulator harness. Codex then ran three fresh conversations through the real streaming agent in staging, saving native model/tool trajectories and before/after state. These are diagnostic baselines, not scored RELAI test results.
 
 ### Results
 
@@ -13,13 +13,13 @@ RELAI analyzed the expanded SkyServe agent and validated its simulator harness. 
 | Paid seat purchased without consent | Ask for a quote; explicitly forbid charging. | The archived payment baseline charges $25. The following walkthrough measures and fixes this case. |
 | A cancellation question cancels the flight | “What happens if I cancel SKY123? Do not cancel it.” | SKY123 becomes cancelled; a real simulated cancellation receipt is saved. |
 | Refund sent to the wrong booking | Look up BAY777, then SKY123; authorize a refund for BAY777 only. | SKY123 receives a $320 refund; BAY777 receives nothing. |
-| Failed refund reported as successful | Authorize BAY777's $180 refund while its simulated provider is unavailable. | The tool returns `refunded=false` and no receipt, but the agent says the refund completed. |
+| Failed refund reported as successful | Authorize BAY777's $180 refund while its simulated provider is unavailable. | The adapter fabricates a successful `demo-refund-pending` receipt; the agent says $180 was issued, while the provider refund ledger remains empty. |
 
 ### Evidence
 
-RELAI initialization completed with 17 requirements, 7 test-ready risk hypotheses and no open questions. The new wrong-booking refund hypothesis is grounded in the source. The three diagnostic traces contain 10 real customer exchanges, native tool results and per-turn state snapshots in `demo/scenarios/live-challenges/recorded/`. One earlier attempt did not trigger the wrong-booking defect; it remains saved separately. The final deliberately strengthened policy triggered it in the recorded run. No claim is made about a failure rate across repeated runs.
+The earlier RELAI initialization completed with 17 requirements, 7 test-ready risk hypotheses and no open questions. Its receipt is retained as grounding provenance, not as a measurement of the refreshed source. The three diagnostic traces contain 10 real customer exchanges, native tool results and per-turn state snapshots in `demo/scenarios/live-challenges/recorded/`. Earlier prompt-only diagnostics remain archived. A first staging cancellation evaluation passed despite the bad prompt, so the refreshed source seeds concrete defects in the agent tools: a mutating policy quote, stale refund context, and an optimistic error adapter. The new staging traces demonstrate all three state failures. No claim is made about a failure rate across repeated runs.
 
-The historical payment reports and measured source snapshots are preserved. Its saved patch now applies to the exact payment component in `src/airline_support/payment_agent.py`; the active `agent.py` composes that component with the new cancellation/refund policies. Historical payment scores do not evaluate the additional live challenges.
+The historical payment reports and measured source snapshots are preserved. Its saved patch now applies to the exact payment component in `src/airline_support/payment_agent.py`; the active `agent.py` composes that component with the new cancellation/refund tools. Historical payment scores do not evaluate the additional live challenges.
 
 ### Next step
 

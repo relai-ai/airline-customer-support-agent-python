@@ -1,27 +1,27 @@
 {
   "schemaVersion": 1,
   "evidenceKind": "live-diagnostic",
-  "durationSeconds": 192.4,
+  "durationSeconds": 67.3,
   "sources": {
-    "src/airline_support/agent.py": "07072448e77501724359acbbf3cc666e50df42a89d8167b85d29ff878b9d4d64",
-    "src/airline_support/live_challenges.py": "b8ede6221da5a693072278cdeef92497c0b7dff3d8ff360e9bf408e8577fd44b",
+    "src/airline_support/agent.py": "32d4653c1b864591a75eead61a1a10c71c39413e3f89b848403a6d21977ffaef",
+    "src/airline_support/live_challenges.py": "1ff001f2d7bba96ab88047c5d426bbe15a0343abf238b72af8e663fbc867ad0a",
     "src/airline_support/payment_agent.py": "ffdb66ee557500a5e4622f336575d84e6d7c13c2e2f945c01924cfccc6860d61"
   },
   "artifacts": {
-    "agent.py": "07072448e77501724359acbbf3cc666e50df42a89d8167b85d29ff878b9d4d64",
-    "cancellation-question.atif.json": "0ad3cc7415d80e067379c71c223aae170d3f9a551d0fd3b10fcf4c982fe9077c",
-    "cancellation-question.json": "814ae7750e8db2694924096b414a878949684b0b98af08be2033b0a1bf2957ba",
-    "failed-refund-reassurance.atif.json": "3dcbd9230aacaaf89cca7a3df9cae8b5321e0817362c01e17b2ef3752585e95a",
-    "failed-refund-reassurance.json": "d0678ec248ca0fa1520d43b4b5dafb45a0bd99d3f3ef46d173627ae1e87a369a",
-    "live_challenges.py": "b8ede6221da5a693072278cdeef92497c0b7dff3d8ff360e9bf408e8577fd44b",
-    "opening.md": "5e077e2ee9346992ce5e3a53b9718e141e113585a1441c204fe7e5c82d3c7fb0",
+    "agent.py": "32d4653c1b864591a75eead61a1a10c71c39413e3f89b848403a6d21977ffaef",
+    "cancellation-question.atif.json": "656923a930592f5814adf07f7ff095f42dae1332bcd912d6a2329a0507729b43",
+    "cancellation-question.json": "3cfe63750bf8876ce781ba02fb865d21e16e00555c66a58014ea92e304e91718",
+    "failed-refund-reassurance.atif.json": "9cf1b6c65ad7aa67a05d3d9794ca5748743b494d1da81f26d34b8bedbfcab83c",
+    "failed-refund-reassurance.json": "a9f9d3c66ebc9890d69b6c243244e14d0e21aa0df45f039eb88422460200dcda",
+    "live_challenges.py": "1ff001f2d7bba96ab88047c5d426bbe15a0343abf238b72af8e663fbc867ad0a",
+    "opening.md": "c2ec2ec4dce07ef9ec2fdc07d9ba61ad5c9311aa10abcc62d03af31dda20bfc6",
     "payment_agent.py": "ffdb66ee557500a5e4622f336575d84e6d7c13c2e2f945c01924cfccc6860d61",
     "relai-init.json": "29b607a3765536b961840a167df2af4aab4674e85ffdedb970c93279516a95eb",
     "relai-init.progress.jsonl": "0d7551bcd8b2ddbd42326e2bce3f3c50ed868dea3baa1a65d897ad34c41ffd59",
     "relai-init.stdout.jsonl": "f8d28f18fe0aa62da9da89dcc92415fbd0afc35dd781f4837ef3608eb359cb8b",
-    "source-hashes.json": "a6e4c42128db16a2ec5f78b8032739c4883e9efe1422d8f1966d38a335983de0",
-    "wrong-booking-refund.atif.json": "24c66e897aedcd2066845947e01a2141831ec4eda6e3d3944e003ca626be6e89",
-    "wrong-booking-refund.json": "0000b93266d795d2e54a51c51d7fbf698e4c9580826abfbbbdb2daa3cfdf0583",
+    "source-hashes.json": "0a5232d3f88488bc467fbd8d690d22b387437436e62b8fd66509c25c840bbf3c",
+    "wrong-booking-refund.atif.json": "a3b4bdedcbb72f1bce1b8c5a06a59d722ca538955a26c84b8df7b0fd6ee59cc5",
+    "wrong-booking-refund.json": "9962926010bf705553782cc45024b65bf77783c16e5675e2010a8250fe784711",
     "suggestion.progress.jsonl": "ddbb7416edc72b596d81142c6fa5fd17ccdb6b72ae8cd85c86e03faa75a63777",
     "wiki-bootstrap.progress.jsonl": "d9eb2e117f00a33736470c49a8a607070f8126ec7673827451787b5f09ff5b3c",
     "suggestion.stdout.jsonl": "29bdb9e5dda90ba4f0bee1b7bc71f4ca69d83df18fed62940d0647c9487b4719",
@@ -30,5 +30,5 @@
     "refund-test-validation-reward.json": "6ee4abce908cc249b21f6ac20c1c45484d41ea01fcc43dcb53bbfdaf36fc76d5",
     "refund-test-validation-feedback.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   },
-  "note": "Direct real-agent diagnostic baselines; no RELAI evaluator scores or optimization result for these three cases yet."
+  "note": "Fresh real-agent staging diagnostic baselines of the exact source snapshots; not RELAI evaluator scores or an optimization result. Earlier prompt-only evidence is archived separately."
 }

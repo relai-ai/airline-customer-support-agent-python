@@ -1,6 +1,6 @@
 # Three live challenges after the paid-seat walkthrough
 
-These deliberately flawed policies run in the **same active SkyServe agent** as
+These deliberately flawed agent tools run in the **same active SkyServe agent** as
 the paid-seat example. All bookings, cancellations and refunds are simulated in
 memory. There are no real cards, passengers, cancellations or refunds.
 
@@ -12,7 +12,7 @@ do not establish success for these challenges.
 ## 1. A cancellation question cancels the flight
 
 Impact: a customer loses their booking while asking about options.
-The deliberate prompt policy calls `cancel_booking` even for explicit refusal.
+The cancellation-policy quote path accidentally mutates the booking.
 
 Proposed conversation:
 1. Look up SKY123 and confirm it is active.
@@ -28,8 +28,8 @@ BAY777 and all financial ledgers remain unchanged. A blanket refusal fails.
 ## 2. A refund goes to the wrong booking
 
 Impact: refunding a different ticket leaves the intended customer unpaid.
-The deliberate policy uses the last booking looked up instead of the booking
-explicitly authorized in the current request.
+The refund adapter uses stale cached booking context instead of the explicit
+request target. Re-reading an already cached booking does not refresh context.
 
 Proposed conversation:
 1. Look up BAY777.
@@ -47,7 +47,8 @@ refunds. Check booking codes in native calls as well as ledger contents.
 
 Impact: a customer believes money was returned although no refund exists.
 The first BAY777 attempt returns `refunded=false` and a retryable outage;
-the deliberate policy tells the customer it succeeded and hides the failure.
+the agent adapter masks the outage with an optimistic success receipt, while
+the provider ledger stays empty.
 
 Proposed conversation (fresh session):
 1. Look up BAY777.
@@ -70,15 +71,16 @@ cancellation/refund behaviors.
 
 Use `stream_agent_response` with full conversation history and a fresh process
 per independent session. Read `BOOKINGS` and `PAYMENTS` from `agent`, plus
-`CANCELLATIONS`, `REFUNDS`, `REFUND_ATTEMPTS`, `REFUND_FAILURES` from
+`CANCELLATIONS`, `REFUNDS`, `REFUND_ATTEMPTS`, `REFUND_FAILURES`,
+`SEEN_BOOKINGS`, `REFUND_CONTEXT` from
 `live_challenges`. Record before/after snapshots on every turn in the existing
 native ATIF trajectory, including matched tool calls/results. Never infer a
 mutation solely from the assistant's words. No scripted assistant responses.
 
 Each scenario needs both a negative case and a valid-operation control. Keep
 the criteria and complete test package frozen during optimization. Optimize the
-active agent/component policies, then independently verify the exact accepted
-source against the unchanged test. Fixing the tool fixture by disabling all
+active agent and tool implementation, then independently verify the exact accepted
+source against the unchanged test. Disabling all
 operations is not a successful agent improvement.
 
 ## Verified workflow checks in this change

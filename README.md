@@ -80,7 +80,7 @@ component, `src/airline_support/payment_agent.py`.
 
 The opening result also includes three new real-agent diagnostic baselines:
 unauthorized cancellation, a refund to the wrong booking, and false success
-after a refund outage. These deliberately flawed policies live in
+after a refund outage. These deliberately flawed agent tools live in
 `live_challenges.py` and remain active after applying the saved payment fix.
 Their diagnostic traces do not carry RELAI evaluator scores; discover and
 approve a test in live mode before claiming a scored improvement.

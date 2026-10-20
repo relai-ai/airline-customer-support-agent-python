@@ -14,7 +14,7 @@ async def run(request):
     if hasattr(agent, 'PAYMENTS') and request.get('payments') is not None:
         agent.PAYMENTS[:] = request['payments']
     challenge_state = request.get('challenges') or {}
-    for name in ['CANCELLATIONS', 'REFUNDS', 'REFUND_ATTEMPTS', 'REFUND_FAILURES']:
+    for name in ['CANCELLATIONS', 'REFUNDS', 'REFUND_ATTEMPTS', 'REFUND_FAILURES', 'SEEN_BOOKINGS', 'REFUND_CONTEXT']:
         if name in challenge_state:
             target = getattr(live_challenges, name)
             target.clear()
@@ -27,7 +27,7 @@ async def run(request):
     reply = ''.join([part async for part in agent.stream_agent_response(messages)])
     return {'reply': reply, 'bookings': agent.BOOKINGS, 'payments': getattr(agent, 'PAYMENTS', []),
             'challenges': {name: getattr(live_challenges, name) for name in
-                           ['CANCELLATIONS', 'REFUNDS', 'REFUND_ATTEMPTS', 'REFUND_FAILURES']}}
+                           ['CANCELLATIONS', 'REFUNDS', 'REFUND_ATTEMPTS', 'REFUND_FAILURES', 'SEEN_BOOKINGS', 'REFUND_CONTEXT']}}
 
 
 if __name__ == '__main__':
