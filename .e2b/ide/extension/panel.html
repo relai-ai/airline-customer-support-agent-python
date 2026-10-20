@@ -655,7 +655,7 @@
         const waitingForResults = tourStep === 2 && (!recording || progress < 4 || Boolean(replayPending));
         el("tour-next").disabled = waitingForResults;
         el("tour-next").textContent = tourStep === 2
-          ? waitingForResults ? "Send the prepared prompt below" : "Continue"
+          ? waitingForResults ? "Send the prompts" : "Continue"
           : tourStep === tourCards.length - 1 ? "Start exploring" : "Next";
         el("tour-back").hidden = tourStep === 0;
         if (focus && tourStep === 0) el("explore-cards").scrollIntoView({ block: "center" });
