@@ -1,0 +1,55 @@
+{
+  "kind": "real-staging-verification",
+  "date": "2026-10-20",
+  "sessionId": "892bb4e1-190a-4552-abb8-a698e5d5e97c",
+  "optimizerRunId": "optimizer-1792527216-503584658",
+  "freshSimulationRunId": "1792530754664-7620",
+  "baselineSourceHashes": {
+    "agent.py": "32d4653c1b864591a75eead61a1a10c71c39413e3f89b848403a6d21977ffaef",
+    "payment_agent.py": "4de96cfa0ffccdbaad6a923ace5ebc35e6b82db74ed510e0f003b75147731dc3",
+    "models.py": "2c39f0153d7cc5f9560cbb7cf1ca8ee865dd44395195bb0a066dfbaf0ebf21a6",
+    "live_challenges.py": "1ff001f2d7bba96ab88047c5d426bbe15a0343abf238b72af8e663fbc867ad0a"
+  },
+  "acceptedCandidateSourceHashes": {
+    "agent.py": "32d4653c1b864591a75eead61a1a10c71c39413e3f89b848403a6d21977ffaef",
+    "payment_agent.py": "4de96cfa0ffccdbaad6a923ace5ebc35e6b82db74ed510e0f003b75147731dc3",
+    "models.py": "2c39f0153d7cc5f9560cbb7cf1ca8ee865dd44395195bb0a066dfbaf0ebf21a6",
+    "live_challenges.py": "87944a854e189406ecfd0c7b5dc6eafc234ca9f8ee5aa17ba418cc1a9a3e41ea"
+  },
+  "testPackageHashes": {
+    "README.md": "6bbc33073ca133cc912dec680d44322d39ed5a622978f190a2a85e1cb0a6df68",
+    "instruction.md": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "task.toml": "de80acbb0e4e45ef181fccb25fa5c50d25addd75e0c637b2e3273bee28d09f3e",
+    "generated/build.json": "6c455bf4b9a4ee2914c7cb05ffe2ab5b5d7f5a294f9faa53ccacacf0704fa295",
+    "tests/evaluator.toml": "88f18b0af62dbe22f715f43419ed74ca16c9edfc11d8a23644af3ede02f48645",
+    "tests/expected.json": "2a6d8364bae97ecdc1aa5fdc17f8ed8d9f9e7741e9b4c54580897fcab2183109",
+    "tests/Dockerfile": "959d9210d5c05c489e2c3216237e7daa137796eb41e9830eef927e924dc270f8",
+    "tests/judge.md": "a993de33adca49733a5e60fcc603a471aa027b8277506c3a55d34026db1c67ef",
+    "tests/test.sh": "01a069393b659f4ba5d30544cb81f0cb72f255234df9c732e865e9aa82d43b59",
+    "tests/evaluate.py": "c12d00dcd25c2dd350fd805090ae3754ac71327798356c9e34190aafdc82eb4b",
+    "environment/scenario.json": "41a90be2bad7ffdfec91683b815b8b15e078a2fa0f3c887dd7b3ad04d2c94e9b",
+    "environment/adapter.json": "53e1899df02c38028505496e2df1259ca3e4fa934b119d1d3ba9118a7d08e68c",
+    "environment/Dockerfile": "b8d4de68f98dabbcfc86276e99f49350af8f008abe26131206265810d087df2e",
+    "environment/refund_adapter.py": "bf123635e3a12e030abde475ee6755283972710106b00cf0fb41d80a1fda1b6a"
+  },
+  "measurementBudget": {
+    "approvedMaximum": 12,
+    "restoredCancellationValidation": 1,
+    "optimizerRollouts": 8,
+    "earlierBudgetInterruptedValidation": 1,
+    "freshScorerValidation": 1,
+    "freshCandidateSimulation": 1,
+    "totalConservativelyCounted": 12
+  },
+  "candidateSourcePublished": false,
+  "costOptimizationMeasured": false,
+  "artifacts": {
+    "optimizer-comparison.json": "b7c103d96774e7721ebb1557f3d6fdebe5d81ab071e421839bbcae38585d20cb",
+    "before-native-reward.json": "6ee4abce908cc249b21f6ac20c1c45484d41ea01fcc43dcb53bbfdaf36fc76d5",
+    "candidate-outcome-summary.json": "f50e81015bcbb558346a222719f074299caf3b7660da05910fdc0366c3b7e635",
+    "candidate.atif.json": "ea05fb31906dd455840bb9e55d2218ac0e03b4eca7bc3de495843d5294f3dbc5",
+    "candidate-native-reward.json": "7847582eed2b1725fb249c8f9142a8e3105baac89114bfdfff04d7c5dfbb22ff",
+    "before.atif.json": "e7480776993741d0ba12655220587a7f7a1604085037c8ed36122279af89670b",
+    "README.md": "d7b35a9f83b24828ed9b98faa88fa4b87097e565be10aa1fc675f25bd1fecc60"
+  }
+}

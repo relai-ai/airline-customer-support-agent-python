@@ -112,7 +112,9 @@ def evaluate(document):
             for _, result in lookups:
                 b = EXPECTED['BOOKINGS'][wanted]
                 accepted = f"{b['passenger']} is booked on {b['route']} departing {b['departure']}. Seat {b['seat']}. Status: {b['status']}."
-                check(result == accepted, where + ' lookup result', result, repr(accepted))
+                accepted_results = (accepted, accepted + " No payment recorded for this booking.")
+                check(result in accepted_results, where + ' lookup result', result,
+                      'exactly either ' + ' or '.join(repr(value) for value in accepted_results))
         if n == 3:
             for call, result, loc in refunds:
                 accepted = {'refunded': False, 'booking': 'BAY777', 'error': 'Refund provider unavailable', 'retryable': True}

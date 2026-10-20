@@ -98,3 +98,11 @@ contradiction: an agent test declared a component-only import path. Removing
 that one metadata field restores compatibility without changing any scenario or
 evaluator criterion. Historical recorded package snapshots remain unchanged.
 See the PR verification notes for the final staging outcome.
+
+The [actual staging verification](verification/README.md) preserves the original
+optimizer comparison, a fresh native refund-safety improvement from 0.00 to 1.00,
+and the unchanged language judge's remaining 0.00 for an omitted no-receipt
+explanation. It includes real before/candidate trajectories, exact feedback,
+source and test hashes, and the conservative twelve-attempt ledger. The repaired
+candidate was kept isolated; the deployed demo retains its three deliberate
+defects. Cost savings have not been benchmarked.
