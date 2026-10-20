@@ -5,6 +5,31 @@ const fs = require("node:fs/promises");
 const readline = require("node:readline");
 const { startProvider } = require("./codex-provider");
 const { startRelaiWorker } = require("./relai-worker");
+// A completed CLI receipt can still be shown when the next chat call cannot fit
+// the session budget. Never infer completion from progress, old turns or errors.
+function completedOptimizationReceipt(item) {
+  if (item?.type !== "commandExecution" || item.status !== "completed" || item.exitCode !== 0 ||
+      !/\brelai\s+(?:optimize\b|runs\s+(?:wait|status)\b)/.test(item.command || "")) return null;
+  let receipt = null;
+  for (const line of String(item.aggregatedOutput || "").slice(-1048576).split(/\r?\n/)) {
+    let value;
+    try { value = JSON.parse(line); } catch { continue; }
+    if (value.schema_version !== "relai.agent_interaction.v1" || value.workflow !== "optimize" ||
+        value.status !== "completed" || !Array.isArray(value.summary?.items) ||
+        !/^optimizer-[a-zA-Z0-9_-]+$/.test(value.session_id || "") ||
+        value.result_path !== `.relai/.internal/runs/optimizer/${value.session_id}/optimizer-result.json`) continue;
+    const labels = ["Status", "Accepted changes", "Final evaluation"];
+    const items = labels.flatMap(label => {
+      const item = value.summary.items.find(item => item.label === label);
+      return typeof item?.value === "string" && item.value.length <= 1000
+        ? [`- ${label}: ${item.value.replace(/[\r\n]+/g, " ")}`] : [];
+    });
+    if (items.length === labels.length) receipt =
+      "RELAI completed the optimization run. Saved result:\n\n" + items.join("\n") +
+      "\n\nReport: `" + value.result_path + "`. Scope warnings and details remain in that report.";
+  }
+  return receipt;
+}
 class CodexBridge {
   constructor(env, root, changed, askUser) {
     this.env = env;
@@ -182,6 +207,7 @@ class CodexBridge {
         "Stop the current Codex turn before sending another request.",
       );
     this.state.messages.push({ role: "user", content: prompt });
+    this.completedRelaiReceipt = null;
     this.cancelRequested = false;
     this.state.pendingTurn = true;
     this.publish();
@@ -327,7 +353,14 @@ class CodexBridge {
       message.content = p.item.text;
       this.publish();
     }
-    if (event.method === "turn/started") this.turn = p.turn.id;
+    if (event.method === "turn/started") {
+      this.turn = p.turn.id;
+      this.completedRelaiReceipt = null;
+    }
+    if (event.method === "item/completed" && this.state.pendingTurn && this.turn && p.turnId === this.turn) {
+      const receipt = completedOptimizationReceipt(p.item);
+      if (receipt) this.completedRelaiReceipt = receipt;
+    }
     if (event.method === "item/completed" && p.item?.type === "fileChange") {
       this.state.changedFiles = [
         ...new Set([
@@ -346,7 +379,9 @@ class CodexBridge {
         this.state.messages.push({
           role: "assistant",
           content:
-            "Codex could not complete this request: " +
+            (failure?.code === "playground_budget_exceeded" && this.completedRelaiReceipt
+              ? this.completedRelaiReceipt + "\n\nThe chat could not add a final explanation: "
+              : "Codex could not complete this request: ") +
             (failure?.message || p.turn.error?.message || "runtime error") +
             (failure?.code === "playground_budget_exceeded"
               ? " Your workspace and recorded review selections are preserved. A new call must fit the remaining session budget."

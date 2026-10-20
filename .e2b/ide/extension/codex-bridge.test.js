@@ -214,3 +214,55 @@ test("question UI failure returns a protocol error instead of granting approval"
   assert.equal(replies[0].error.code, -32603);
   assert.equal(replies[0].result, undefined);
 });
+
+function completedReceiptEvent(overrides = {}) {
+  const session = 'optimizer-123-example';
+  return { method: 'item/completed', params: { turnId: 'current-turn', item: {
+    type: 'commandExecution', status: 'completed', exitCode: 0,
+    command: 'relai runs wait run-1', aggregatedOutput: JSON.stringify({
+      schema_version: 'relai.agent_interaction.v1', status: 'completed', workflow: 'optimize',
+      session_id: session, result_path: `.relai/.internal/runs/optimizer/${session}/optimizer-result.json`,
+      summary: { items: [ {label:'Status',value:'accepted'}, {label:'Accepted changes',value:'1'},
+        {label:'Final evaluation',value:'score 0.00 → 0.50'},
+        {label:'Report summary',value:'Unverified patch-writer narrative must not replace measured results.'} ] },
+    }), ...overrides,
+  } } };
+}
+function budgetFailure(bridge) {
+  bridge.provider = { takeFailure: () => ({code:'playground_budget_exceeded',message:'Insufficient remaining budget.'}) };
+  bridge.receive({method:'turn/completed',params:{turn:{status:'failed',error:{message:'retry limit'}}}});
+  return bridge.state.messages.at(-1).content;
+}
+test('a budget-limited chat preserves a completed optimizer receipt from this turn without another model call', () => {
+  const {bridge}=fixture(); bridge.state.pendingTurn=true; bridge.turn='current-turn';
+  bridge.receive(completedReceiptEvent());
+  const result=budgetFailure(bridge);
+  assert.match(result,/RELAI completed the optimization/);
+  assert.match(result,/score 0.00 → 0.50/);
+  assert.match(result,/chat could not add a final explanation/);
+  assert.match(result,/review selections are preserved/);
+  assert.doesNotMatch(result,/Unverified patch-writer/);
+  assert.equal(bridge.state.pendingTurn,false);
+});
+test('progress, failed commands and unrelated output cannot become a successful optimizer receipt', () => {
+  for(const change of [
+    {exitCode:1}, {status:'failed'}, {command:'cat old-report.json'},
+    {aggregatedOutput:JSON.stringify({schema_version:'relai.agent_interaction.v1',workflow:'optimize',status:'running'})},
+    {aggregatedOutput:'malformed JSON'},
+  ]) {
+    const {bridge}=fixture();bridge.state.pendingTurn=true;bridge.turn='current-turn';
+    bridge.receive(completedReceiptEvent(change));
+    assert.doesNotMatch(budgetFailure(bridge),/RELAI completed/);
+  }
+});
+test('old-turn receipts and invalid report paths are never reused after a budget rejection', () => {
+  for(const mode of ['old-turn','new-turn','bad-path']) {
+    const {bridge}=fixture();bridge.state.pendingTurn=true;bridge.turn='current-turn';
+    const event=completedReceiptEvent();
+    if(mode==='old-turn') event.params.turnId='old-turn';
+    if(mode==='bad-path') {const value=JSON.parse(event.params.item.aggregatedOutput);value.result_path='/private/secrets';event.params.item.aggregatedOutput=JSON.stringify(value);}
+    bridge.receive(event);
+    if(mode==='new-turn') bridge.receive({method:'turn/started',params:{turn:{id:'next-turn'}}});
+    assert.doesNotMatch(budgetFailure(bridge),/RELAI completed/);
+  }
+});

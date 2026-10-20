@@ -7,11 +7,11 @@ This repository has one conversational agent: **SkyServe Airline Support**.
 `stream_agent_response` is its shared execution entry point. The terminal
 interfaces and alternative model providers all use this same agent.
 `lookup_booking`, `baggage_policy`, `change_seat`, `paid_seat_options`, and
-`purchase_seat_upgrade`, `cancel_booking`, `issue_refund`, and `refund_status` are its internal tools,
+`purchase_seat_upgrade`, `cancellation_policy`, `cancel_booking`, `issue_refund`, and `refund_status` are its internal tools,
 not separate agents.
 
 The active factory composes the byte-preserved historical payment component in
-`payment_agent.py` with three deliberately flawed live challenge policies in
+`payment_agent.py` with three deliberately flawed live challenge tools in
 `live_challenges.py`. See `demo/scenarios/live-challenges/README.md` for the
 expected safe behavior and observable ledgers. Applying the archived payment
 fix changes only `payment_agent.py`; its scores do not evaluate the new challenges.
