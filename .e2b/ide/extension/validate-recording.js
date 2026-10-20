@@ -3,7 +3,7 @@ const fs = require("node:fs/promises");
 const path = require("node:path");
 const { loadRecording, reviewFile, digest } = require("./recorded");
 
-async function validate(root, example = "booking") {
+async function validate(root, example = "booking", { archiveOnly = false } = {}) {
   const recording = await loadRecording(root, example);
   if (recording.verificationStatus !== "verified" && !(recording.schemaVersion === 3 && recording.verificationStatus === "mixed"))
     throw Error(
@@ -11,6 +11,7 @@ async function validate(root, example = "booking") {
     );
   for (const file of recording.files) {
     reviewFile(recording, file.path);
+    if (archiveOnly) continue;
     const target = path.join(root, file.path);
     if (file.before === null) {
       try {
@@ -25,6 +26,7 @@ async function validate(root, example = "booking") {
       throw Error("Template source differs from the measured baseline");
   }
   console.log(
+    archiveOnly ? "Archived recording evidence and source snapshots validated; no model calls." :
     recording.verificationStatus === "mixed"
       ? "Recorded evidence and original source validated; behavioral results remain mixed. No model calls."
       : "Recorded walkthrough and original source validated; no model calls.",
@@ -34,7 +36,10 @@ async function validate(root, example = "booking") {
 if (require.main === module) {
   const root = process.argv[2] || process.cwd();
   (async () => {
-    await validate(root);
+    let relocated = false;
+    try { await fs.access(path.join(root, 'demo/scenarios/unauthorized-payment/recorded/workspace-layout.json')); relocated = true; }
+    catch (error) { if (error.code !== 'ENOENT') throw error; }
+    await validate(root, "booking", { archiveOnly: relocated });
     try { await fs.access(path.join(root, 'demo/scenarios/unauthorized-payment/recorded/walkthrough.json')); }
     catch (error) { if (error.code === 'ENOENT') return; throw error; }
     await validate(root, 'unauthorized-payment');

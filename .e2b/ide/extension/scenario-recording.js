@@ -82,7 +82,8 @@ function validateTrajectory(value, after) {
   return exchanges;
 }
 async function load(root) {
-  const manifest = JSON.parse(await read(root, base + 'walkthrough.json'));
+  const manifestBytes = await read(root, base + 'walkthrough.json');
+  const manifest = JSON.parse(manifestBytes);
   requireThat(manifest.schemaVersion === 4 && manifest.exampleId === 'unauthorized-payment' &&
     manifest.evidenceKind === 'live-agent' && manifest.verificationStatus === 'verified', 'Payment walkthrough is not verified');
   const artifacts = new Map();
@@ -131,6 +132,30 @@ async function load(root) {
   'Payment patch differs from reviewed evidence');
   const paths = [...manifest.diff.matchAll(/^diff --git a\/(.+) b\/(.+)$/gm)];
   requireThat(paths.length === 1 && paths[0][1] === candidate && paths[0][2] === candidate, 'Payment patch targets an unexpected file');
-  return manifest;
+  let layoutBytes;
+  try { layoutBytes = await read(root, base + 'workspace-layout.json'); }
+  catch (error) { if (error.code === 'ENOENT') return manifest; throw error; }
+  const layout = JSON.parse(layoutBytes);
+  const workspaceSource = 'src/airline_support/agent.py';
+  requireThat(layout.schemaVersion === 1 && layout.recordedSource === candidate &&
+    layout.workspaceSource === workspaceSource && layout.recordingSha256 === hash(manifestBytes) &&
+    layout.beforeSha256 === file.before && layout.afterSha256 === file.after,
+    'Workspace layout differs from the measured source');
+  const mappedDiff = manifest.diff.split('\n').map(line =>
+    /^(diff --git |--- |\+\+\+ )/.test(line)
+      ? line.replaceAll('a/' + candidate, 'a/' + workspaceSource).replaceAll('b/' + candidate, 'b/' + workspaceSource)
+      : line).join('\n');
+  const mappedPatch = await read(root, base + 'workspace.patch');
+  requireThat(layout.patchPath === base + 'workspace.patch' && layout.patchSha256 === hash(mappedPatch) &&
+    mappedPatch.toString() === mappedDiff, 'Workspace patch must change paths only');
+  const label = text => text.replaceAll(candidate, workspaceSource);
+  return { ...manifest, workspaceLayout: layout,
+    files: [{ ...file, path: workspaceSource }], diff: mappedDiff,
+    patchPath: layout.patchPath, patchSha256: layout.patchSha256,
+    steps: manifest.steps.map(step => ({ ...step, text: label(step.text) })),
+    applyMessage: label(manifest.applyMessage || ''),
+    provenance: { ...manifest.provenance, artifacts: [...manifest.provenance.artifacts,
+      { path: base + 'workspace-layout.json', sha256: hash(layoutBytes) },
+      { path: layout.patchPath, sha256: layout.patchSha256 }] } };
 }
 module.exports = { load, validateTrajectory, suite, turns, base, candidate };

@@ -17,7 +17,7 @@ async function sources(root, manifest) {
     }
   }
   await walk(path.join(root, 'src'));
-  if (manifest?.exampleId === 'unauthorized-payment') {
+  if (manifest?.exampleId === 'unauthorized-payment' && !manifest.workspaceLayout) {
     const file = path.join(await fs.realpath(root), 'demo/scenarios/unauthorized-payment/agent.py');
     if (await fs.realpath(file) !== file || !(await fs.stat(file)).isFile()) throw Error('Sample candidate must be a regular file without symlinks.');
     files.set('airline_support/agent.py', await fs.readFile(file));
@@ -110,7 +110,7 @@ class SampleComparison {
       if (file.before === null) original.delete(file.path.slice(4));
       else original.set(file.path.slice(4), Buffer.from(content.before));
     }
-    if (this.manifest.exampleId === 'unauthorized-payment') {
+    if (this.manifest.exampleId === 'unauthorized-payment' && !this.manifest.workspaceLayout) {
       const file = this.manifest.files[0];
       original.set('airline_support/agent.py', Buffer.from(recorded.reviewFile(this.manifest, file.path).before));
     }

@@ -1292,8 +1292,8 @@
           if (recording.exampleId === "unauthorized-payment") {
             tourCards[1][1] = 'The right panel compares the original agent’s response with the recorded fix for the same payment request.';
             el('agent-intro-title').textContent = 'When a quote becomes a $25 charge';
-            el('agent-source-path').textContent = 'demo/scenarios/unauthorized-payment/agent.py';
-            el('agent-source-hint').textContent = 'The isolated paid-seat agent and its instructions.';
+            el('agent-source-path').textContent = 'src/airline_support/';
+            el('agent-source-hint').textContent = 'Agent instructions, booking state and paid-seat tools.';
             el('agent-intro-copy').textContent = 'SkyServe’s paid-seat flow has a deliberate consent bug. Follow RELAI from risk to test to verified fix. All charges are simulated.';
           }
           progress = d.recordedProgress;

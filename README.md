@@ -2,7 +2,7 @@
 
 A terminal airline customer support agent built with the OpenAI Agents SDK for Python.
 
-The agent can help with demo booking lookups, baggage policy, seat changes, and flight-change guidance. Each terminal conversation is saved as JSONL with an ATIF trajectory under `logs/`.
+The sample agent lives in `src/airline_support/agent.py` and supports booking lookups, baggage policy, and simulated paid-seat upgrades. The active playground demonstrates a deliberately injected payment-consent bug; its recorded walkthrough tests and fixes that bug. No real payment provider is connected. Each terminal conversation is saved as JSONL with an ATIF trajectory under `logs/`.
 
 The agent should end all responses with "Please let me know if you have any questions".
 

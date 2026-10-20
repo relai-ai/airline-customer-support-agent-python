@@ -49,7 +49,8 @@ function activate(context) {
     const env = JSON.parse(
       await fs.readFile("/home/user/.playground/environment.json", "utf8"),
     );
-    const example = env.PLAYGROUND_EXAMPLE || "booking";
+    const example = env.PLAYGROUND_EXAMPLE || "unauthorized-payment";
+    env.PLAYGROUND_EXAMPLE = example;
     const sessionId = env.PLAYGROUND_SESSION_ID + (example === "booking" ? "" : ":" + example);
     const recordingKey = "relai.playground.recording." + sessionId;
     const root = "/home/user/airline";
@@ -134,6 +135,12 @@ function activate(context) {
         // Explicit action allowlist. Webview cannot choose URLs, paths or credentials.
         if (msg.action === "load") {
           recording = await recorded.loadRecording(root, example);
+          if (example === "booking") {
+            let archivedLayout = false;
+            try { await fs.access(path.join(root, "demo/scenarios/unauthorized-payment/recorded/workspace-layout.json")); archivedLayout = true; }
+            catch (error) { if (error.code !== "ENOENT") throw error; }
+            if (archivedLayout) throw Error("The booking example is archived. Launch its earlier Git revision/template; this workspace contains the payment agent.");
+          }
           await codex.restore();
           const investigation = { investigation: codex.snapshot() };
           current.webview.postMessage({
@@ -184,7 +191,7 @@ function activate(context) {
           ["source", "relai", "project", "wiki", "tests", "harbor"].includes(msg.folder)
         ) {
           const folders = {
-            source: recording?.exampleId === "unauthorized-payment" ? "demo/scenarios/unauthorized-payment/agent.py" : "src/airline_support",
+            source: "src/airline_support",
             relai: ".relai",
             project: ".",
             wiki: ".relai/evals-wiki",

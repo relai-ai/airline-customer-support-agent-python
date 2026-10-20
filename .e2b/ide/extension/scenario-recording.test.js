@@ -123,3 +123,45 @@ test('payment comparison cannot substitute easier customer requests after optimi
   await f.write('after-trajectory.json', value); await f.save();
   await assert.rejects(loadRecording(f.root, 'unauthorized-payment'), /different customer requests/);
 });
+
+async function mapFixture(f) {
+  const target = 'src/airline_support/agent.py';
+  const manifestBytes = await fs.readFile(path.join(f.root, base, 'walkthrough.json'));
+  const patch = f.manifest.diff.replaceAll('a/' + candidate, 'a/' + target).replaceAll('b/' + candidate, 'b/' + target);
+  const layout = { schemaVersion: 1, recordedSource: candidate, workspaceSource: target,
+    recordingSha256: digest(manifestBytes), beforeSha256: f.manifest.files[0].before,
+    afterSha256: f.manifest.files[0].after, patchPath: base + 'workspace.patch', patchSha256: digest(patch) };
+  await fs.writeFile(path.join(f.root, target), f.manifest.files[0].beforeContent);
+  await fs.writeFile(path.join(f.root, base, 'workspace.patch'), patch);
+  await fs.writeFile(path.join(f.root, base, 'workspace-layout.json'), JSON.stringify(layout));
+  return { target, patch, layout, manifestBytes };
+}
+test('workspace relocation applies identical measured bytes to the familiar source and preserves archived evidence', async t => {
+  const f = await fixture(t), mapped = await mapFixture(f);
+  const originalPatch = await fs.readFile(path.join(f.root, base, 'verified.patch'));
+  const manifest = await loadRecording(f.root, 'unauthorized-payment');
+  assert.equal(manifest.files[0].path, mapped.target);
+  assert.equal(manifest.files[0].after, f.manifest.files[0].after);
+  await applyRecording(f.root, manifest);
+  assert.equal(await fs.readFile(path.join(f.root, mapped.target), 'utf8'), '# payment after\n');
+  assert.deepEqual(await fs.readFile(path.join(f.root, base, 'walkthrough.json')), mapped.manifestBytes);
+  assert.deepEqual(await fs.readFile(path.join(f.root, base, 'verified.patch')), originalPatch);
+  assert.equal(await fs.readFile(path.join(f.root, candidate), 'utf8'), '# payment before\n');
+  assert.match(await applyRecording(f.root, manifest), /already applied/);
+});
+test('relocation refuses content changes even when the new patch hash is recomputed', async t => {
+  const f = await fixture(t), mapped = await mapFixture(f);
+  const changed = mapped.patch.replace('+# payment after', '+# different unmeasured source');
+  assert.notEqual(changed, mapped.patch);
+  mapped.layout.patchSha256 = digest(changed);
+  await fs.writeFile(path.join(f.root, base, 'workspace.patch'), changed);
+  await fs.writeFile(path.join(f.root, base, 'workspace-layout.json'), JSON.stringify(mapped.layout));
+  await assert.rejects(loadRecording(f.root, 'unauthorized-payment'), /paths only/);
+});
+test('relocated Apply preserves user edits to the main agent', async t => {
+  const f = await fixture(t), mapped = await mapFixture(f);
+  const manifest = await loadRecording(f.root, 'unauthorized-payment');
+  await fs.writeFile(path.join(f.root, mapped.target), '# visitor changes\n');
+  await assert.rejects(applyRecording(f.root, manifest), /edits were preserved/);
+  assert.equal(await fs.readFile(path.join(f.root, mapped.target), 'utf8'), '# visitor changes\n');
+});

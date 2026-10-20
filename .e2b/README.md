@@ -1,21 +1,26 @@
 # Python airline playground
 
-The image packages the Python SkyServe source, initialized RELAI EvalsWiki,
-a fourteen-turn booking-grounding test, saved real command artifacts, and a pinned Codex
-app-server. Tool installation and image validation make no model calls.
-The Docker copy allowlist excludes host credentials and private CLI state.
+The image packages the Python SkyServe source in the familiar
+`src/airline_support/` layout, initialized RELAI EvalsWiki, a frozen six-turn
+payment-consent test, saved real command artifacts, and a pinned Codex app-server.
+The active source deliberately contains a synthetic $25 purchase-consent bug.
+The four prepared requests replay risk, test, measured optimization, and Apply.
+Final optimizer comparison improved 0.50 to 1.00; separate verification passed
+both evaluators. No image-build or recorded-playback operation calls a model.
 
-The four prefilled requests replay the measured wiki, baseline simulation,
-a focused fix with independent RELAI verification, and explicit apply workflow. The original source remains in the
-image; review uses read-only before/after documents. Applying checks every source
-hash and preserves visitor edits on mismatch. Edited or custom requests run the
-real Codex process with actual commands, approvals, Stop, and persistent history.
+The payment agent's source bytes match the recorded baseline; Apply uses the
+identical measured fix with only the patch path relocated to
+`src/airline_support/agent.py`. The original reports and native evidence remain
+unchanged. `recorded/workspace-layout.json` records this relocation, and validation
+rejects any source or patch-content change beyond the path mapping. Git history
+and `demo/recorded/` preserve the previous booking example. Its patch is checked
+in a separate disposable archive checkout, never against the active agent.
 
-The current recording was orchestrated by the real Codex CLI with real target
-model completions and booking tools. Its final comparison improves from 0.7917
-to 1.0000, and a separate verification passes all twelve criteria. The original
-source and all forty generated test files remain unchanged in the template.
-Exact replies and native evidence are in `demo/recorded/exact-step-*.json`.
+Review uses read-only before/after documents. Apply checks source hashes and
+preserves visitor edits on mismatch. Edited or custom requests use the real
+Codex process with actual commands, approvals, Stop, and persistent history.
+Provisioned live sessions need a compatible RELAI CLI; local previews explicitly
+disable live comparisons. The Docker allowlist excludes host credentials.
 
 The build explicitly installs `relai@relai-codex` through Codex's plugin command,
 then initializes a real app-server and verifies RELAI skill discovery. These

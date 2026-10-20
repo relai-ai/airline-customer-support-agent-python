@@ -535,7 +535,7 @@ async function applyRecording(root, manifest) {
 }
 function sourcePath(name, manifest) {
   return manifest.exampleId === "unauthorized-payment"
-    ? name === "demo/scenarios/unauthorized-payment/agent.py"
+    ? name === (manifest.workspaceLayout ? "src/airline_support/agent.py" : "demo/scenarios/unauthorized-payment/agent.py")
     : /^(?:src\/airline_support\/[a-zA-Z0-9_-]+\.py|tests\/test_[a-zA-Z0-9_-]+\.py)$/.test(name);
 }
 function reviewFile(manifest, name) {

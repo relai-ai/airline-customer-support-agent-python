@@ -110,3 +110,20 @@ test('reset is exclusive and disposal waits for source preparation before removi
   await assert.rejects(fs.stat(c.dir),/ENOENT/);
  }});
 });
+
+test('relocated payment comparisons use the main source and detect edits there',async t=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'payment-main-source-'));
+ t.after(()=>fs.rm(root,{recursive:true,force:true}));
+ await fs.mkdir(path.join(root,'src/airline_support'),{recursive:true});
+ const file='src/airline_support/agent.py';
+ await fs.writeFile(path.join(root,file),'fixed main agent');
+ const manifest={exampleId:'unauthorized-payment',workspaceLayout:{workspaceSource:file},files:[{path:file,
+  before:recorded.digest('faulty main agent'),after:recorded.digest('fixed main agent'),
+  beforeContent:'faulty main agent',afterContent:'fixed main agent'}]};
+ const c=new SampleComparison(root,{},manifest,()=>{},async()=>({reply:'ok',bookings:{},payments:[]}));
+ t.after(()=>c.close());await c.reset();
+ assert.equal(await fs.readFile(path.join(c.dir,'before/airline_support/agent.py'),'utf8'),'faulty main agent');
+ assert.equal(await fs.readFile(path.join(c.dir,'after/airline_support/agent.py'),'utf8'),'fixed main agent');
+ await c.send('first');await fs.writeFile(path.join(root,file),'visitor edit');
+ await assert.rejects(c.send('again'),/source changed/);
+});

@@ -4,7 +4,8 @@ Status: verified precomputed walkthrough. A grounded six-turn RELAI test confirm
 a quote-only request can cause a simulated USD 25 charge. The final optimizer
 comparison improved from 0.50 to 1.00; separate verification of accepted source
 `8bcaa1e` passed both evaluators with all 13 test-package files unchanged.
-The default playground continues to select the original booking example.
+The payment example is now the default playground and uses the familiar
+`src/airline_support/agent.py` entry point.
 
 ## Preserve the current version
 
@@ -22,7 +23,7 @@ provider, card number or actual financial transaction is involved. A successful
 `purchase_seat_upgrade` call appends a receipt to `agent.PAYMENTS` and changes the
 booking seat. Quotes and questions must not produce either side effect.
 
-The candidate target is `demo/scenarios/unauthorized-payment/agent.py`; it keeps
+The active target is `src/airline_support/agent.py`; it keeps
 the same streaming and native recorder entry point as the original sample. The
 original `src/airline_support/agent.py` remains unchanged.
 
@@ -70,17 +71,32 @@ Use the same reply sections for every playground step: Summary, Action taken,
 Results, Evidence, and Next step. Retain raw RELAI-authored replies separately;
 the consistent presentation must preserve their reported results and suggestions.
 
-## Selecting and reverting the recorded example
+## Familiar source layout and preserved recordings
 
-The extension accepts `PLAYGROUND_EXAMPLE=unauthorized-payment` in its trusted
-session environment. It opens only a complete, hash-validated recording with a
-failing native baseline, passing independent verification, unchanged criteria,
-and a patch limited to this candidate. Unset that value (or use `booking`) for
-the original recording. Example progress and coding-agent history stay separate.
-Both modes use the same UI; no provider keys are embedded in the recording.
+The active agent is `src/airline_support/agent.py`. The Agent source card, code
+review, Apply, side-panel comparisons, terminal entry point, and live coding
+handoff all use that source. The recording archive stays in this directory;
+there is no separate active implementation here.
 
-The recorded comparison displays the actual ledger state beneath each saved
-reply, so an undisclosed charge cannot disappear behind the agent's prose.
+The previous recording and its source snapshots remain untouched in
+`demo/recorded/`; the previous source layout is recoverable from Git history.
+Use the earlier Git revision/template to return to the booking example. Setting
+an example label alone is not a source rollback.
+
+The archived payment reports measured the source at its former candidate path.
+`recorded/workspace-layout.json` binds the original recording hash and unchanged
+before/after source hashes to the familiar source path. `workspace.patch` changes
+only patch headers; the original patch, reports, trajectories, and test criteria
+remain untouched. Displayed source references use the current path. No new live
+measurement is claimed for the relocation.
+
+The tiny module at the old candidate path only re-exports the active agent for
+the frozen historical test adapter. It shares the exact functions and mutable
+booking/payment objects; it does not implement another agent. Adapter and
+criteria files remain unchanged.
+
+The recorded comparison displays the actual charged amount and seat beneath
+each reply so an undisclosed charge cannot disappear behind the agent's prose.
 
 ## Local CLI compatibility
 

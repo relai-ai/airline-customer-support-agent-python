@@ -6,7 +6,8 @@ This repository has one conversational agent: **SkyServe Airline Support**.
 `create_airline_agent` in `src/airline_support/agent.py` creates it, and
 `stream_agent_response` is its shared execution entry point. The terminal
 interfaces and alternative model providers all use this same agent.
-`lookup_booking`, `baggage_policy`, and `change_seat` are its internal tools,
+`lookup_booking`, `baggage_policy`, `change_seat`, `paid_seat_options`, and
+`purchase_seat_upgrade` are its internal tools,
 not separate agents.
 
 Pass `ChatMessage` history ending in the new user message to
