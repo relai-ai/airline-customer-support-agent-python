@@ -895,7 +895,7 @@
           const step = recording.steps[index];
           root.append(message("user", recording.prompts[index]));
           const reply = message("assistant", recordedReplyText(index, step.text, recording.turns, recording.evidenceKind === "deterministic-recorder"), false);
-          const timing = index === 0 ? recording.initialization : step;
+          const timing = index === 0 ? (recording.initialization || step) : step;
           let timingText = [
             recording.riskInventory ? "Recorded: relai wiki list risks" : "Recorded: relai init",
             "Recorded: relai test create",
