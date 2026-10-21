@@ -43,3 +43,19 @@ Local UI previews may set `PLAYGROUND_SAMPLE_LIVE_DISABLED=1` in their synthetic
 session environment. The panel then keeps recorded examples available and disables
 model requests. This flag is for local fixtures, not a replacement for gateway
 authorization or spending enforcement.
+
+
+### Guided completion analytics
+
+After the fourth saved step applies the recorded optimizer changes successfully,
+the webview enters Live Mode and sends `relai-playground-guided-completed` with
+`PLAYGROUND_SESSION_ID` to the outer IDE window. Restoring completed progress or
+receiving `relai-playground-analytics-ready` from that window retries the signal.
+A failed Apply, viewing saved optimizer output alone, opening the IDE, skipping
+the tour, or ending a session does not count as completion.
+
+The dashboard's outer IDE analytics bridge turns this signal into the identified
+PostHog event `playground_guided_completed`, deduplicated per session. The sample
+never receives PostHog credentials and sends no prompt/result text. Both the
+sample image and dashboard bridge must be released for capture. Email workflows
+should enforce once-per-person sending separately from session deduplication.

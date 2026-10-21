@@ -612,6 +612,12 @@
         failedSend = null,
         attemptedCommand = null,
         attemptedResult = null;
+      // The outer IDE owns PostHog identity/configuration. Never forward prompts
+      // or model output; report only the persisted guided-completion milestone.
+      function announceGuidedCompletion() {
+        if (recording && progress >= 4 && sessionId)
+          window.top.postMessage({ type: "relai-playground-guided-completed", sessionId }, "*");
+      }
       const saved = vscode.getState() || {};
       let sessionId;
       let tourComplete = Boolean(saved.tourComplete);
@@ -1268,7 +1274,7 @@
         card.append(actions);
         card.scrollIntoView?.({ block: "nearest" });
       }
-      window.addEventListener("message", ({ data: d }) => {
+      window.addEventListener("message", ({ data: d, source }) => {
         if (d.type === "question") {
           renderQuestion(d.question);
           renderLive(state);
@@ -1287,6 +1293,10 @@
           save();
           return;
         }
+        // Retry when the async outer analytics script becomes ready, including
+        // when this webview restored completed progress before the SDK loaded.
+        if (d.type === "relai-playground-analytics-ready" && source === window.top)
+          announceGuidedCompletion();
         if (d.type === "loaded") {
           recording = { ...d.recording, prompts: d.recording.prompts.map(recordedPromptText) };
           progress = d.recordedProgress;
@@ -1308,6 +1318,7 @@
           lastSuggestion = recording.prompts[progress] || null;
           renderLive(d.investigation);
           save();
+          announceGuidedCompletion();
         }
         if (d.type === "recorded") {
           replayPending = null;
@@ -1318,6 +1329,7 @@
           if (progress >= 1 && progress <= 3)
             el("history").children[(progress - 1) * 2]?.scrollIntoView?.({ block: "start" });
           else el("content").scrollTop = el("content").scrollHeight;
+          announceGuidedCompletion();
         }
         if (d.type === "state") {
           if (

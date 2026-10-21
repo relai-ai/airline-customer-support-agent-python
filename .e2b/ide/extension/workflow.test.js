@@ -60,6 +60,8 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   const fs = require("node:fs"),
     vm = require("node:vm"),
     path = require("node:path");
+  const completionSignals = [];
+  const top = { postMessage: value => completionSignals.push(value) };
   const sent = [], savedStates = [],
     handlers = {};
   class Element {
@@ -120,6 +122,7 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
     document: doc,
     innerWidth: 800, innerHeight: 900,
     window: {
+      top,
       addEventListener: (event, fn) => {
         handlers[event] = fn;
       },
@@ -261,7 +264,7 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
     true,
   );
   recording.steps[1].exactResponse = { path: "saved-second.json" };
-  handlers.message({ data: { type: "loaded", recording, recordedProgress: 2 } });
+  handlers.message({ data: { type: "loaded", recording, sessionId: "same-session", recordedProgress: 2 } });
   assert.ok(!flatten(elements.get("history")).some(n => n.textContent === "▸ Explore the simulation"));
   assert.ok(flatten(elements.get("history")).some(n => n.textContent === "Recorded result · Codex + RELAI · validation: 1m 0.0s"));
   assert.equal(elements.get("prompt").readOnly, true);
@@ -287,8 +290,16 @@ test("guided prompts stay fixed until all saved steps finish, then live requests
   assert.equal(elements.get("quick-tour").hidden, true, "Applying must not reveal dialog 4 early");
   handlers.message({ data: { type: "error", message: "Apply failed" } });
   assert.equal(elements.get("quick-tour").hidden, true, "Failed Apply must not reveal dialog 4");
+  assert.equal(completionSignals.length, 0, "Errors and optimizer playback alone must not complete the guided flow");
   elements.get("send").click();
   handlers.message({ data: { type: "recorded", recordedProgress: 4 } });
+  assert.equal(completionSignals.length, 1);
+  assert.equal(completionSignals[0].type, "relai-playground-guided-completed");
+  assert.equal(completionSignals[0].sessionId, "same-session");
+  handlers.message({ source: {}, data: { type: "relai-playground-analytics-ready" } });
+  assert.equal(completionSignals.length, 1, "Unrelated windows cannot request analytics");
+  handlers.message({ source: top, data: { type: "relai-playground-analytics-ready" } });
+  assert.equal(completionSignals.length, 2, "Late analytics initialization receives the completed state");
   assert.equal(elements.get("quick-tour").hidden, false);
   assert.equal(elements.get("tour-marker").hidden, false);
   assert.match(elements.get("tour-count").textContent, /4 OF 4/);
