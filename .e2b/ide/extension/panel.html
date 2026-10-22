@@ -319,9 +319,9 @@
         margin: 0;
         padding: 8px 0;
         resize: none;
-        height: 48px;
-        min-height: 48px;
-        max-height: min(180px, 30vh);
+        height: 128px;
+        min-height: 128px;
+        max-height: 128px;
         overflow-y: auto;
         outline: none;
       }
@@ -543,7 +543,7 @@
         <div class="prompt-box">
           <textarea
             id="prompt"
-            rows="1"
+            rows="4"
             maxlength="12000"
             readonly
             aria-describedby="run-notice"
@@ -640,10 +640,7 @@
         card.style.left = Math.max(16, Math.min(innerWidth - card.offsetWidth - 16, left)) + "px";
         card.style.top = Math.max(12, Math.min(innerHeight - card.offsetHeight - 12, top)) + "px";
       }
-      window.addEventListener("resize", () => {
-        resizePrompt();
-        positionTour();
-      });
+      window.addEventListener("resize", positionTour);
       document.addEventListener("scroll", positionTour, true);
       function showTour(focus = false) {
         if (!tourComplete && tourStep === 2 && recording && progress >= 4) tourStep = 3;
@@ -1025,13 +1022,6 @@
         row.append(spinner, node("span", label));
         return row;
       }
-      function resizePrompt() {
-        const prompt = el("prompt");
-        const scrollTop = prompt.scrollTop;
-        prompt.style.height = "auto";
-        prompt.style.height = prompt.scrollHeight + "px";
-        prompt.scrollTop = scrollTop;
-      }
       function composer() {
         const preset = recording?.prompts[progress] || "";
         const recorded = Boolean(recording) && progress < 4;
@@ -1075,7 +1065,6 @@
           Boolean(replayPending) ||
           awaitingVerification ||
           (!busy && !el("prompt").value.trim());
-        resizePrompt();
         showTour();
       }
       function renderLive(i) {
